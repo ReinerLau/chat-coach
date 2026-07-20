@@ -106,23 +106,28 @@ def mock_lark():
     def _parse_payload(args):
         """Extract JSON payload from args, handling both --json=<value> and --json <value>."""
         for i, a in enumerate(args):
+            if a is None:
+                continue
             if a.startswith("--json="):
                 return json.loads(a.split("=", 1)[1])
             if a == "--json" and i + 1 < len(args):
-                return json.loads(args[i + 1])
+                val = args[i + 1]
+                if val is not None:
+                    return json.loads(val)
         return None
 
     def run_lark_impl(args: list[str]) -> dict:
-        cmd = args[0]
+        def _arg_after(flag):
+            for i, a in enumerate(args):
+                if a == flag and i + 1 < len(args):
+                    return args[i + 1]
+            return None
+
+        cmd = args[0] if args else None
 
         if cmd == "+record-upsert":
-            rid = None
-            table_id = None
-            for i, a in enumerate(args):
-                if a == "--record-id":
-                    rid = args[i + 1]
-                elif a == "--table-id":
-                    table_id = args[i + 1]
+            rid = _arg_after("--record-id")
+            table_id = _arg_after("--table-id")
 
             payload = _parse_payload(args) or {}
             store = history if table_id == coach.HISTORY_TABLE else contacts
@@ -139,10 +144,7 @@ def mock_lark():
                 return {"ok": False}
 
         elif cmd == "+record-list":
-            table_id = None
-            for i, a in enumerate(args):
-                if a == "--table-id":
-                    table_id = args[i + 1]
+            table_id = _arg_after("--table-id")
 
             if table_id == coach.HISTORY_TABLE:
                 return _make_history_response([
