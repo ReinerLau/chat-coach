@@ -11,6 +11,12 @@ import pytest
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 import coach
 
+# Ensure module-level constants are set even when config.json is absent (CI).
+# The mock uses these to route between contacts and history tables.
+coach.BASE_TOKEN = coach.BASE_TOKEN or "test_base_token"
+coach.CONTACTS_TABLE = coach.CONTACTS_TABLE or "test_contacts_table"
+coach.HISTORY_TABLE = coach.HISTORY_TABLE or "test_history_table"
+
 
 # ── Helpers for building fake Bitable API responses ───────────────────
 
@@ -130,7 +136,8 @@ def mock_lark():
             table_id = _arg_after("--table-id")
 
             payload = _parse_payload(args) or {}
-            store = history if table_id == coach.HISTORY_TABLE else contacts
+            is_history = table_id and coach.HISTORY_TABLE and table_id == coach.HISTORY_TABLE
+            store = history if is_history else contacts
 
             if rid and rid in store:
                 for k, v in payload.items():
@@ -146,7 +153,8 @@ def mock_lark():
         elif cmd == "+record-list":
             table_id = _arg_after("--table-id")
 
-            if table_id == coach.HISTORY_TABLE:
+            # Only route to history when we can positively identify the table
+            if table_id and coach.HISTORY_TABLE and table_id == coach.HISTORY_TABLE:
                 return _make_history_response([
                     {"_record_id": rid, **rec}
                     for rid, rec in history.items()
