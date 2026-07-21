@@ -4,8 +4,7 @@
 import json
 import subprocess
 import sys
-from datetime import date, datetime
-from pathlib import Path
+from datetime import date
 
 from config import get as _cfg
 
