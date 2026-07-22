@@ -1,4 +1,4 @@
-"""读取 Bitable 配置，优先环境变量，fallback 到 data/config.json."""
+"""配置管理：优先环境变量 CHAT_COACH_<KEY>，fallback 到 data/config.json."""
 
 import json
 import os

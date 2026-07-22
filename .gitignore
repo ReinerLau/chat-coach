@@ -9,3 +9,4 @@ venv/
 .DS_Store
 data/config.json
 *.png
+uv.lock
