@@ -1,19 +1,14 @@
-#!/usr/bin/env python3
-"""chat-coach helper: read chat history from Feishu Bitable."""
+"""从 Bitable 读取聊天历史."""
 
 import json
 import subprocess
 import sys
 
-from config import get as _cfg
-
-BASE_TOKEN = _cfg("base_token")
-HISTORY_TABLE = _cfg("history_table_id")
-HISTORY_VIEW = _cfg("history_view_name", "Grid View")
+from chat_coach.config import get as _cfg
 
 
 def _run_lark(base_args: list[str]) -> dict:
-    """Run lark-cli base subcommand, return parsed JSON response."""
+    """Run lark-cli base subcommand, return parsed JSON."""
     merged = []
     skip = False
     for i, arg in enumerate(base_args):
@@ -29,23 +24,31 @@ def _run_lark(base_args: list[str]) -> dict:
     cmd = ["lark-cli", "base"] + merged + ["--as", "user", "--format", "json"]
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"lark-cli 调用失败: {result.stderr[:500]}")
-        sys.exit(1)
+        print(f"[context] lark-cli 调用失败: {result.stderr[:500]}", file=sys.stderr)
+        return {}
     try:
         return json.loads(result.stdout)
     except json.JSONDecodeError:
-        print(f"lark-cli 返回解析失败: {result.stdout[:200]}")
-        sys.exit(1)
+        print(f"[context] lark-cli 返回解析失败: {result.stdout[:200]}", file=sys.stderr)
+        return {}
 
 
-def _get_all_history() -> list[dict]:
-    """Return all history records, sorted by Time."""
+def get_history(limit: int = 20) -> list[dict]:
+    """返回最近 N 条聊天记录，格式 [{"role": "them/me", "content": "..."}]."""
+    base_token = _cfg("base_token")
+    table_id = _cfg("history_table_id")
+    view_name = _cfg("history_view_name", "Grid View")
+
     resp = _run_lark([
         "+record-list",
-        "--base-token", BASE_TOKEN,
-        "--table-id", HISTORY_TABLE,
-        "--view-id", HISTORY_VIEW,
+        "--base-token", base_token,
+        "--table-id", table_id,
+        "--view-id", view_name,
     ])
+
+    if not resp:
+        return []
+
     data = resp.get("data", {})
     rows = data.get("data", [])
     fields = data.get("fields", [])
@@ -59,30 +62,10 @@ def _get_all_history() -> list[dict]:
                 entry["role"] = "them" if val and "对方" in str(val) else "me"
             elif fname == "Content":
                 entry["content"] = val or ""
-
         if "content" in entry:
             entries.append(entry)
 
+    if len(entries) > limit:
+        entries = entries[-limit:]
+
     return entries
-
-
-def cmd_context() -> None:
-    """Print all chat history."""
-    history = _get_all_history()
-
-    if not history:
-        print("暂无聊天记录")
-        return
-
-    for e in history:
-        label = "对方" if e["role"] == "them" else "我"
-        print(f"{label}: {e['content']}")
-
-
-HANDLERS = {"context": cmd_context}
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2 or sys.argv[1] not in HANDLERS:
-        print(f"用法: coach.py <{'|'.join(HANDLERS)}>")
-        sys.exit(1)
-    HANDLERS[sys.argv[1]]()
