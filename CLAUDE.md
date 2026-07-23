@@ -31,7 +31,7 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
 5. **文档整理**：测试通过后，运行 `/neat-freak` 整理项目文档和规则文件，清理残留，确保 CLAUDE.md 和代码实际行为一致。
 
 6. **提交 PR 并等 CI**：推送分支到远端，创建 PR 到 `master`。CI 自动跑 `pytest tests/ -v`。
-   - **AI 行为**：PR 创建后，AI 轮询 CI 状态（`gh run list --branch <分支> --json status,conclusion`），CI 通过则继续下一步；CI 挂了则用 `gh run view --log` 拉失败详情，自动修复后推送，最多修复 3 次。CI 通过后主动提醒用户进入第 7 步用户自测。
+   - **AI 行为**：PR 创建后，AI 用 `gh run watch` 阻塞等待 CI（单次 Bash 调用，不浪费 token 反复轮询）。CI 挂了则用 `gh run view --log` 拉失败详情，自动修复后推送再 `gh run watch`，最多修复 3 次。CI 通过后主动提醒用户进入第 7 步用户自测。
 
 7. **用户自测**：CI 通过后，用户在本地启动 Bot 做实机验证：
    1. `python -m chat_coach.bot` 启动服务
