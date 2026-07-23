@@ -19,10 +19,30 @@ def _get_lark_client():
     return Client.builder().app_id(app_id).app_secret(app_secret).build()
 
 
+def _build_card(text: str) -> dict:
+    """将回复文本包装为飞书卡片 JSON."""
+    return {
+        "config": {"wide_screen_mode": True},
+        "header": {
+            "title": {"tag": "plain_text", "content": "回复建议"},
+            "template": "blue",
+        },
+        "elements": [
+            {"tag": "markdown", "content": text},
+            {"tag": "hr"},
+            {
+                "tag": "note",
+                "elements": [{"tag": "plain_text", "content": "Chat Coach"}],
+            },
+        ],
+    }
+
+
 def _send_bot_message(open_id: str, text: str) -> None:
-    """通过飞书 SDK 以 bot 身份发送消息."""
+    """通过飞书 SDK 以 bot 身份发送卡片消息."""
     from lark_oapi.api.im.v1 import CreateMessageRequest, CreateMessageRequestBody
 
+    card = _build_card(text)
     client = _get_lark_client()
     request = (
         CreateMessageRequest.builder()
@@ -30,8 +50,8 @@ def _send_bot_message(open_id: str, text: str) -> None:
         .request_body(
             CreateMessageRequestBody.builder()
             .receive_id(open_id)
-            .msg_type("text")
-            .content(json.dumps({"text": text}, ensure_ascii=False))
+            .msg_type("interactive")
+            .content(json.dumps(card, ensure_ascii=False))
             .build()
         )
         .build()
