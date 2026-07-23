@@ -80,7 +80,7 @@ def _make_event_handler():
             sys.stdout.flush()
             return
 
-        print(f"[bot] 收到消息: {msg_event.text[:50]}")
+        print(f"[bot] 收到消息: {msg_event.text[:50]} (id={msg_event.message_id})")
         sys.stdout.flush()
 
         # 后台处理，立即返回（避免飞书超时重试）
