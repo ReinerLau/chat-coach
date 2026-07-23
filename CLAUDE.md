@@ -19,6 +19,7 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
    - 动手前先判断：当前改动和当前分支的主题是否一致？如果不一致，另起新分支。
    - **AI 行为**：收到开发任务时，主动判断是否与当前分支主题匹配。如果不匹配，先提醒用户切到新分支再开始。
    - **Worktree 隔离**：新分支使用 `claude --worktree` 启动，自动创建独立 git worktree 目录，不同分支互不干扰，不用来回 stash 切分支。
+   - **Worktree 初始化**：AI 进入 worktree 后，自动执行 `pip install -e .` 和 `ln -s <主项目>/data ./data`，确保测试和自测都能直接运行。
 
 2. **需求描述**：用户用自然语言描述需求或 Bug，不用写详细的 spec。AI 需要主动追问澄清模糊点，确保理解一致后再动手。
 
@@ -35,14 +36,11 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
 6. **提交 PR 并等 CI**：推送分支到远端，创建 PR 到 `master`。CI 自动跑 `pytest tests/ -v`。
    - **AI 行为**：PR 创建后，AI 用 `gh run watch` 阻塞等待 CI（单次 Bash 调用，不浪费 token 反复轮询）。CI 挂了则用 `gh run view --log` 拉失败详情，自动修复后推送再 `gh run watch`，最多修复 3 次。CI 通过后主动提醒用户进入第 7 步用户自测。
 
-7. **用户自测**：CI 通过后，用户在**主 checkout**（非 worktree）做实机验证：
-   1. `cd <项目主目录>` 回到主 checkout
-   2. `git fetch && git checkout <分支名>` 切到当前功能分支
-   3. `python -m chat_coach.bot` 启动服务
-   4. 在飞书 1v1 私聊中给 Bot 发消息，模拟真实对话场景
-   5. 确认 Bot 回复符合预期，无报错
-   6. 测试完后 `git checkout master` 回到 master
-   7. 验证通过后进入第 8 步合并 PR
+7. **用户自测**：CI 通过后，用户在本地启动 Bot 做实机验证：
+   1. `python -m chat_coach.bot` 启动服务
+   2. 在飞书 1v1 私聊中给 Bot 发消息，模拟真实对话场景
+   3. 确认 Bot 回复符合预期，无报错
+   4. 验证通过后进入第 8 步合并 PR
 
 8. **合并 PR**：用户自测通过且 review 确认无误后，在 GitHub 上点击 "Squash and merge"，将 PR 合并到 `master`。
    - 合并后 GitHub Actions 自动：删远端分支 → 根据 PR label 计算版本号 → 打 tag → 推远端
