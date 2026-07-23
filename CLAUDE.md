@@ -19,7 +19,7 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
    - 动手前先判断：当前改动和当前分支的主题是否一致？如果不一致，另起新分支。
    - **AI 行为**：收到开发任务时，主动判断是否与当前分支主题匹配。如果不匹配，先提醒用户切到新分支再开始。
    - **Worktree 隔离**：新分支使用 `claude --worktree` 启动，自动创建独立 git worktree 目录，不同分支互不干扰，不用来回 stash 切分支。
-   - **Worktree 初始化**：AI 进入 worktree 后，自动执行 `pip install -e .` 和 `cp <主项目>/data/config.local.json ./data/config.local.json`，确保测试和自测都能直接运行。
+   - **Worktree 初始化**：AI 进入 worktree 后，自动执行 `pip install -e .`，确保测试和自测都能直接运行。
 
 2. **需求描述**：用户用自然语言描述需求或 Bug，不用写详细的 spec。AI 需要主动追问澄清模糊点，确保理解一致后再动手。
 
