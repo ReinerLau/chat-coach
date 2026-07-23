@@ -50,6 +50,17 @@ class _MessageDedup:
 _dedup = _MessageDedup()
 
 
+def _process_message(msg_event) -> None:
+    """后台处理消息：查历史 → 调 LLM → 发回复 → 写记录."""
+    try:
+        history = get_history()
+        handle_message(msg_event.open_id, msg_event.text, history)
+        add_entry("them", msg_event.text)
+        print("[bot] 已处理")
+    except Exception as e:
+        print(f"[bot] 处理失败: {e}")
+
+
 def _make_event_handler():
     """创建 EventDispatcherHandler，注册 im.message.receive_v1 事件."""
     from lark_oapi.event.dispatcher_handler import EventDispatcherHandler
@@ -74,17 +85,6 @@ def _make_event_handler():
 
         # 后台处理，立即返回（避免飞书超时重试）
         Thread(target=_process_message, args=(msg_event,), daemon=True).start()
-
-
-def _process_message(msg_event) -> None:
-    """后台处理消息：查历史 → 调 LLM → 发回复 → 写记录."""
-    try:
-        history = get_history()
-        handle_message(msg_event.open_id, msg_event.text, history)
-        add_entry("them", msg_event.text)
-        print(f"[bot] 已处理")
-    except Exception as e:
-        print(f"[bot] 处理失败: {e}")
 
     return (
         EventDispatcherHandler.builder("", "")
