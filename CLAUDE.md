@@ -12,11 +12,14 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
 
 ## 开发流程
 
+**自检规则**：收到开发任务时，AI 必须先用 TaskCreate 把 9 个步骤全部创建为任务（当前步骤标 `in_progress`，其余标 `pending`），然后按序执行。每一步完成后立即标记 `completed`，再开始下一步。如果一个步骤被跳过，它会留在任务列表里——这就是自检信号。步骤 6（提交 PR）和步骤 9（回归主线）由 AI 自动执行，不询问用户。
+
 1. **分支开发**：新需求或 Bug 修复必须从 `master` 新建分支，禁止直接在 `master` 上提交。`master` 是保护分支，保证当前版本稳定运行。
    - 每个分支只做一件事：一个需求或一个 Bug 修复，不要把不相干的改动堆在同一个分支里。
    - 动手前先判断：当前改动和当前分支的主题是否一致？如果不一致，另起新分支。
    - **AI 行为**：收到开发任务时，主动判断是否与当前分支主题匹配。如果不匹配，先提醒用户切到新分支再开始。
    - **Worktree 隔离**：新分支使用 `claude --worktree` 启动，自动创建独立 git worktree 目录，不同分支互不干扰，不用来回 stash 切分支。
+   - **Worktree 初始化**：AI 进入 worktree 后，自动执行 `uv pip install -e . -r requirements.txt`，确保测试和自测都能直接运行。
 
 2. **需求描述**：用户用自然语言描述需求或 Bug，不用写详细的 spec。AI 需要主动追问澄清模糊点，确保理解一致后再动手。
 
