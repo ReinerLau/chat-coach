@@ -1,8 +1,9 @@
-"""Tests for event handler parsing."""
+"""Tests for event handler parsing and message deduplication."""
 
 import json
 
 from chat_coach.event_handler import parse_event
+from chat_coach.bot import _MessageDedup
 
 
 def test_parse_v2_text_event():
@@ -81,3 +82,34 @@ def test_parse_empty_text_event():
     }
     result = parse_event(event)
     assert result is None
+
+
+# ── MessageDedup tests ──────────────────────────────────────────────
+
+
+def test_dedup_first_message_not_duplicate():
+    dedup = _MessageDedup()
+    assert not dedup.is_duplicate("om_001")
+
+
+def test_dedup_repeated_message_is_duplicate():
+    dedup = _MessageDedup()
+    assert not dedup.is_duplicate("om_001")
+    assert dedup.is_duplicate("om_001")
+    assert dedup.is_duplicate("om_001")
+
+
+def test_dedup_different_messages_not_duplicate():
+    dedup = _MessageDedup()
+    assert not dedup.is_duplicate("om_001")
+    assert not dedup.is_duplicate("om_002")
+    assert not dedup.is_duplicate("om_003")
+
+
+def test_dedup_cleanup_does_not_break():
+    dedup = _MessageDedup(ttl=0.001, max_size=3)
+    # 填满触发清理
+    for i in range(5):
+        dedup.is_duplicate(f"om_{i:03d}")
+    # 新 message_id 不应被误判为重复，清理逻辑不应崩溃
+    assert not dedup.is_duplicate("om_999")

@@ -5,12 +5,48 @@ Usage:
 """
 
 import sys
+import time
 
 from chat_coach.config import get
 from chat_coach.event_handler import parse_event
 from chat_coach.context import get_history
 from chat_coach.writer import add_entry
 from chat_coach.reply import handle_message
+
+
+class _MessageDedup:
+    """基于 message_id 的去重器，防止飞书事件重试导致重复处理.
+
+    飞书事件投递保证 at-least-once，应用层必须自行去重。
+    用 dict 存 message_id → 过期时间戳，定期清理过期条目，
+    同时限制最大容量防止内存泄漏。
+    """
+
+    def __init__(self, ttl: float = 300, max_size: int = 10000):
+        self._ttl = ttl
+        self._max_size = max_size
+        self._seen: dict[str, float] = {}
+
+    def is_duplicate(self, message_id: str) -> bool:
+        now = time.monotonic()
+        # 每隔一段时间清理过期条目
+        if len(self._seen) > self._max_size // 2:
+            self._seen = {
+                k: v for k, v in self._seen.items() if now - v < self._ttl
+            }
+        if message_id in self._seen:
+            return True
+        self._seen[message_id] = now
+        # 超过最大容量时丢弃最旧的一半
+        if len(self._seen) > self._max_size:
+            cutoff = now - self._ttl / 2
+            self._seen = {
+                k: v for k, v in self._seen.items() if now - v < cutoff
+            }
+        return False
+
+
+_dedup = _MessageDedup()
 
 
 def _make_event_handler():
@@ -25,6 +61,11 @@ def _make_event_handler():
 
         msg_event = parse_event(raw)
         if not msg_event:
+            return
+
+        if _dedup.is_duplicate(msg_event.message_id):
+            print(f"[bot] 跳过重复消息: {msg_event.message_id}")
+            sys.stdout.flush()
             return
 
         print(f"[bot] 收到消息: {msg_event.text[:50]}")
