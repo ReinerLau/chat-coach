@@ -1,0 +1,15 @@
+{
+  "base_token": "VCeYbpeLOa6eUhsL1SDcAUFYnfh",
+  "history_table_id": "tblaZl8nfQboVL6I",
+  "history_fields": {
+    "Content": "fldQPpYhOS",
+    "Role": "fldSQeXq27"
+  },
+  "lark_app_id": "",
+  "lark_app_secret": "",
+  "llm_provider": "deepseek",
+  "llm_api_key": "",
+  "llm_model": "deepseek-v4-flash",
+  "llm_base_url": "https://api.deepseek.com/v1",
+  "max_history": 20
+}
