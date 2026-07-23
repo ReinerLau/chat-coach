@@ -1,0 +1,78 @@
+name: Auto Tag
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [master]
+
+jobs:
+  tag:
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine version bump
+        id: bump
+        run: |
+          LABELS=$(echo '${{ toJson(github.event.pull_request.labels) }}' | jq -r '.[].name')
+
+          if echo "$LABELS" | grep -q "^major$"; then
+            BUMP="major"
+          elif echo "$LABELS" | grep -q "^minor$"; then
+            BUMP="minor"
+          else
+            BUMP="patch"
+          fi
+
+          echo "PR: #${{ github.event.pull_request.number }}, bump: $BUMP"
+          echo "bump=$BUMP" >> $GITHUB_OUTPUT
+
+      - name: Calculate next version
+        id: version
+        run: |
+          LATEST=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
+
+          if [ -z "$LATEST" ]; then
+            NEW="1.0.0"
+            echo "No existing tag, starting at v$NEW"
+            echo "tag=v$NEW" >> $GITHUB_OUTPUT
+            echo "ver=$NEW" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          VER="${LATEST#v}"
+          MAJOR=$(echo "$VER" | cut -d. -f1)
+          MINOR=$(echo "$VER" | cut -d. -f2)
+          PATCH=$(echo "$VER" | cut -d. -f3)
+
+          case "${{ steps.bump.outputs.bump }}" in
+            major)
+              MAJOR=$((MAJOR + 1)); MINOR=0; PATCH=0 ;;
+            minor)
+              MINOR=$((MINOR + 1)); PATCH=0 ;;
+            patch)
+              PATCH=$((PATCH + 1)) ;;
+          esac
+
+          NEW="${MAJOR}.${MINOR}.${PATCH}"
+          echo "Latest: $LATEST -> New: v$NEW"
+          echo "tag=v$NEW" >> $GITHUB_OUTPUT
+          echo "ver=$NEW" >> $GITHUB_OUTPUT
+
+      - name: Sync pyproject.toml and tag
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.ver }}\"/" pyproject.toml
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pyproject.toml
+          git commit -m "chore: bump version to ${{ steps.version.outputs.ver }}"
+          git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
+          git push origin master "${{ steps.version.outputs.tag }}"
+          echo "Done: ${{ steps.version.outputs.tag }} | synced pyproject.toml"
