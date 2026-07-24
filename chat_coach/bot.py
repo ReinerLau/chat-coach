@@ -66,6 +66,20 @@ def _process_message(msg_event) -> None:
         print(f"[bot] 处理失败: {e}")
 
 
+def _process_card_action(
+    open_id: str, message_id: str, token: str,
+    action_value: dict, selected_text: str,
+) -> None:
+    """后台处理卡片按钮点击：发消息 → 更新卡片 → 写记录."""
+    try:
+        handle_card_action(open_id, message_id, token, action_value)
+        if selected_text:
+            add_entry("me", selected_text)
+        print("[bot] 卡片回调已处理")
+    except Exception as e:
+        print(f"[bot] 处理卡片回调失败: {e}")
+
+
 def _make_event_handler():
     """创建 EventDispatcherHandler，注册 im.message.receive_v1 和 card.action.trigger 事件."""
     from lark_oapi.event.dispatcher_handler import EventDispatcherHandler
@@ -92,7 +106,7 @@ def _make_event_handler():
         Thread(target=_process_message, args=(msg_event,), daemon=True).start()
 
     def on_card_action(event: P2CardActionTrigger) -> P2CardActionTriggerResponse:
-        """处理卡片按钮点击：发送选中回复 + 更新卡片."""
+        """处理卡片按钮点击：后台发送选中回复 + 更新卡片，立即返回."""
         try:
             data = event.event
             if not data or not data.action:
@@ -121,16 +135,13 @@ def _make_event_handler():
             )
             sys.stdout.flush()
 
-            handle_card_action(open_id, message_id, token, action_value)
+            # 后台处理，立即返回（避免飞书回调 3 秒超时）
+            Thread(
+                target=_process_card_action,
+                args=(open_id, message_id, token, action_value, selected_text),
+                daemon=True,
+            ).start()
 
-            # 记录发送的回复到 Bitable
-            if selected_text:
-                try:
-                    add_entry("me", selected_text)
-                except Exception as e:
-                    print(f"[bot] 写入 Bitable 失败: {e}", flush=True)
-
-            # 卡片更新本身就是视觉反馈，不额外返回 toast
             return P2CardActionTriggerResponse({})
         except Exception as e:
             print(f"[bot] 处理卡片回调失败: {e}", flush=True)
