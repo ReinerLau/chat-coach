@@ -11,10 +11,13 @@ class OpenAIProvider(LLMProvider):
         self.client = OpenAI(api_key=api_key, base_url=base_url)
 
     def chat(self, messages: list[dict], **kwargs) -> str:
-        response = self.client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            temperature=kwargs.get("temperature", 0.9),
-            max_tokens=kwargs.get("max_tokens", 300),
-        )
+        chat_kwargs = {
+            "model": self.model,
+            "messages": messages,
+            "temperature": kwargs.pop("temperature", 0.9),
+            "max_tokens": kwargs.pop("max_tokens", 300),
+        }
+        # 透传额外参数（如 response_format）
+        chat_kwargs.update(kwargs)
+        response = self.client.chat.completions.create(**chat_kwargs)
         return response.choices[0].message.content or ""

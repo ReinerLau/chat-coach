@@ -8,11 +8,16 @@ import sys
 import time
 from threading import Thread
 
+from lark_oapi.event.callback.model.p2_card_action_trigger import (
+    P2CardActionTrigger,
+    P2CardActionTriggerResponse,
+)
+
 from chat_coach.config import get
 from chat_coach.event_handler import parse_event
 from chat_coach.context import get_history
 from chat_coach.writer import add_entry
-from chat_coach.reply import handle_message
+from chat_coach.reply import handle_message, handle_card_action
 
 
 class _MessageDedup:
@@ -62,7 +67,7 @@ def _process_message(msg_event) -> None:
 
 
 def _make_event_handler():
-    """创建 EventDispatcherHandler，注册 im.message.receive_v1 事件."""
+    """创建 EventDispatcherHandler，注册 im.message.receive_v1 和 card.action.trigger 事件."""
     from lark_oapi.event.dispatcher_handler import EventDispatcherHandler
 
     def on_im_message(event) -> None:
@@ -86,9 +91,50 @@ def _make_event_handler():
         # 后台处理，立即返回（避免飞书超时重试）
         Thread(target=_process_message, args=(msg_event,), daemon=True).start()
 
+    def on_card_action(event: P2CardActionTrigger) -> P2CardActionTriggerResponse:
+        """处理卡片按钮点击：发送选中回复 + 更新卡片."""
+        try:
+            data = event.event
+            if not data or not data.action:
+                return P2CardActionTriggerResponse({})
+
+            open_id = data.operator.open_id if data.operator else ""
+            token = data.token or ""
+            action_value = data.action.value or {}
+            message_id = (
+                data.context.open_message_id if data.context else ""
+            )
+
+            if not open_id or not token:
+                print(
+                    f"[bot] 卡片回调缺少必要字段: "
+                    f"open_id={open_id}, token={bool(token)}",
+                    flush=True,
+                )
+                return P2CardActionTriggerResponse({})
+
+            print(
+                f"[bot] 卡片按钮点击: tag={data.action.tag}, "
+                f"open_id={open_id}",
+                flush=True,
+            )
+            sys.stdout.flush()
+
+            handle_card_action(open_id, message_id, token, action_value)
+
+            return P2CardActionTriggerResponse(
+                {"toast": {"type": "success", "content": "已发送"}}
+            )
+        except Exception as e:
+            print(f"[bot] 处理卡片回调失败: {e}", flush=True)
+            return P2CardActionTriggerResponse(
+                {"toast": {"type": "error", "content": "发送失败，请重试"}}
+            )
+
     return (
         EventDispatcherHandler.builder("", "")
         .register_p2_customized_event("im.message.receive_v1", on_im_message)
+        .register_p2_card_action_trigger(on_card_action)
         .build()
     )
 
