@@ -285,14 +285,16 @@ def test_handle_card_action_missing_text():
 
 
 def test_cache_expiry():
+    import time
+    from chat_coach import reply as reply_mod
+
     suggestions = [{"style": "", "text": "test"}]
     _cache_suggestions("om_expire", suggestions)
 
-    # 模拟过期：直接把缓存时间戳改到很久以前
-    from chat_coach import reply as reply_mod
-
+    # 模拟过期：把缓存时间戳改到 TTL 之前
+    expired_ts = time.monotonic() - reply_mod._CACHE_TTL - 60
     with reply_mod._card_cache_lock:
-        reply_mod._card_cache["om_expire"] = (suggestions, 0)
+        reply_mod._card_cache["om_expire"] = (suggestions, expired_ts)
 
     cached = _get_cached_suggestions("om_expire")
     assert cached is None
