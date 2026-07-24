@@ -2,15 +2,6 @@
 name = "chat-coach"
 version = "1.1.2"
 requires-python = ">=3.11"
-dependencies = [
-    "lark-oapi",
-    "openai",
-    "watchfiles",
-]
-
-[project.scripts]
-chat-coach-bot = "chat_coach.bot:main"
-chat-coach-dev = "chat_coach.dev:main"
 
 [tool.setuptools.packages.find]
 include = ["chat_coach*"]
