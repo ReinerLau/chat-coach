@@ -2,7 +2,6 @@
 
 Usage:
     chat-coach-dev
-    python -m chat_coach.dev
 """
 
 import sys
@@ -20,7 +19,8 @@ def main() -> None:
 
     run_process(
         *[str(d) for d in watch_dirs],
-        target=[sys.executable, "-m", "chat_coach.bot"],
+        target=f"{sys.executable} -m chat_coach.bot",
+        target_type="command",
         callback=lambda changes: print(
             f"[dev] {len(changes)} 个文件变更，重启中..."
         ),
