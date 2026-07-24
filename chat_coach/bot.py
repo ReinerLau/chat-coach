@@ -122,14 +122,11 @@ def _make_event_handler():
 
             handle_card_action(open_id, message_id, token, action_value)
 
-            return P2CardActionTriggerResponse(
-                {"toast": {"type": "success", "content": "已发送"}}
-            )
+            # 卡片更新本身就是视觉反馈，不额外返回 toast
+            return P2CardActionTriggerResponse({})
         except Exception as e:
             print(f"[bot] 处理卡片回调失败: {e}", flush=True)
-            return P2CardActionTriggerResponse(
-                {"toast": {"type": "error", "content": "发送失败，请重试"}}
-            )
+            return P2CardActionTriggerResponse({})
 
     return (
         EventDispatcherHandler.builder("", "")
