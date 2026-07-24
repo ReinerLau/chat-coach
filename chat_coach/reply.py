@@ -1,9 +1,7 @@
 """回复生成和发送."""
 
 import json
-import os
 import re
-import subprocess
 import time
 from pathlib import Path
 from threading import Lock
@@ -228,30 +226,27 @@ def _send_text_message(open_id: str, text: str) -> None:
 
 
 def _update_card_message(token: str, card: dict) -> bool:
-    """通过 lark-cli 调用卡片更新 API."""
-    data = json.dumps({"token": token, "card": card}, ensure_ascii=False)
-    try:
-        result = subprocess.run(
-            [
-                "lark-cli", "api", "POST",
-                "/open-apis/interactive/v1/card/update",
-                "--as", "bot",
-                "--data", data,
-            ],
-            capture_output=True, text=True, timeout=10,
-            env={
-                **os.environ,
-                "LARKSUITE_CLI_NO_UPDATE_NOTIFIER": "1",
-                "LARKSUITE_CLI_NO_SKILLS_NOTIFIER": "1",
-            },
+    """通过 lark_oapi SDK 调用卡片更新 API."""
+    from lark_oapi.core import HttpMethod, AccessTokenType
+    from lark_oapi.core.model.base_request import BaseRequest
+
+    client = _get_lark_client()
+    request = (
+        BaseRequest.builder()
+        .http_method(HttpMethod.POST)
+        .uri("/open-apis/interactive/v1/card/update")
+        .token_types({AccessTokenType.TENANT})
+        .body({"token": token, "card": card})
+        .build()
+    )
+    response = client.request(request)
+    if response.code != 0:
+        print(
+            f"[reply] 更新卡片失败: {response.msg} (code={response.code})",
+            flush=True,
         )
-        if result.returncode != 0:
-            print(f"[reply] 更新卡片失败: {result.stderr.strip()}", flush=True)
-            return False
-        return True
-    except Exception as e:
-        print(f"[reply] 更新卡片异常: {e}", flush=True)
         return False
+    return True
 
 
 # ── 公开 API ──────────────────────────────────────────────────
