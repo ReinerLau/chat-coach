@@ -12,16 +12,14 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
 
 ## 开发流程
 
-**自检规则**：收到开发任务时，AI 必须先用 TaskCreate 把 9 个步骤全部创建为任务（当前步骤标 `in_progress`，其余标 `pending`），然后按序执行。每一步完成后立即标记 `completed`，再开始下一步。如果一个步骤被跳过，它会留在任务列表里——这就是自检信号。步骤 6（提交 PR）和步骤 9（回归主线）由 AI 自动执行，不询问用户。
+**自检规则**：收到开发任务时，AI 必须先用 `TaskCreate` 把 9 个步骤全部创建为任务（当前步骤标 `in_progress`，其余标 `pending`），然后按序执行。每一步完成后立即标记 `completed`，再开始下一步。如果一个步骤被跳过，它会留在任务列表里——这就是自检信号。步骤 6（提交 PR）和步骤 9（回归主线）由 AI 自动执行，不询问用户。
 
 1. **分支开发**：新需求或 Bug 修复必须从 `master` 新建分支，禁止直接在 `master` 上提交。`master` 是保护分支，保证当前版本稳定运行。
    - 每个分支只做一件事：一个需求或一个 Bug 修复，不要把不相干的改动堆在同一个分支里。
    - 动手前先判断：当前改动和当前分支的主题是否一致？如果不一致，另起新分支。
-   - **AI 行为**：收到开发任务时，主动判断是否与当前分支主题匹配。如果不匹配，先提醒用户切到新分支再开始。
    - **Worktree 隔离**：新分支使用 `claude --worktree` 启动，自动创建独立 git worktree 目录，不同分支互不干扰，不用来回 stash 切分支。
-   - **Worktree 初始化**：AI 进入 worktree 后，自动执行 `uv pip install -e . -r requirements.txt`，确保测试和自测都能直接运行。
 
-2. **需求描述**：用户用自然语言描述需求或 Bug，不用写详细的 spec。AI 需要主动追问澄清模糊点，确保理解一致后再动手。
+2. **需求描述**：用户用自然语言描述需求或 Bug，不用写详细的 spec。AI 需要主动追问澄清模糊点，使用 `AskUserQuestion` 进行选项式问答，确保理解一致后再动手。
 
 3. **Agent 开发**：AI 完成代码编写和自测，确保能跑通。完成后主动总结改动内容。
 
@@ -41,6 +39,7 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
    2. 在飞书 1v1 私聊中给 Bot 发消息，模拟真实对话场景
    3. 确认 Bot 回复符合预期，无报错
    4. 验证通过后进入第 8 步合并 PR
+   5. 若验证不通过（回复不符合预期、报错等），用户将问题反馈给 AI，AI 回到步骤 3 修复问题，重新走 3→4→5→6→7 流程
 
 8. **合并 PR**：用户自测通过且 review 确认无误后，在 GitHub 上点击 "Squash and merge"，将 PR 合并到 `master`。
    - 合并后 GitHub Actions 自动：删远端分支 → 根据 PR label 计算版本号 → 打 tag → 推远端
