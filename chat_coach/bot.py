@@ -113,14 +113,22 @@ def _make_event_handler():
                 )
                 return P2CardActionTriggerResponse({})
 
+            selected_text = action_value.get("t", "")
             print(
                 f"[bot] 卡片按钮点击: tag={data.action.tag}, "
-                f"open_id={open_id}",
+                f"open_id={open_id}, text={selected_text[:20]}",
                 flush=True,
             )
             sys.stdout.flush()
 
             handle_card_action(open_id, message_id, token, action_value)
+
+            # 记录发送的回复到 Bitable
+            if selected_text:
+                try:
+                    add_entry("me", selected_text)
+                except Exception as e:
+                    print(f"[bot] 写入 Bitable 失败: {e}", flush=True)
 
             # 卡片更新本身就是视觉反馈，不额外返回 toast
             return P2CardActionTriggerResponse({})
