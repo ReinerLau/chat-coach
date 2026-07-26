@@ -11,6 +11,8 @@ from chat_coach.reply import (
     _send_bot_message,
     _get_cached_suggestions,
     _cache_suggestions,
+    _is_processed,
+    _mark_processed,
     handle_card_action,
 )
 
@@ -138,16 +140,58 @@ def test_suggestions_card_has_note():
 # ── _build_selected_card ───────────────────────────────────────
 
 
-def test_selected_card_shows_checkmark():
+def test_selected_card_keeps_same_structure():
+    """选中后卡片保留原布局（标题、markdown、按钮、note）."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选这个"},
     ]
     card = _build_selected_card(suggestions, 0, "ou_test")
+
+    # 标题不变
+    assert card["header"]["title"]["content"] == "回复建议"
+    assert card["header"]["template"] == "blue"
+
+    # 保留 markdown + action + note 结构
+    tags = [e["tag"] for e in card["elements"]]
+    assert "markdown" in tags
+    assert "action" in tags
+    assert "note" in tags
+
+    # markdown：选中正常显示，未选中加删除线
     md = card["elements"][0]["content"]
-    assert "✅" in md
-    assert "已发送" in md
-    assert "~~" in md  # 未选中的有删除线
+    assert "~~" in md
+
+
+def test_selected_card_disables_all_buttons():
+    """选中后全部按钮被禁用."""
+    suggestions = [
+        {"style": "随意", "text": "选这个"},
+        {"style": "正式", "text": "不选"},
+    ]
+    card = _build_selected_card(suggestions, 0, "ou_test")
+
+    action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
+    for btn in action_elem["actions"]:
+        assert btn.get("disabled") is True
+
+
+def test_selected_card_markdown_marks_unselected():
+    """未选中项有删除线，选中项无额外前缀."""
+    suggestions = [
+        {"style": "随意", "text": "选这个"},
+        {"style": "正式", "text": "不选"},
+    ]
+    card = _build_selected_card(suggestions, 0, "ou_test")
+
+    md = card["elements"][0]["content"]
+    lines = md.split("\n")
+    # 选中行无删除线，无 ✓
+    assert "~~" not in lines[0]
+    assert "选这个" in lines[0]
+    # 未选中行有删除线
+    assert "~~" in lines[1]
+    assert "不选" in lines[1]
 
 
 def test_selected_card_has_open_ids():
@@ -156,10 +200,11 @@ def test_selected_card_has_open_ids():
     assert card["open_ids"] == ["ou_123"]
 
 
-def test_selected_card_header_changed():
+def test_selected_card_header_unchanged():
+    """选中后标题不变."""
     suggestions = [{"style": "", "text": "test"}]
     card = _build_selected_card(suggestions, 0, "ou_test")
-    assert card["header"]["title"]["content"] == "已发送"
+    assert card["header"]["title"]["content"] == "回复建议"
 
 
 # ── _send_bot_message ─────────────────────────────────────────
@@ -251,6 +296,26 @@ def test_handle_card_action_sends_text_and_updates_card():
         # 验证更新卡片包含 open_ids
         updated_card = mock_update.call_args[0][1]
         assert updated_card["open_ids"] == ["ou_test"]
+        # 标记已处理
+        assert _is_processed("om_test") is True
+
+
+def test_handle_card_action_duplicate_skipped():
+    """重复点击相同卡片时直接跳过，不重发消息."""
+    with (
+        patch("chat_coach.reply._send_text_message") as mock_send,
+        patch("chat_coach.reply._update_card_message") as mock_update,
+    ):
+        _cache_suggestions("om_dup", [{"style": "", "text": "hello"}])
+        _mark_processed("om_dup")  # 模拟已处理过
+
+        handle_card_action(
+            "ou_test", "om_dup", "token123",
+            {"i": 0, "t": "hello"},
+        )
+
+        mock_send.assert_not_called()
+        mock_update.assert_not_called()
 
 
 def test_handle_card_action_cache_miss_sends_only():
