@@ -141,7 +141,7 @@ def test_suggestions_card_has_note():
 
 
 def test_selected_card_keeps_same_structure():
-    """选中后的卡片结构和原卡片一致（标题、文本、布局不变）."""
+    """选中后卡片保留原布局（标题、markdown、按钮、note）."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选这个"},
@@ -158,16 +158,14 @@ def test_selected_card_keeps_same_structure():
     assert "action" in tags
     assert "note" in tags
 
-    # markdown 内容不变（无删除线、无 ✅）
+    # markdown：选中加 ✓，未选中加删除线
     md = card["elements"][0]["content"]
-    assert "✅" not in md
-    assert "~~" not in md
-    assert "选这个" in md
-    assert "不选这个" in md
+    assert "✓" in md
+    assert "~~" in md
 
 
 def test_selected_card_disables_all_buttons():
-    """未选中按钮被禁用，选中按钮不禁用."""
+    """选中后全部按钮被禁用."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选"},
@@ -175,28 +173,25 @@ def test_selected_card_disables_all_buttons():
     card = _build_selected_card(suggestions, 0, "ou_test")
 
     action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
-    # 未选中按钮 disabled
-    assert action_elem["actions"][1].get("disabled") is True
-    # 选中按钮不禁用
-    assert "disabled" not in action_elem["actions"][0]
+    for btn in action_elem["actions"]:
+        assert btn.get("disabled") is True
 
 
-def test_selected_card_selected_button_has_checkmark():
-    """选中按钮文字加 ✓ 前缀，不禁用、无 tooltip."""
+def test_selected_card_selected_item_has_checkmark():
+    """选中项 markdown 有 ✓ 前缀."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选"},
     ]
     card = _build_selected_card(suggestions, 0, "ou_test")
 
-    action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
-    # 选中按钮有 ✓ 前缀
-    assert action_elem["actions"][0]["text"]["content"].startswith("✓ ")
-    # 选中按钮不禁用，无 tooltip
-    assert "disabled" not in action_elem["actions"][0]
-    assert "disabled_tips" not in action_elem["actions"][0]
-    # 未选中按钮无 ✓ 前缀
-    assert not action_elem["actions"][1]["text"]["content"].startswith("✓ ")
+    md = card["elements"][0]["content"]
+    lines = md.split("\n")
+    # 选中行有 ✓，未选中行有 ~~
+    assert "✓" in lines[0]
+    assert "选这个" in lines[0]
+    assert "~~" in lines[1]
+    assert "不选" in lines[1]
 
 
 def test_selected_card_has_open_ids():

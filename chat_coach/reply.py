@@ -160,17 +160,29 @@ def _build_suggestions_card(suggestions: list[dict]) -> dict:
 def _build_selected_card(
     suggestions: list[dict], selected_index: int, open_id: str
 ) -> dict:
-    """构建选中后的更新卡片（保持原样式，仅禁用按钮）."""
+    """构建选中后的更新卡片（保持布局，禁用按钮，文字标记选中/未选中）."""
     card = _build_suggestions_card(suggestions)
 
-    # 禁用未选中按钮，选中按钮加 ✓ 标记但不置灰
+    # 全部按钮禁用
     for elem in card["elements"]:
         if elem["tag"] == "action":
-            for i, btn in enumerate(elem["actions"]):
-                if i == selected_index:
-                    btn["text"]["content"] = "✓ " + btn["text"]["content"]
-                else:
-                    btn["disabled"] = True
+            for btn in elem["actions"]:
+                btn["disabled"] = True
+
+    # 更新 markdown：选中加 ✓ 前缀，未选中加删除线
+    lines = []
+    for i, s in enumerate(suggestions):
+        style_tag = f"[{s['style']}] " if s["style"] else ""
+        if i == selected_index:
+            lines.append(f"**{i+1}.** ✓ {style_tag}{s['text']}")
+        else:
+            lines.append(f"~~**{i+1}.** {style_tag}{s['text']}~~")
+
+    # 替换第一个 markdown 元素
+    for elem in card["elements"]:
+        if elem["tag"] == "markdown":
+            elem["content"] = "\n".join(lines)
+            break
 
     # Card 1.0 更新必须包含 open_ids
     card["open_ids"] = [open_id]
