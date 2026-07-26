@@ -11,6 +11,8 @@ from chat_coach.reply import (
     _send_bot_message,
     _get_cached_suggestions,
     _cache_suggestions,
+    _is_processed,
+    _mark_processed,
     handle_card_action,
 )
 
@@ -299,6 +301,26 @@ def test_handle_card_action_sends_text_and_updates_card():
         # 验证更新卡片包含 open_ids
         updated_card = mock_update.call_args[0][1]
         assert updated_card["open_ids"] == ["ou_test"]
+        # 标记已处理
+        assert _is_processed("om_test") is True
+
+
+def test_handle_card_action_duplicate_skipped():
+    """重复点击相同卡片时直接跳过，不重发消息."""
+    with (
+        patch("chat_coach.reply._send_text_message") as mock_send,
+        patch("chat_coach.reply._update_card_message") as mock_update,
+    ):
+        _cache_suggestions("om_dup", [{"style": "", "text": "hello"}])
+        _mark_processed("om_dup")  # 模拟已处理过
+
+        handle_card_action(
+            "ou_test", "om_dup", "token123",
+            {"i": 0, "t": "hello"},
+        )
+
+        mock_send.assert_not_called()
+        mock_update.assert_not_called()
 
 
 def test_handle_card_action_cache_miss_sends_only():

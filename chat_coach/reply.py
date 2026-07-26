@@ -17,6 +17,26 @@ _card_cache: dict[str, tuple[list[dict], float]] = {}
 _card_cache_lock = Lock()
 _CACHE_TTL = 600  # 10 分钟
 
+# 已处理的消息 ID（防重复点击）
+_processed_message_ids: set[str] = set()
+_processed_lock = Lock()
+_PROCESSED_MAX = 10000
+
+
+def _is_processed(message_id: str) -> bool:
+    """检查卡片是否已被处理过."""
+    with _processed_lock:
+        return message_id in _processed_message_ids
+
+
+def _mark_processed(message_id: str) -> None:
+    """标记卡片已处理."""
+    with _processed_lock:
+        if len(_processed_message_ids) > _PROCESSED_MAX:
+            # 超过上限时清空旧记录，避免内存泄漏
+            _processed_message_ids.clear()
+        _processed_message_ids.add(message_id)
+
 
 def _cache_suggestions(message_id: str, suggestions: list[dict]) -> None:
     """缓存已发送卡片的回复建议列表."""
@@ -245,6 +265,10 @@ def handle_card_action(
     open_id: str, message_id: str, token: str, action_value: dict
 ) -> None:
     """处理卡片按钮点击：发送选中回复 + 更新卡片."""
+    if _is_processed(message_id):
+        print(f"[reply] 卡片已处理过，跳过: message_id={message_id}", flush=True)
+        return
+
     selected_index = action_value.get("i", 0)
     selected_text = action_value.get("t", "")
 
@@ -261,8 +285,8 @@ def handle_card_action(
     if suggestions is not None:
         updated_card = _build_selected_card(suggestions, selected_index, open_id)
         _update_card_message(token, updated_card)
-    else:
-        print(f"[reply] 缓存未命中 message_id={message_id}，跳过卡片更新", flush=True)
+
+    _mark_processed(message_id)
 
 
 def build_messages(history: list[dict], new_message: str) -> list[dict]:
