@@ -165,7 +165,7 @@ def test_selected_card_keeps_same_structure():
 
 
 def test_selected_card_disables_all_buttons():
-    """选中后所有按钮被禁用."""
+    """未选中按钮被禁用，选中按钮不禁用."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选"},
@@ -173,12 +173,14 @@ def test_selected_card_disables_all_buttons():
     card = _build_selected_card(suggestions, 0, "ou_test")
 
     action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
-    for btn in action_elem["actions"]:
-        assert btn.get("disabled") is True
+    # 未选中按钮 disabled
+    assert action_elem["actions"][1].get("disabled") is True
+    # 选中按钮不禁用
+    assert "disabled" not in action_elem["actions"][0]
 
 
-def test_selected_card_selected_button_has_tooltip():
-    """选中的按钮显示 disabled_tips 和 ✓ 前缀."""
+def test_selected_card_selected_button_has_checkmark():
+    """选中按钮文字加 ✓ 前缀，不禁用、无 tooltip."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选"},
@@ -186,14 +188,12 @@ def test_selected_card_selected_button_has_tooltip():
     card = _build_selected_card(suggestions, 0, "ou_test")
 
     action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
-    # 选中的按钮（index 0）有 tooltip 和 ✓ 前缀
-    assert action_elem["actions"][0]["disabled_tips"] == {
-        "tag": "plain_text",
-        "content": "已发送",
-    }
+    # 选中按钮有 ✓ 前缀
     assert action_elem["actions"][0]["text"]["content"].startswith("✓ ")
-    # 未选中的按钮无 tooltip，无 ✓ 前缀
-    assert "disabled_tips" not in action_elem["actions"][1]
+    # 选中按钮不禁用，无 tooltip
+    assert "disabled" not in action_elem["actions"][0]
+    assert "disabled_tips" not in action_elem["actions"][0]
+    # 未选中按钮无 ✓ 前缀
     assert not action_elem["actions"][1]["text"]["content"].startswith("✓ ")
 
 
