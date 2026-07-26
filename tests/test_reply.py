@@ -158,9 +158,8 @@ def test_selected_card_keeps_same_structure():
     assert "action" in tags
     assert "note" in tags
 
-    # markdown：选中加 ✓，未选中加删除线
+    # markdown：选中正常显示，未选中加删除线
     md = card["elements"][0]["content"]
-    assert "✓" in md
     assert "~~" in md
 
 
@@ -177,8 +176,8 @@ def test_selected_card_disables_all_buttons():
         assert btn.get("disabled") is True
 
 
-def test_selected_card_selected_item_has_checkmark():
-    """选中项 markdown 有 ✓ 前缀."""
+def test_selected_card_markdown_marks_unselected():
+    """未选中项有删除线，选中项无额外前缀."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选"},
@@ -187,9 +186,10 @@ def test_selected_card_selected_item_has_checkmark():
 
     md = card["elements"][0]["content"]
     lines = md.split("\n")
-    # 选中行有 ✓，未选中行有 ~~
-    assert "✓" in lines[0]
+    # 选中行无删除线，无 ✓
+    assert "~~" not in lines[0]
     assert "选这个" in lines[0]
+    # 未选中行有删除线
     assert "~~" in lines[1]
     assert "不选" in lines[1]
 

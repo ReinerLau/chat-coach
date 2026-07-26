@@ -169,12 +169,12 @@ def _build_selected_card(
             for btn in elem["actions"]:
                 btn["disabled"] = True
 
-    # 更新 markdown：选中加 ✓ 前缀，未选中加删除线
+    # 更新 markdown：未选中加删除线
     lines = []
     for i, s in enumerate(suggestions):
         style_tag = f"[{s['style']}] " if s["style"] else ""
         if i == selected_index:
-            lines.append(f"**{i+1}.** ✓ {style_tag}{s['text']}")
+            lines.append(f"**{i+1}.** {style_tag}{s['text']}")
         else:
             lines.append(f"~~**{i+1}.** {style_tag}{s['text']}~~")
 
