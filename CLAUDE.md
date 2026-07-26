@@ -39,7 +39,7 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
    2. 在飞书 1v1 私聊中给 Bot 发消息，模拟真实对话场景
    3. 确认 Bot 回复符合预期，无报错
    4. 验证通过后进入第 8 步合并 PR
-   5. 若验证不通过（回复不符合预期、报错等），用户将问题反馈给 AI，AI 回到步骤 3 修复问题，重新走 3→4→5→6→7 流程
+   5. 若验证不通过（回复不符合预期、报错等），用户将问题反馈给 AI，AI 回到步骤 3 修复问题，重新走 3→4→5→6→7 流程。修复迭代开始前，AI 必须用 `TaskCreate` 重新创建步骤 3-7 的任务列表（不包含步骤 1-2 和 8-9），确保每一步都被显式追踪
 
 8. **合并 PR**：用户自测通过且 review 确认无误后，在 GitHub 上点击 "Squash and merge"，将 PR 合并到 `master`。
    - 合并后 GitHub Actions 自动：删远端分支 → 根据 PR label 计算版本号 → 打 tag → 推远端
