@@ -143,12 +143,13 @@ def _build_selected_card(
     """构建选中后的更新卡片（保持原样式，仅禁用按钮）."""
     card = _build_suggestions_card(suggestions)
 
-    # 禁用全部按钮，选中按钮显示 tooltip
+    # 禁用全部按钮，选中按钮加 ✓ 标记和 tooltip
     for elem in card["elements"]:
         if elem["tag"] == "action":
             for i, btn in enumerate(elem["actions"]):
                 btn["disabled"] = True
                 if i == selected_index:
+                    btn["text"]["content"] = "✓ " + btn["text"]["content"]
                     btn["disabled_tips"] = {
                         "tag": "plain_text",
                         "content": "已发送",
