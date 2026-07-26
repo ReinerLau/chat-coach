@@ -140,32 +140,23 @@ def _build_suggestions_card(suggestions: list[dict]) -> dict:
 def _build_selected_card(
     suggestions: list[dict], selected_index: int, open_id: str
 ) -> dict:
-    """构建选中后的更新卡片（去除按钮，显示选择结果）."""
-    lines = []
-    for i, s in enumerate(suggestions):
-        style_tag = f"[{s['style']}] " if s["style"] else ""
-        if i == selected_index:
-            lines.append(f"✅ **{style_tag}{s['text']}** （已发送）")
-        else:
-            lines.append(f"~~{style_tag}{s['text']}~~")
+    """构建选中后的更新卡片（保持原样式，仅禁用按钮）."""
+    card = _build_suggestions_card(suggestions)
+
+    # 禁用全部按钮，选中按钮显示 tooltip
+    for elem in card["elements"]:
+        if elem["tag"] == "action":
+            for i, btn in enumerate(elem["actions"]):
+                btn["disabled"] = True
+                if i == selected_index:
+                    btn["disabled_tips"] = {
+                        "tag": "plain_text",
+                        "content": "已发送",
+                    }
 
     # Card 1.0 更新必须包含 open_ids
-    return {
-        "open_ids": [open_id],
-        "config": {"wide_screen_mode": True},
-        "header": {
-            "title": {"tag": "plain_text", "content": "已发送"},
-            "template": "blue",
-        },
-        "elements": [
-            {"tag": "markdown", "content": "\n".join(lines)},
-            {"tag": "hr"},
-            {
-                "tag": "note",
-                "elements": [{"tag": "plain_text", "content": "Chat Coach"}],
-            },
-        ],
-    }
+    card["open_ids"] = [open_id]
+    return card
 
 
 def _send_bot_message(open_id: str, text: str) -> str | None:

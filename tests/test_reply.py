@@ -138,16 +138,61 @@ def test_suggestions_card_has_note():
 # ── _build_selected_card ───────────────────────────────────────
 
 
-def test_selected_card_shows_checkmark():
+def test_selected_card_keeps_same_structure():
+    """选中后的卡片结构和原卡片一致（标题、文本、布局不变）."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选这个"},
     ]
     card = _build_selected_card(suggestions, 0, "ou_test")
+
+    # 标题不变
+    assert card["header"]["title"]["content"] == "回复建议"
+    assert card["header"]["template"] == "blue"
+
+    # 保留 markdown + action + note 结构
+    tags = [e["tag"] for e in card["elements"]]
+    assert "markdown" in tags
+    assert "action" in tags
+    assert "note" in tags
+
+    # markdown 内容不变（无删除线、无 ✅）
     md = card["elements"][0]["content"]
-    assert "✅" in md
-    assert "已发送" in md
-    assert "~~" in md  # 未选中的有删除线
+    assert "✅" not in md
+    assert "~~" not in md
+    assert "选这个" in md
+    assert "不选这个" in md
+
+
+def test_selected_card_disables_all_buttons():
+    """选中后所有按钮被禁用."""
+    suggestions = [
+        {"style": "随意", "text": "选这个"},
+        {"style": "正式", "text": "不选"},
+    ]
+    card = _build_selected_card(suggestions, 0, "ou_test")
+
+    action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
+    for btn in action_elem["actions"]:
+        assert btn.get("disabled") is True
+
+
+def test_selected_card_selected_button_has_tooltip():
+    """选中的按钮显示 disabled_tips."""
+    suggestions = [
+        {"style": "随意", "text": "选这个"},
+        {"style": "正式", "text": "不选"},
+    ]
+    card = _build_selected_card(suggestions, 0, "ou_test")
+
+    action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
+    # 选中的按钮（index 0）有 tooltip
+    assert action_elem["actions"][0]["disabled_tips"] == {
+        "tag": "plain_text",
+        "content": "已发送",
+    }
+    # 未选中的按钮无 tooltip
+    assert "disabled_tips" not in action_elem["actions"][1]
 
 
 def test_selected_card_has_open_ids():
@@ -156,10 +201,11 @@ def test_selected_card_has_open_ids():
     assert card["open_ids"] == ["ou_123"]
 
 
-def test_selected_card_header_changed():
+def test_selected_card_header_unchanged():
+    """选中后标题不变."""
     suggestions = [{"style": "", "text": "test"}]
     card = _build_selected_card(suggestions, 0, "ou_test")
-    assert card["header"]["title"]["content"] == "已发送"
+    assert card["header"]["title"]["content"] == "回复建议"
 
 
 # ── _send_bot_message ─────────────────────────────────────────
