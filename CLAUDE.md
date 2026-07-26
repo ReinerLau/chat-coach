@@ -12,7 +12,7 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
 
 ## 开发流程
 
-**自检规则**：收到开发任务时，AI 必须先用 `TaskCreate` 把 9 个步骤全部创建为任务（当前步骤标 `in_progress`，其余标 `pending`），然后按序执行。每一步完成后立即标记 `completed`，再开始下一步。如果一个步骤被跳过，它会留在任务列表里——这就是自检信号。步骤 6（提交 PR）和步骤 9（回归主线）由 AI 自动执行，不询问用户。
+**自检规则**：收到开发任务时，AI 必须先用 `TaskCreate` 把 10 个步骤全部创建为任务（当前步骤标 `in_progress`，其余标 `pending`），然后按序执行。每一步完成后立即标记 `completed`，再开始下一步。如果一个步骤被跳过，它会留在任务列表里——这就是自检信号。步骤 6（提交 PR）和步骤 10（回归主线）由 AI 自动执行，不询问用户。
 
 1. **分支开发**：新需求或 Bug 修复必须从 `master` 新建分支，禁止直接在 `master` 上提交。`master` 是保护分支，保证当前版本稳定运行。
    - 每个分支只做一件事：一个需求或一个 Bug 修复，不要把不相干的改动堆在同一个分支里。
@@ -31,21 +31,26 @@ You are a chat reply coach. Your job: help the user reply to messages naturally.
 
 5. **文档整理**：测试通过后，运行 `/neat-freak` 整理项目文档和规则文件，清理残留，确保 CLAUDE.md 和代码实际行为一致。
 
-6. **提交 PR 并等 CI**：推送分支到远端，创建 PR 到 `master`。CI 自动跑 `pytest tests/ -v`。
-   - **AI 行为**：PR 创建后，AI 用 `gh run watch` 阻塞等待 CI（单次 Bash 调用，不浪费 token 反复轮询）。CI 挂了则用 `gh run view --log` 拉失败详情，自动修复后推送再 `gh run watch`，最多修复 3 次。CI 通过后主动提醒用户进入第 7 步用户自测。
+6. **提交 PR**：推送分支到远端，创建 PR 到 `master`。GitHub Actions 自动触发 `pytest tests/ -v`。
+   - **AI 行为**：PR 创建后不等 CI，直接提醒用户进入第 7 步用户自测。CI 在后台跑，结果稍后在第 8 步处理。
 
-7. **用户自测**：CI 通过后，用户在本地启动 Bot 做实机验证：
+7. **用户自测**：PR 创建后不等 CI，用户立即在本地启动 Bot 做实机验证：
    1. `python -m chat_coach.bot` 启动服务
    2. 在飞书 1v1 私聊中给 Bot 发消息，模拟真实对话场景
    3. 确认 Bot 回复符合预期，无报错
-   4. 验证通过后进入第 8 步合并 PR
-   5. 若验证不通过（回复不符合预期、报错等），用户将问题反馈给 AI，AI 回到步骤 3 修复问题，重新走 3→4→5→6→7 流程。修复迭代开始前，AI 必须用 `TaskCreate` 重新创建步骤 3-7 的任务列表（不包含步骤 1-2 和 8-9），确保每一步都被显式追踪
+   4. 验证通过后进入第 8 步等 CI
+   5. 若验证不通过（回复不符合预期、报错等），用户将问题反馈给 AI，AI 回到步骤 3 修复问题，重新走 3→4→5→6→7 流程。修复迭代开始前，AI 必须用 `TaskCreate` 重新创建步骤 3-7 的任务列表（不包含步骤 1-2 和 8-10），确保每一步都被显式追踪
 
-8. **合并 PR**：用户自测通过且 review 确认无误后，在 GitHub 上点击 "Squash and merge"，将 PR 合并到 `master`。
+8. **等 CI**：用户自测通过后，AI 处理 CI 结果：
+   - 用户自测通过时 CI 可能还在跑或已经结束，AI 用 `gh run watch` 阻塞等待最新 CI 完成（单次调用，不反复轮询）。
+   - CI 通过：进入第 9 步合并 PR。
+   - CI 失败：AI 用 `gh run view --log` 拉失败详情，自动修复后推送再 `gh run watch`，最多修复 3 次。CI 修复只涉及机械问题（lint、import、测试断言），不改业务行为，无需用户二次自测。CI 通过后进入第 9 步。
+
+9. **合并 PR**：用户自测和 CI 均通过后，AI 提醒用户在 GitHub 上点击 "Squash and merge"，将 PR 合并到 `master`。
    - 合并后 GitHub Actions 自动：删远端分支 → 根据 PR label 计算版本号 → 打 tag → 推远端
    - PR 需打上 `major`、`minor` 或 `patch` label 来指定版本升级类型（默认 `patch`）
 
-9. **回归主线**：PR 合并后，用户通知 AI，AI 自动执行：
+10. **回归主线**：PR 合并后，用户通知 AI，AI 自动执行：
    - `cd <项目主目录>` 回到主 worktree
    - `git pull` 拉最新 master（含刚合并的 PR 和 auto-tag）
    - `git fetch --prune` 清理远端已删除的分支引用
