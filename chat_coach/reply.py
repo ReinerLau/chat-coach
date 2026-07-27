@@ -344,7 +344,7 @@ def build_messages(history: list[dict], new_message: str) -> list[dict]:
                 "role": "user",
                 "content": (
                     f"聊天历史：\n\n{history_text}\n\n"
-                    f"对方最新消息：{new_message}\n\n请生成 1-3 条回复建议。如果对方情绪低落或消息难以回复，只提供 1 条克制、共情的建议即可。"
+                    f"对方最新消息：{new_message}\n\n请生成 4 条回复建议，分别对应随意、亲近、日常、克制四种语气。其中 1-2 条标为推荐。"
                 ),
             }
         )
@@ -352,7 +352,7 @@ def build_messages(history: list[dict], new_message: str) -> list[dict]:
         messages.append(
             {
                 "role": "user",
-                "content": f"对方消息：{new_message}\n\n请生成 1-3 条回复建议。如果对方情绪低落或消息难以回复，只提供 1 条克制、共情的建议即可。",
+                "content": f"对方消息：{new_message}\n\n请生成 4 条回复建议，分别对应随意、亲近、日常、克制四种语气。其中 1-2 条标为推荐。",
             }
         )
 
