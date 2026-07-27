@@ -139,15 +139,24 @@ def _parse_suggestions(raw: str) -> list[dict]:
 
 def _build_suggestions_card(suggestions: list[dict]) -> dict:
     """构建带按钮的回复建议卡片."""
+    # 第一个推荐项用 primary（蓝色），其余用 default
+    has_recommended = any(s.get("recommended") for s in suggestions)
     buttons = []
+    first_primary_used = False
     for i, s in enumerate(suggestions):
         text = s["text"]
         display = text if len(text) <= 60 else text[:57] + "..."
+        if has_recommended:
+            is_primary = s.get("recommended") and not first_primary_used
+            if is_primary:
+                first_primary_used = True
+        else:
+            is_primary = i == 0
         buttons.append(
             {
                 "tag": "button",
                 "text": {"tag": "plain_text", "content": display},
-                "type": "primary" if i == 0 else "default",
+                "type": "primary" if is_primary else "default",
                 "value": {"i": i, "t": text},
             }
         )
@@ -155,11 +164,7 @@ def _build_suggestions_card(suggestions: list[dict]) -> dict:
     lines = []
     for i, s in enumerate(suggestions):
         style_tag = f"[{s['style']}] " if s["style"] else ""
-        recommended_tag = (
-            " <font color='#2b7bd6'>**推荐**</font> "
-            if s.get("recommended")
-            else ""
-        )
+        recommended_tag = " ⭐**推荐** " if s.get("recommended") else ""
         lines.append(f"**{i+1}.** {style_tag}{s['text']}{recommended_tag}")
         if s.get("reasoning"):
             lines.append(f"    *{s['reasoning']}*")
@@ -199,11 +204,7 @@ def _build_selected_card(
     lines = []
     for i, s in enumerate(suggestions):
         style_tag = f"[{s['style']}] " if s["style"] else ""
-        recommended_tag = (
-            " <font color='#2b7bd6'>**推荐**</font> "
-            if s.get("recommended")
-            else ""
-        )
+        recommended_tag = " ⭐**推荐** " if s.get("recommended") else ""
         if i == selected_index:
             lines.append(f"**{i+1}.** {style_tag}{s['text']}{recommended_tag}")
         else:

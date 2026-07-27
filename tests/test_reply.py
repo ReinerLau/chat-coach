@@ -150,6 +150,7 @@ def test_suggestions_card_has_buttons():
 
 
 def test_suggestions_card_first_button_is_primary():
+    """没有推荐标记时，第一个按钮仍是 primary."""
     suggestions = [
         {"style": "随意", "text": "a"},
         {"style": "正式", "text": "b"},
@@ -203,10 +204,24 @@ def test_suggestions_card_recommended_badge():
     ]
     card = _build_suggestions_card(suggestions)
     md = card["elements"][0]["content"]
-    assert "<font color='#2b7bd6'>**推荐**</font>" in md
+    assert "⭐**推荐**" in md
     # 推荐标记只出现在推荐项上
     assert "好嘞" in md and "好的" in md
-    assert "推荐" in md
+
+
+def test_suggestions_card_recommended_button_is_primary():
+    """有推荐项时，第一个推荐项的按钮为 primary，非推荐项为 default."""
+    suggestions = [
+        {"style": "克制", "text": "收到", "recommended": False},
+        {"style": "日常", "text": "好的", "recommended": True},
+        {"style": "亲近", "text": "好嘞", "recommended": False},
+    ]
+    card = _build_suggestions_card(suggestions)
+    action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
+    # 第一个推荐项(index 1)是 primary
+    assert action_elem["actions"][0]["type"] == "default"
+    assert action_elem["actions"][1]["type"] == "primary"
+    assert action_elem["actions"][2]["type"] == "default"
 
 
 # ── _build_selected_card ───────────────────────────────────────
