@@ -13,6 +13,7 @@ from chat_coach.reply import (
     _cache_suggestions,
     _is_processed,
     _mark_processed,
+    _handle_retry,
     handle_card_action,
 )
 
@@ -130,19 +131,46 @@ def test_suggestions_card_structure():
     assert card["header"]["template"] == "blue"
 
 
+def _find_md(card: dict) -> str:
+    """在卡片元素中查找第一个 markdown 内容."""
+    for e in card["elements"]:
+        if e["tag"] == "markdown":
+            return e["content"]
+    return ""
+
+
+def _find_action_buttons(card: dict) -> list[dict]:
+    """查找卡片中所有按钮（排除重试按钮）."""
+    buttons = []
+    for e in card["elements"]:
+        if e["tag"] == "action":
+            for btn in e.get("actions", []):
+                if btn.get("value", {}).get("action") != "retry":
+                    buttons.append(btn)
+    return buttons
+
+
+def test_suggestions_card_has_retry_button():
+    """卡片顶部应有重试按钮."""
+    suggestions = [{"style": "随意", "text": "行啊"}]
+    card = _build_suggestions_card(suggestions)
+
+    # 第一个元素是 retry action
+    retry_action = card["elements"][0]
+    assert retry_action["tag"] == "action"
+    assert len(retry_action["actions"]) == 1
+    retry_btn = retry_action["actions"][0]
+    assert retry_btn["text"]["content"] == "🔄 重试"
+    assert retry_btn["value"] == {"action": "retry"}
+
+
 def test_suggestions_card_has_buttons():
     suggestions = [{"style": "随意", "text": "行啊"}]
     card = _build_suggestions_card(suggestions)
 
-    # 找到 action 元素
-    action_elem = None
-    for e in card["elements"]:
-        if e["tag"] == "action":
-            action_elem = e
-            break
-    assert action_elem is not None
-    assert len(action_elem["actions"]) == 1
-    btn = action_elem["actions"][0]
+    buttons = _find_action_buttons(card)
+    assert len(buttons) == 1
+    btn = buttons[0]
     assert btn["tag"] == "button"
     assert btn["text"]["tag"] == "plain_text"
     assert btn["text"]["content"] == "行啊"
@@ -156,8 +184,7 @@ def test_suggestions_card_all_buttons_default():
         {"style": "日常", "text": "好的", "recommended": True},
     ]
     card = _build_suggestions_card(suggestions)
-    action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
-    for btn in action_elem["actions"]:
+    for btn in _find_action_buttons(card):
         assert btn["type"] == "default"
 
 
@@ -166,8 +193,7 @@ def test_suggestions_card_truncates_long_text():
     assert len(long_text) > 60  # 确保触发截断
     suggestions = [{"style": "", "text": long_text}]
     card = _build_suggestions_card(suggestions)
-    action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
-    display = action_elem["actions"][0]["text"]["content"]
+    display = _find_action_buttons(card)[0]["text"]["content"]
     assert len(display) <= 60
     assert display.endswith("...")
 
@@ -184,14 +210,14 @@ def test_suggestions_card_shows_reasoning():
         {"style": "随意", "text": "行啊", "reasoning": "直接答应推进话题"},
     ]
     card = _build_suggestions_card(suggestions)
-    md = card["elements"][0]["content"]
+    md = _find_md(card)
     assert "*直接答应推进话题*" in md
 
 
 def test_suggestions_card_no_reasoning_when_empty():
     suggestions = [{"style": "", "text": "test", "reasoning": ""}]
     card = _build_suggestions_card(suggestions)
-    md = card["elements"][0]["content"]
+    md = _find_md(card)
     # 空 reasoning 不产生额外行
     lines = md.split("\n")
     assert len(lines) == 1  # 只有回复行，无思路行
@@ -203,7 +229,7 @@ def test_suggestions_card_recommended_badge():
         {"style": "亲近", "text": "好嘞", "reasoning": "随意回应", "recommended": True},
     ]
     card = _build_suggestions_card(suggestions)
-    md = card["elements"][0]["content"]
+    md = _find_md(card)
     assert "⭐**推荐**" in md
     # 推荐标记只出现在推荐项上
     assert "好嘞" in md and "好的" in md
@@ -237,15 +263,21 @@ def test_selected_card_keeps_same_structure():
 
 
 def test_selected_card_disables_all_buttons():
-    """选中后全部按钮被禁用."""
+    """选中后全部按钮被禁用，且无重试按钮."""
     suggestions = [
         {"style": "随意", "text": "选这个"},
         {"style": "正式", "text": "不选"},
     ]
     card = _build_selected_card(suggestions, 0, "ou_test")
 
-    action_elem = [e for e in card["elements"] if e["tag"] == "action"][0]
-    for btn in action_elem["actions"]:
+    # 不应包含重试按钮
+    for e in card["elements"]:
+        if e["tag"] == "action":
+            for btn in e.get("actions", []):
+                assert btn.get("value", {}).get("action") != "retry"
+
+    # 所有按钮禁用
+    for btn in _find_action_buttons(card):
         assert btn.get("disabled") is True
 
 
@@ -257,7 +289,7 @@ def test_selected_card_markdown_marks_unselected():
     ]
     card = _build_selected_card(suggestions, 0, "ou_test")
 
-    md = card["elements"][0]["content"]
+    md = _find_md(card)
     lines = md.split("\n")
     # 选中行无删除线，无 ✓
     assert "~~" not in lines[0]
@@ -280,7 +312,7 @@ def test_selected_card_reasoning_strikethrough():
         {"style": "正式", "text": "不选", "reasoning": "礼貌回避"},
     ]
     card = _build_selected_card(suggestions, 0, "ou_test")
-    md = card["elements"][0]["content"]
+    md = _find_md(card)
     # 选中项的 reasoning 无删除线
     assert "*直接答应*" in md
     # 未选中项的 reasoning 有删除线
@@ -304,7 +336,11 @@ def test_send_bot_message_uses_interactive_msg_type():
         mock_response.data.message_id = "om_test123"
         mock_client.return_value.im.v1.message.create.return_value = mock_response
 
-        msg_id = _send_bot_message("ou_test", '[{"style":"","text":"hello"}]')
+        msg_id = _send_bot_message(
+            "ou_test",
+            '{"suggestions":[{"style":"","text":"hello"}]}',
+            "对方发来的消息",
+        )
 
         call_args = mock_client.return_value.im.v1.message.create.call_args
         request = call_args[0][0]
@@ -325,11 +361,14 @@ def test_send_bot_message_caches_suggestions():
         _send_bot_message(
             "ou_test",
             '{"suggestions":[{"style":"随意","text":"周末可以啊"}]}',
+            "原始消息",
         )
 
         cached = _get_cached_suggestions("om_cache_test")
         assert cached is not None
-        assert cached[0]["text"] == "周末可以啊"
+        suggestions, user_text = cached
+        assert suggestions[0]["text"] == "周末可以啊"
+        assert user_text == "原始消息"
 
 
 def test_send_bot_message_handles_failure():
@@ -371,7 +410,7 @@ def test_handle_card_action_sends_text_and_updates_card():
             {"style": "随意", "text": "选这个"},
             {"style": "正式", "text": "不选"},
         ]
-        _cache_suggestions("om_test", suggestions)
+        _cache_suggestions("om_test", suggestions, "原始消息")
 
         handle_card_action(
             "ou_test", "om_test", "token123",
@@ -393,7 +432,7 @@ def test_handle_card_action_duplicate_skipped():
         patch("chat_coach.reply._send_text_message") as mock_send,
         patch("chat_coach.reply._update_card_message") as mock_update,
     ):
-        _cache_suggestions("om_dup", [{"style": "", "text": "hello"}])
+        _cache_suggestions("om_dup", [{"style": "", "text": "hello"}], "原消息")
         _mark_processed("om_dup")  # 模拟已处理过
 
         handle_card_action(
@@ -441,12 +480,101 @@ def test_cache_expiry():
     from chat_coach import reply as reply_mod
 
     suggestions = [{"style": "", "text": "test"}]
-    _cache_suggestions("om_expire", suggestions)
+    _cache_suggestions("om_expire", suggestions, "原消息")
 
     # 模拟过期：把缓存时间戳改到 TTL 之前
     expired_ts = time.monotonic() - reply_mod._CACHE_TTL - 60
     with reply_mod._card_cache_lock:
-        reply_mod._card_cache["om_expire"] = (suggestions, expired_ts)
+        reply_mod._card_cache["om_expire"] = (suggestions, "原消息", expired_ts)
 
     cached = _get_cached_suggestions("om_expire")
     assert cached is None
+
+
+# ── 重试按钮 ───────────────────────────────────────────────────
+
+
+def test_handle_card_action_retry_dispatches():
+    """action_value 含 action=retry 时走 _handle_retry 分支."""
+    with (
+        patch("chat_coach.reply._handle_retry") as mock_retry,
+        patch("chat_coach.reply._send_text_message") as mock_send,
+    ):
+        _cache_suggestions("om_retry", [{"style": "", "text": "test"}], "原消息")
+        handle_card_action(
+            "ou_test", "om_retry", "token_retry",
+            {"action": "retry"},
+        )
+        mock_retry.assert_called_once_with("ou_test", "om_retry", "token_retry")
+        mock_send.assert_not_called()
+
+
+def test_handle_retry_regenerates_and_updates_card():
+    """重试时调 LLM 重新生成并更新卡片."""
+    import chat_coach.reply as reply_mod
+
+    with (
+        patch.object(reply_mod, "_update_card_message") as mock_update,
+        patch.object(reply_mod, "get_history") as mock_history,
+        patch.object(reply_mod, "generate_reply") as mock_generate,
+    ):
+        mock_update.return_value = True
+        mock_history.return_value = []
+        mock_generate.return_value = (
+            '{"suggestions":[{"style":"随意","text":"新回复"}]}'
+        )
+        _cache_suggestions(
+            "om_retry2",
+            [{"style": "日常", "text": "旧回复"}],
+            "对方说你好",
+        )
+
+        _handle_retry("ou_test", "om_retry2", "token_xyz")
+
+        mock_generate.assert_called_once()
+        mock_update.assert_called_once()
+        # 验证更新的卡片内容包含新回复
+        updated_card = mock_update.call_args[0][1]
+        md = _find_md(updated_card)
+        assert "新回复" in md
+        # 新建议应重新缓存
+        cached = _get_cached_suggestions("om_retry2")
+        assert cached is not None
+        suggestions, user_text = cached
+        assert suggestions[0]["text"] == "新回复"
+        assert user_text == "对方说你好"
+
+
+def test_handle_retry_cache_expired():
+    """缓存过期时重试静默失败."""
+    with (
+        patch("chat_coach.reply._update_card_message") as mock_update,
+        patch("builtins.print") as mock_print,
+    ):
+        _handle_retry("ou_test", "om_nonexistent", "token_x")
+        mock_update.assert_not_called()
+        mock_print.assert_any_call(
+            "[reply] 重试失败：缓存已过期", flush=True
+        )
+
+
+def test_handle_retry_llm_returns_invalid():
+    """LLM 返回无效内容时跳过卡片更新."""
+    import chat_coach.reply as reply_mod
+
+    with (
+        patch.object(reply_mod, "_update_card_message") as mock_update,
+        patch.object(reply_mod, "get_history") as mock_history,
+        patch.object(reply_mod, "generate_reply") as mock_generate,
+        patch("builtins.print") as mock_print,
+    ):
+        mock_history.return_value = []
+        mock_generate.return_value = ""
+        _cache_suggestions("om_retry3", [{"style": "", "text": "旧"}], "原消息")
+
+        _handle_retry("ou_test", "om_retry3", "token_x")
+
+        mock_update.assert_not_called()
+        mock_print.assert_any_call(
+            "[reply] 重试失败：LLM 未返回有效回复", flush=True
+        )
