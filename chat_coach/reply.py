@@ -347,16 +347,8 @@ def _handle_retry(open_id: str, message_id: str, token: str) -> None:
 
     history = get_history()
     reply = generate_reply(history, user_text)
-    suggestions = _parse_suggestions(reply)
-    if not suggestions:
-        print("[reply] 重试失败：LLM 未返回有效回复", flush=True)
-        return
-
-    new_card = _build_suggestions_card(suggestions)
-    new_card["open_ids"] = [open_id]
-    if _update_card_message(token, new_card):
-        _cache_suggestions(message_id, suggestions, user_text)
-        print("[reply] 重试完成，卡片已更新", flush=True)
+    _send_bot_message(open_id, reply, user_text)
+    print("[reply] 重试完成，已发送新卡片", flush=True)
 
 
 def handle_card_action(

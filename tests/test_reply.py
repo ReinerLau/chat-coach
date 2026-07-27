@@ -509,16 +509,15 @@ def test_handle_card_action_retry_dispatches():
         mock_send.assert_not_called()
 
 
-def test_handle_retry_regenerates_and_updates_card():
-    """重试时调 LLM 重新生成并更新卡片."""
+def test_handle_retry_regenerates_and_sends_new_card():
+    """重试时调 LLM 重新生成并发送新卡片消息."""
     import chat_coach.reply as reply_mod
 
     with (
-        patch.object(reply_mod, "_update_card_message") as mock_update,
+        patch.object(reply_mod, "_send_bot_message") as mock_send,
         patch.object(reply_mod, "get_history") as mock_history,
         patch.object(reply_mod, "generate_reply") as mock_generate,
     ):
-        mock_update.return_value = True
         mock_history.return_value = []
         mock_generate.return_value = (
             '{"suggestions":[{"style":"随意","text":"新回复"}]}'
@@ -532,18 +531,11 @@ def test_handle_retry_regenerates_and_updates_card():
         _handle_retry("ou_test", "om_retry2", "token_xyz")
 
         mock_generate.assert_called_once()
-        mock_update.assert_called_once()
-        # 验证更新的卡片内容包含新回复和 open_ids
-        updated_card = mock_update.call_args[0][1]
-        assert updated_card["open_ids"] == ["ou_test"]
-        md = _find_md(updated_card)
-        assert "新回复" in md
-        # 新建议应重新缓存
-        cached = _get_cached_suggestions("om_retry2")
-        assert cached is not None
-        suggestions, user_text = cached
-        assert suggestions[0]["text"] == "新回复"
-        assert user_text == "对方说你好"
+        mock_send.assert_called_once_with(
+            "ou_test",
+            '{"suggestions":[{"style":"随意","text":"新回复"}]}',
+            "对方说你好",
+        )
 
 
 def test_handle_retry_cache_expired():
@@ -560,14 +552,13 @@ def test_handle_retry_cache_expired():
 
 
 def test_handle_retry_llm_returns_invalid():
-    """LLM 返回无效内容时跳过卡片更新."""
+    """LLM 返回无效内容时 _send_bot_message 内部处理（不发消息）."""
     import chat_coach.reply as reply_mod
 
     with (
-        patch.object(reply_mod, "_update_card_message") as mock_update,
+        patch.object(reply_mod, "_send_bot_message") as mock_send,
         patch.object(reply_mod, "get_history") as mock_history,
         patch.object(reply_mod, "generate_reply") as mock_generate,
-        patch("builtins.print") as mock_print,
     ):
         mock_history.return_value = []
         mock_generate.return_value = ""
@@ -575,7 +566,5 @@ def test_handle_retry_llm_returns_invalid():
 
         _handle_retry("ou_test", "om_retry3", "token_x")
 
-        mock_update.assert_not_called()
-        mock_print.assert_any_call(
-            "[reply] 重试失败：LLM 未返回有效回复", flush=True
-        )
+        # _send_bot_message 仍被调用，内部发现无效返回时打印日志并返回 None
+        mock_send.assert_called_once_with("ou_test", "", "原消息")
