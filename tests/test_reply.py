@@ -24,8 +24,43 @@ def test_parse_json_format():
     raw = '{"suggestions":[{"style":"随意","text":"行啊"},{"style":"正式","text":"好的"}]}'
     result = _parse_suggestions(raw)
     assert len(result) == 2
-    assert result[0] == {"style": "随意", "text": "行啊"}
-    assert result[1] == {"style": "正式", "text": "好的"}
+    assert result[0] == {
+        "style": "随意", "text": "行啊", "reasoning": "", "recommended": False,
+    }
+    assert result[1] == {
+        "style": "正式", "text": "好的", "reasoning": "", "recommended": False,
+    }
+
+
+def test_parse_json_with_reasoning():
+    raw = (
+        '{"suggestions":['
+        '{"style":"随意","text":"行啊","reasoning":"直接答应推进话题"},'
+        '{"style":"正式","text":"好的","reasoning":"礼貌回应给对方空间"}'
+        ']}'
+    )
+    result = _parse_suggestions(raw)
+    assert len(result) == 2
+    assert result[0] == {
+        "style": "随意", "text": "行啊",
+        "reasoning": "直接答应推进话题", "recommended": False,
+    }
+    assert result[1] == {
+        "style": "正式", "text": "好的",
+        "reasoning": "礼貌回应给对方空间", "recommended": False,
+    }
+
+
+def test_parse_json_with_recommended():
+    raw = (
+        '{"suggestions":['
+        '{"style":"日常","text":"好的","recommended":true},'
+        '{"style":"克制","text":"收到","recommended":false}'
+        ']}'
+    )
+    result = _parse_suggestions(raw)
+    assert result[0]["recommended"] is True
+    assert result[1]["recommended"] is False
 
 
 def test_parse_json_in_code_block():
@@ -50,8 +85,14 @@ def test_parse_fallback_line_format():
     raw = "[随意] 周末可以啊 去哪吃\n[正式] 周六有空 你定个时间？"
     result = _parse_suggestions(raw)
     assert len(result) == 2
-    assert result[0] == {"style": "随意", "text": "周末可以啊 去哪吃"}
-    assert result[1] == {"style": "正式", "text": "周六有空 你定个时间？"}
+    assert result[0] == {
+        "style": "随意", "text": "周末可以啊 去哪吃",
+        "reasoning": "", "recommended": False,
+    }
+    assert result[1] == {
+        "style": "正式", "text": "周六有空 你定个时间？",
+        "reasoning": "", "recommended": False,
+    }
 
 
 def test_parse_plain_text_fallback():
@@ -137,6 +178,37 @@ def test_suggestions_card_has_note():
     assert "note" in tags
 
 
+def test_suggestions_card_shows_reasoning():
+    suggestions = [
+        {"style": "随意", "text": "行啊", "reasoning": "直接答应推进话题"},
+    ]
+    card = _build_suggestions_card(suggestions)
+    md = card["elements"][0]["content"]
+    assert "*直接答应推进话题*" in md
+
+
+def test_suggestions_card_no_reasoning_when_empty():
+    suggestions = [{"style": "", "text": "test", "reasoning": ""}]
+    card = _build_suggestions_card(suggestions)
+    md = card["elements"][0]["content"]
+    # 空 reasoning 不产生额外行
+    lines = md.split("\n")
+    assert len(lines) == 1  # 只有回复行，无思路行
+
+
+def test_suggestions_card_recommended_badge():
+    suggestions = [
+        {"style": "日常", "text": "好的", "reasoning": "简洁回应", "recommended": False},
+        {"style": "亲近", "text": "好嘞", "reasoning": "随意回应", "recommended": True},
+    ]
+    card = _build_suggestions_card(suggestions)
+    md = card["elements"][0]["content"]
+    assert "<font color='#2b7bd6'>**推荐**</font>" in md
+    # 推荐标记只出现在推荐项上
+    assert "好嘞" in md and "好的" in md
+    assert "推荐" in md
+
+
 # ── _build_selected_card ───────────────────────────────────────
 
 
@@ -198,6 +270,20 @@ def test_selected_card_has_open_ids():
     suggestions = [{"style": "", "text": "test"}]
     card = _build_selected_card(suggestions, 0, "ou_123")
     assert card["open_ids"] == ["ou_123"]
+
+
+def test_selected_card_reasoning_strikethrough():
+    """选中后未选中的 reasoning 也加删除线，选中的不加."""
+    suggestions = [
+        {"style": "随意", "text": "选这个", "reasoning": "直接答应"},
+        {"style": "正式", "text": "不选", "reasoning": "礼貌回避"},
+    ]
+    card = _build_selected_card(suggestions, 0, "ou_test")
+    md = card["elements"][0]["content"]
+    # 选中项的 reasoning 无删除线
+    assert "*直接答应*" in md
+    # 未选中项的 reasoning 有删除线
+    assert "~~*礼貌回避*~~" in md
 
 
 def test_selected_card_header_unchanged():

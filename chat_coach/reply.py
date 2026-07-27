@@ -82,7 +82,12 @@ def _parse_suggestions(raw: str) -> list[dict]:
         data = json.loads(raw)
         if isinstance(data, dict) and "suggestions" in data:
             return [
-                {"style": s.get("style", ""), "text": s["text"]}
+                {
+                    "style": s.get("style", ""),
+                    "text": s["text"],
+                    "reasoning": s.get("reasoning", ""),
+                    "recommended": s.get("recommended", False),
+                }
                 for s in data["suggestions"]
                 if s.get("text")
             ]
@@ -96,7 +101,12 @@ def _parse_suggestions(raw: str) -> list[dict]:
             data = json.loads(m.group(1))
             if isinstance(data, dict) and "suggestions" in data:
                 return [
-                    {"style": s.get("style", ""), "text": s["text"]}
+                    {
+                        "style": s.get("style", ""),
+                        "text": s["text"],
+                        "reasoning": s.get("reasoning", ""),
+                        "recommended": s.get("recommended", False),
+                    }
                     for s in data["suggestions"]
                     if s.get("text")
                 ]
@@ -111,9 +121,18 @@ def _parse_suggestions(raw: str) -> list[dict]:
             continue
         m = re.match(r"\[(.+?)\]\s*(.+)", line)
         if m:
-            suggestions.append({"style": m.group(1), "text": m.group(2).strip()})
+            suggestions.append(
+                {
+                    "style": m.group(1),
+                    "text": m.group(2).strip(),
+                    "reasoning": "",
+                    "recommended": False,
+                }
+            )
         elif line and not line.startswith("{") and not line.startswith("```"):
-            suggestions.append({"style": "", "text": line})
+            suggestions.append(
+                {"style": "", "text": line, "reasoning": "", "recommended": False}
+            )
 
     return suggestions[:10]
 
@@ -136,7 +155,14 @@ def _build_suggestions_card(suggestions: list[dict]) -> dict:
     lines = []
     for i, s in enumerate(suggestions):
         style_tag = f"[{s['style']}] " if s["style"] else ""
-        lines.append(f"**{i+1}.** {style_tag}{s['text']}")
+        recommended_tag = (
+            " <font color='#2b7bd6'>**推荐**</font> "
+            if s.get("recommended")
+            else ""
+        )
+        lines.append(f"**{i+1}.** {style_tag}{s['text']}{recommended_tag}")
+        if s.get("reasoning"):
+            lines.append(f"    *{s['reasoning']}*")
 
     return {
         "config": {"wide_screen_mode": True},
@@ -173,10 +199,20 @@ def _build_selected_card(
     lines = []
     for i, s in enumerate(suggestions):
         style_tag = f"[{s['style']}] " if s["style"] else ""
+        recommended_tag = (
+            " <font color='#2b7bd6'>**推荐**</font> "
+            if s.get("recommended")
+            else ""
+        )
         if i == selected_index:
-            lines.append(f"**{i+1}.** {style_tag}{s['text']}")
+            lines.append(f"**{i+1}.** {style_tag}{s['text']}{recommended_tag}")
         else:
-            lines.append(f"~~**{i+1}.** {style_tag}{s['text']}~~")
+            lines.append(f"~~**{i+1}.** {style_tag}{s['text']}{recommended_tag}~~")
+        if s.get("reasoning"):
+            if i == selected_index:
+                lines.append(f"    *{s['reasoning']}*")
+            else:
+                lines.append(f"    ~~*{s['reasoning']}*~~")
 
     # 替换第一个 markdown 元素
     for elem in card["elements"]:
@@ -316,7 +352,7 @@ def build_messages(history: list[dict], new_message: str) -> list[dict]:
                 "role": "user",
                 "content": (
                     f"聊天历史：\n\n{history_text}\n\n"
-                    f"对方最新消息：{new_message}\n\n请生成 2-3 条回复建议。"
+                    f"对方最新消息：{new_message}\n\n请生成 1-3 条回复建议。如果对方情绪低落或消息难以回复，只提供 1 条克制、共情的建议即可。"
                 ),
             }
         )
@@ -324,7 +360,7 @@ def build_messages(history: list[dict], new_message: str) -> list[dict]:
         messages.append(
             {
                 "role": "user",
-                "content": f"对方消息：{new_message}\n\n请生成 2-3 条回复建议。",
+                "content": f"对方消息：{new_message}\n\n请生成 1-3 条回复建议。如果对方情绪低落或消息难以回复，只提供 1 条克制、共情的建议即可。",
             }
         )
 
