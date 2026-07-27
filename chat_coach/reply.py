@@ -353,6 +353,7 @@ def _handle_retry(open_id: str, message_id: str, token: str) -> None:
         return
 
     new_card = _build_suggestions_card(suggestions)
+    new_card["open_ids"] = [open_id]
     if _update_card_message(token, new_card):
         _cache_suggestions(message_id, suggestions, user_text)
         print("[reply] 重试完成，卡片已更新", flush=True)

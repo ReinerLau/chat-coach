@@ -533,8 +533,9 @@ def test_handle_retry_regenerates_and_updates_card():
 
         mock_generate.assert_called_once()
         mock_update.assert_called_once()
-        # 验证更新的卡片内容包含新回复
+        # 验证更新的卡片内容包含新回复和 open_ids
         updated_card = mock_update.call_args[0][1]
+        assert updated_card["open_ids"] == ["ou_test"]
         md = _find_md(updated_card)
         assert "新回复" in md
         # 新建议应重新缓存
