@@ -373,7 +373,9 @@ def generate_reply(history: list[dict], new_message: str) -> str:
 
     provider = get_provider(llm_config)
     messages = build_messages(history, new_message)
-    return provider.chat(messages, response_format={"type": "json_object"})
+    raw = provider.chat(messages, response_format={"type": "json_object"})
+    print(f"[reply] LLM 原始返回: {raw[:500]}", flush=True)
+    return raw
 
 
 def handle_message(open_id: str, text: str, history: list[dict]) -> None:
