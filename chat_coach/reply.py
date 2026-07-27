@@ -139,24 +139,15 @@ def _parse_suggestions(raw: str) -> list[dict]:
 
 def _build_suggestions_card(suggestions: list[dict]) -> dict:
     """构建带按钮的回复建议卡片."""
-    # 第一个推荐项用 primary（蓝色），其余用 default
-    has_recommended = any(s.get("recommended") for s in suggestions)
     buttons = []
-    first_primary_used = False
     for i, s in enumerate(suggestions):
         text = s["text"]
         display = text if len(text) <= 60 else text[:57] + "..."
-        if has_recommended:
-            is_primary = s.get("recommended") and not first_primary_used
-            if is_primary:
-                first_primary_used = True
-        else:
-            is_primary = i == 0
         buttons.append(
             {
                 "tag": "button",
                 "text": {"tag": "plain_text", "content": display},
-                "type": "primary" if is_primary else "default",
+                "type": "default",
                 "value": {"i": i, "t": text},
             }
         )
