@@ -8,12 +8,13 @@ from threading import Lock
 
 from chat_coach.llm import get_provider
 from chat_coach.config import get as _cfg
+from chat_coach.context import get_history
 
 _PROMPT_PATH = Path(__file__).resolve().parent.parent / "prompts" / "reply.md"
 _SYSTEM_PROMPT = _PROMPT_PATH.read_text() if _PROMPT_PATH.exists() else ""
 
-# 卡片缓存：message_id → (suggestions, timestamp)
-_card_cache: dict[str, tuple[list[dict], float]] = {}
+# 卡片缓存：message_id → (suggestions, user_text, timestamp)
+_card_cache: dict[str, tuple[list[dict], str, float]] = {}
 _card_cache_lock = Lock()
 _CACHE_TTL = 600  # 10 分钟
 
@@ -38,25 +39,29 @@ def _mark_processed(message_id: str) -> None:
         _processed_message_ids.add(message_id)
 
 
-def _cache_suggestions(message_id: str, suggestions: list[dict]) -> None:
-    """缓存已发送卡片的回复建议列表."""
+def _cache_suggestions(
+    message_id: str, suggestions: list[dict], user_text: str = ""
+) -> None:
+    """缓存已发送卡片的回复建议列表和用户原始消息."""
     now = time.monotonic()
     with _card_cache_lock:
-        expired = [k for k, v in _card_cache.items() if now - v[1] > _CACHE_TTL]
+        expired = [k for k, v in _card_cache.items() if now - v[2] > _CACHE_TTL]
         for k in expired:
             del _card_cache[k]
-        _card_cache[message_id] = (suggestions, now)
+        _card_cache[message_id] = (suggestions, user_text, now)
 
 
-def _get_cached_suggestions(message_id: str) -> list[dict] | None:
-    """取出缓存的回复建议，过期返回 None."""
+def _get_cached_suggestions(
+    message_id: str,
+) -> tuple[list[dict], str] | None:
+    """取出缓存的回复建议和用户原始消息，过期返回 None."""
     with _card_cache_lock:
         entry = _card_cache.get(message_id)
         if entry is None:
             return None
-        suggestions, ts = entry
+        suggestions, user_text, ts = entry
         if time.monotonic() - ts <= _CACHE_TTL:
-            return suggestions
+            return suggestions, user_text
         del _card_cache[message_id]
     return None
 
@@ -167,6 +172,18 @@ def _build_suggestions_card(suggestions: list[dict]) -> dict:
             "template": "blue",
         },
         "elements": [
+            {
+                "tag": "action",
+                "layout": "flow",
+                "actions": [
+                    {
+                        "tag": "button",
+                        "text": {"tag": "plain_text", "content": "🔄 重试"},
+                        "type": "default",
+                        "value": {"action": "retry"},
+                    }
+                ],
+            },
             {"tag": "markdown", "content": "\n".join(lines)},
             {"tag": "hr"},
             {"tag": "action", "actions": buttons},
@@ -182,8 +199,21 @@ def _build_suggestions_card(suggestions: list[dict]) -> dict:
 def _build_selected_card(
     suggestions: list[dict], selected_index: int, open_id: str
 ) -> dict:
-    """构建选中后的更新卡片（保持布局，禁用按钮，文字标记选中/未选中）."""
+    """构建选中后的更新卡片（保持布局，禁用按钮，移除重试按钮）."""
     card = _build_suggestions_card(suggestions)
+
+    # 移除重试按钮（value.action == "retry" 的 action 元素）
+    card["elements"] = [
+        e
+        for e in card["elements"]
+        if not (
+            e["tag"] == "action"
+            and any(
+                btn.get("value", {}).get("action") == "retry"
+                for btn in e.get("actions", [])
+            )
+        )
+    ]
 
     # 全部按钮禁用
     for elem in card["elements"]:
@@ -217,7 +247,9 @@ def _build_selected_card(
     return card
 
 
-def _send_bot_message(open_id: str, text: str) -> str | None:
+def _send_bot_message(
+    open_id: str, text: str, user_text: str = ""
+) -> str | None:
     """发送卡片消息，返回 message_id."""
     from lark_oapi.api.im.v1 import CreateMessageRequest, CreateMessageRequestBody
 
@@ -247,7 +279,7 @@ def _send_bot_message(open_id: str, text: str) -> str | None:
 
     message_id = response.data.message_id
     if message_id:
-        _cache_suggestions(message_id, suggestions)
+        _cache_suggestions(message_id, suggestions, user_text)
     return message_id
 
 
@@ -301,10 +333,33 @@ def _update_card_message(token: str, card: dict) -> bool:
 # ── 公开 API ──────────────────────────────────────────────────
 
 
+def _handle_retry(open_id: str, message_id: str, token: str) -> None:
+    """处理重试按钮：重新调用 LLM 生成回复建议并更新卡片."""
+    cached = _get_cached_suggestions(message_id)
+    if cached is None:
+        print("[reply] 重试失败：缓存已过期", flush=True)
+        return
+
+    _, user_text = cached
+    if not user_text:
+        print("[reply] 重试失败：缓存中无原始消息", flush=True)
+        return
+
+    history = get_history()
+    reply = generate_reply(history, user_text)
+    _send_bot_message(open_id, reply, user_text)
+    print("[reply] 重试完成，已发送新卡片", flush=True)
+
+
 def handle_card_action(
     open_id: str, message_id: str, token: str, action_value: dict
 ) -> None:
-    """处理卡片按钮点击：发送选中回复 + 更新卡片."""
+    """处理卡片按钮点击：发送选中回复 + 更新卡片，或处理重试."""
+    # 重试按钮
+    if action_value.get("action") == "retry":
+        _handle_retry(open_id, message_id, token)
+        return
+
     if _is_processed(message_id):
         print(f"[reply] 卡片已处理过，跳过: message_id={message_id}", flush=True)
         return
@@ -316,13 +371,14 @@ def handle_card_action(
         print("[reply] 卡片回调缺少回复文本", flush=True)
         return
 
-    suggestions = _get_cached_suggestions(message_id)
+    cached = _get_cached_suggestions(message_id)
 
     # 发送选中文本
     _send_text_message(open_id, selected_text)
 
     # 更新卡片（若缓存命中）
-    if suggestions is not None:
+    if cached is not None:
+        suggestions, _ = cached
         updated_card = _build_selected_card(suggestions, selected_index, open_id)
         _update_card_message(token, updated_card)
 
@@ -359,8 +415,26 @@ def build_messages(history: list[dict], new_message: str) -> list[dict]:
     return messages
 
 
+def _json_truncated(raw: str) -> bool:
+    """检测 JSON 是否被截断（不完整）."""
+    raw = raw.strip()
+    if not raw:
+        return False
+    # 尝试提取 JSON 内容
+    m = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", raw, re.DOTALL)
+    if m:
+        raw = m.group(1).strip()
+    try:
+        json.loads(raw)
+        return False
+    except json.JSONDecodeError as e:
+        # "Unterminated string" / "Expecting" → 截断；其他语法错误不算
+        msg = e.msg.lower()
+        return "unterminated string" in msg or "expecting" in msg
+
+
 def generate_reply(history: list[dict], new_message: str) -> str:
-    """调用 LLM 生成回复建议."""
+    """调用 LLM 生成回复建议，截断时自动重试一次."""
     llm_config = {
         "llm_provider": _cfg("llm_provider", "openai"),
         "llm_api_key": _cfg("llm_api_key"),
@@ -375,10 +449,16 @@ def generate_reply(history: list[dict], new_message: str) -> str:
     messages = build_messages(history, new_message)
     raw = provider.chat(messages, response_format={"type": "json_object"})
     print(f"[reply] LLM 原始返回: {raw[:500]}", flush=True)
+
+    if _json_truncated(raw):
+        print("[reply] LLM 返回被截断，重试一次...", flush=True)
+        raw = provider.chat(messages, response_format={"type": "json_object"})
+        print(f"[reply] LLM 重试返回: {raw[:500]}", flush=True)
+
     return raw
 
 
 def handle_message(open_id: str, text: str, history: list[dict]) -> None:
     """处理一条消息：生成回复并发送卡片."""
     reply = generate_reply(history, text)
-    _send_bot_message(open_id, reply)
+    _send_bot_message(open_id, reply, text)
