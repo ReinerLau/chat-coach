@@ -14,7 +14,9 @@ from chat_coach.reply import (
     _is_processed,
     _mark_processed,
     _handle_retry,
+    _json_truncated,
     handle_card_action,
+    generate_reply,
 )
 
 
@@ -568,3 +570,95 @@ def test_handle_retry_llm_returns_invalid():
 
         # _send_bot_message 仍被调用，内部发现无效返回时打印日志并返回 None
         mock_send.assert_called_once_with("ou_test", "", "原消息")
+
+
+# ── JSON 截断检测 ──────────────────────────────────────────────
+
+
+def test_json_truncated_unterminated_string():
+    """字符串中途截断."""
+    raw = '{"suggestions":[{"style":"克制","text":"你好'
+    assert _json_truncated(raw) is True
+
+
+def test_json_truncated_expecting_value():
+    """缺少后续字段."""
+    raw = '{"suggestions":[{"style":"日常","text":"好的"}]'
+    assert _json_truncated(raw) is True
+
+
+def test_json_truncated_valid_json():
+    """完整 JSON 不算截断."""
+    raw = '{"suggestions":[{"style":"日常","text":"好的"}]}'
+    assert _json_truncated(raw) is False
+
+
+def test_json_truncated_empty():
+    assert _json_truncated("") is False
+
+
+def test_json_truncated_code_block_incomplete():
+    """代码块内截断 JSON."""
+    raw = '```json\n{"suggestions":[{"style":"克制","text":"你好"\n```'
+    assert _json_truncated(raw) is True
+
+
+# ── generate_reply 截断重试 ─────────────────────────────────────
+
+
+def test_generate_reply_retries_on_truncation():
+    """LLM 返回截断时自动重试一次."""
+    from chat_coach import reply as reply_mod
+
+    with (
+        patch.object(reply_mod, "get_provider") as mock_get_provider,
+        patch.object(reply_mod, "_cfg") as mock_cfg,
+        patch.object(reply_mod, "build_messages") as mock_build,
+    ):
+        mock_cfg.side_effect = lambda key, default=None: {
+            "llm_provider": "openai",
+            "llm_api_key": "sk-test",
+            "llm_model": "test-model",
+            "llm_base_url": "https://test.api",
+        }.get(key, default)
+        mock_build.return_value = [{"role": "user", "content": "test"}]
+
+        mock_provider = MagicMock()
+        mock_provider.chat.side_effect = [
+            '{"suggestions":[{"style":"克制","text":"你好',  # 截断
+            '{"suggestions":[{"style":"克制","text":"你好完整"}]}',  # 重试成功
+        ]
+        mock_get_provider.return_value = mock_provider
+
+        result = generate_reply([], "你好")
+
+        assert mock_provider.chat.call_count == 2
+        assert "你好完整" in result
+
+
+def test_generate_reply_no_retry_on_valid():
+    """完整 JSON 不重试."""
+    from chat_coach import reply as reply_mod
+
+    with (
+        patch.object(reply_mod, "get_provider") as mock_get_provider,
+        patch.object(reply_mod, "_cfg") as mock_cfg,
+        patch.object(reply_mod, "build_messages") as mock_build,
+    ):
+        mock_cfg.side_effect = lambda key, default=None: {
+            "llm_provider": "openai",
+            "llm_api_key": "sk-test",
+            "llm_model": "test-model",
+            "llm_base_url": "https://test.api",
+        }.get(key, default)
+        mock_build.return_value = [{"role": "user", "content": "test"}]
+
+        mock_provider = MagicMock()
+        mock_provider.chat.return_value = (
+            '{"suggestions":[{"style":"日常","text":"好的"}]}'
+        )
+        mock_get_provider.return_value = mock_provider
+
+        generate_reply([], "你好")
+
+        assert mock_provider.chat.call_count == 1

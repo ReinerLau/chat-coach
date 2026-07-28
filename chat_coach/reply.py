@@ -415,8 +415,26 @@ def build_messages(history: list[dict], new_message: str) -> list[dict]:
     return messages
 
 
+def _json_truncated(raw: str) -> bool:
+    """检测 JSON 是否被截断（不完整）."""
+    raw = raw.strip()
+    if not raw:
+        return False
+    # 尝试提取 JSON 内容
+    m = re.search(r"```(?:json)?\s*\n?(.*?)\n?```", raw, re.DOTALL)
+    if m:
+        raw = m.group(1).strip()
+    try:
+        json.loads(raw)
+        return False
+    except json.JSONDecodeError as e:
+        # "Unterminated string" / "Expecting" → 截断；其他语法错误不算
+        msg = e.msg.lower()
+        return "unterminated string" in msg or "expecting" in msg
+
+
 def generate_reply(history: list[dict], new_message: str) -> str:
-    """调用 LLM 生成回复建议."""
+    """调用 LLM 生成回复建议，截断时自动重试一次."""
     llm_config = {
         "llm_provider": _cfg("llm_provider", "openai"),
         "llm_api_key": _cfg("llm_api_key"),
@@ -431,6 +449,12 @@ def generate_reply(history: list[dict], new_message: str) -> str:
     messages = build_messages(history, new_message)
     raw = provider.chat(messages, response_format={"type": "json_object"})
     print(f"[reply] LLM 原始返回: {raw[:500]}", flush=True)
+
+    if _json_truncated(raw):
+        print("[reply] LLM 返回被截断，重试一次...", flush=True)
+        raw = provider.chat(messages, response_format={"type": "json_object"})
+        print(f"[reply] LLM 重试返回: {raw[:500]}", flush=True)
+
     return raw
 
 
