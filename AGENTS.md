@@ -41,7 +41,7 @@
 
 ## 开发流程
 
-**自检规则**：收到开发任务时，步骤 1 已由用户手动完成（用户用 `claude --worktree` 启动新 worktree）。AI 必须先用 `TaskCreate` 把步骤 2-11 全部创建为任务（当前步骤标 `in_progress`，其余标 `pending`），然后按序执行。每一步完成后立即标记 `completed`，再开始下一步。如果一个步骤被跳过，它会留在任务列表里——这就是自检信号。步骤 6（提交 PR）和步骤 11（回归主线）由 AI 自动执行，不询问用户。
+**自检规则**：收到开发任务时，步骤 1 已由用户手动完成（用户用 `Codex --worktree` 启动新 worktree）。AI 必须先用 `TaskCreate` 把步骤 2-11 全部创建为任务（当前步骤标 `in_progress`，其余标 `pending`），然后按序执行。每一步完成后立即标记 `completed`，再开始下一步。如果一个步骤被跳过，它会留在任务列表里——这就是自检信号。步骤 6（提交 PR）和步骤 11（回归主线）由 AI 自动执行，不询问用户。
 
 ### 自测不通过时的红线（违反即流程违规）
 
@@ -52,7 +52,7 @@
 
 做完这两步之后才能开始修代码。**收到自测反馈的第一反应不是改代码，是重置任务列表。**
 
-1. **分支开发**（用户手动执行）：用户用 `claude --worktree` 启动新 worktree，自动从 `master` 新建分支。`master` 未在 GitHub 上开启分支保护（免费版私有仓库不支持），但按流程约定仍禁止直接提交，统一走分支 + PR。
+1. **分支开发**（用户手动执行）：用户用 `Codex --worktree` 启动新 worktree，自动从 `master` 新建分支。`master` 未在 GitHub 上开启分支保护（免费版私有仓库不支持），但按流程约定仍禁止直接提交，统一走分支 + PR。
    - 每个分支只做一件事：一个需求或一个 Bug 修复。
    - 动手前先判断：当前改动和当前分支的主题是否一致？如果不一致，另起新分支。
    - **Worktree 隔离**：worktree 自动创建独立 git 工作目录，不同分支互不干扰，不用来回 stash 切分支。
@@ -68,7 +68,7 @@
    - **改完再跑一次**：提交前再跑一次全量测试，确保全部通过。
    - **AI 行为**：开发完成后主动用子 Agent 跑测试，主上下文只看结果摘要，不要把跑测试这件事丢给用户。如果测试失败，修复后再提交。
 
-5. **文档整理**：测试通过后，运行 `/neat-freak` 整理项目文档和规则文件，清理残留，确保 CLAUDE.md 和代码实际行为一致。
+5. **文档整理**：测试通过后，运行 `/neat-freak` 整理项目文档和规则文件，清理残留，确保 AGENTS.md 和代码实际行为一致。
 
 6. **提交 PR**：推送分支到远端，创建 PR 到 `master`。GitHub Actions 自动触发 `pytest tests/ -v`。
    - **AI 行为**：PR 创建后不等 CI，直接提醒用户进入第 7 步用户自测。CI 在后台跑，结果稍后在第 9 步处理。
@@ -106,17 +106,3 @@
 - Use Chinese by default
 - Be terse and direct — you're a tool, not a companion
 - No emojis unless the user uses them first
-
-## Agent skills
-
-### Issue tracker
-
-Issues and specs for this repo live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.
-
-### Triage labels
-
-Five canonical triage roles use the default label strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
-
-### Domain docs
-
-Single-context layout: one `CONTEXT.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
