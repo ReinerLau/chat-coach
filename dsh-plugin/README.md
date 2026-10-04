@@ -18,10 +18,16 @@ node bin/import-tracememo-key.js "$HOME/Library/Containers/com.tencent.xinWeChat
 
 迁移会请求 macOS 钥匙串授权，不会打印数据库密钥。若已通过其他方式取得密钥，可运行 `node bin/save-db-key.js <微信账号目录>` 安全输入；也可在启动 DSH 前设置 `WECHAT_DB_KEY`。本插件目前不自动从微信进程提取新密钥。
 
-把本目录安装到 DSH web profile：
+从源码把本目录安装到 DSH web profile：
 
 ```sh
 dsh plugin --profile web add /absolute/path/to/chat-coach/dsh-plugin
+```
+
+发布版只托管在 GitHub Packages。先按 GitHub Packages 的说明给本机 npm/pnpm 配置 `@reinerlau:registry=https://npm.pkg.github.com` 和具有 `read:packages` 权限的认证，再运行：
+
+```sh
+dsh plugin --profile web add @reinerlau/dsh-plugin-wechat-coach
 ```
 
 在 `~/.dsh/profiles/web/cordis.patch.yml` 追加：
@@ -29,7 +35,7 @@ dsh plugin --profile web add /absolute/path/to/chat-coach/dsh-plugin
 ```yaml
 - insert:
     - id: wechat-coach
-      name: dsh-plugin-wechat-coach
+      name: '@reinerlau/dsh-plugin-wechat-coach'
       config:
         accountRoot: /Users/you/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/<账号目录>
         dataFile: /Users/you/.dsh/wechat-coach/messages.sqlite

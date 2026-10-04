@@ -1,7 +1,13 @@
 {
-  "name": "dsh-plugin-wechat-coach",
+  "name": "@reinerlau/dsh-plugin-wechat-coach",
   "version": "0.1.0",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ReinerLau/chat-coach.git",
+    "directory": "dsh-plugin"
+  },
+  "publishConfig": { "registry": "https://npm.pkg.github.com" },
+  "files": ["README.md", "bin/", "native/", "src/", "vendor/"],
   "type": "module",
   "main": "src/index.js",
   "engines": { "node": ">=22.13" },
