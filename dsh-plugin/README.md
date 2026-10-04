@@ -45,7 +45,7 @@ dsh plugin --profile web add @reinerlau/dsh-plugin-wechat-coach
         model: deepseek-flash
 ```
 
-插件首次启动会生成随机访问令牌并存入自己的钥匙串项。运行 `node bin/show-phone-token.js` 查看令牌，手机打开 `http://<电脑局域网IP>:3085/wechat-coach` 后输入。也可使用 `WECHAT_COACH_TOKEN` 环境变量覆盖。DSH 主 Web 服务保持默认的 `127.0.0.1:3080`；插件的 `lanPort` 只开放本插件页面与接口。
+插件首次启动会生成随机访问令牌并存入自己的钥匙串项。在电脑浏览器打开 `http://127.0.0.1:3085/wechat-coach/setup`，用同一局域网的手机扫描二维码即可自动连接；此页面仅接受本机访问。`node bin/show-phone-token.js` 是手动输入令牌的备用工具，也可用 `WECHAT_COACH_TOKEN` 环境变量覆盖。DSH 主 Web 服务保持默认的 `127.0.0.1:3080`；插件的 `lanPort` 只开放本插件页面、配对页与接口。
 
 ## 行为
 

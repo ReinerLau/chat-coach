@@ -6,17 +6,28 @@
     "url": "git+https://github.com/ReinerLau/chat-coach.git",
     "directory": "dsh-plugin"
   },
-  "publishConfig": { "registry": "https://npm.pkg.github.com" },
-  "files": ["README.md", "bin/", "native/", "src/", "vendor/"],
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
+  "files": [
+    "README.md",
+    "bin/",
+    "native/",
+    "src/",
+    "vendor/"
+  ],
   "type": "module",
   "main": "src/index.js",
-  "engines": { "node": ">=22.13" },
+  "engines": {
+    "node": ">=22.13"
+  },
   "scripts": {
     "test": "node --test test/*.test.js"
   },
   "dependencies": {
+    "@deepseek-ai/schemastery": "~3.18.4",
     "koffi": "^2.15.1",
-    "@deepseek-ai/schemastery": "~3.18.4"
+    "qrcode": "^1.5.4"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.4",

@@ -23,12 +23,14 @@
     const show=(id,on)=>$(id).classList.toggle('hidden',!on);
     async function api(path,options={}){const response=await fetch('/wechat-coach/api'+path,{...options,headers:{Authorization:'Bearer '+token,'content-type':'application/json'}});const result=await response.json();if(!response.ok)throw new Error(result.error||'请求失败');return result}
     function error(e){$('error').textContent=e.message||String(e)}
-    $('connect').onclick=async()=>{token=$('token').value;try{const data=await api('/sessions');show('login',false);show('list',true);$('sessions').replaceChildren();for(const session of data.sessions){const button=document.createElement('button');button.textContent=session.name;button.onclick=()=>open(session);$('sessions').append(button)}if(!data.sessions.length)$('sessions').textContent='还没有同步到会话';$('error').textContent=''}catch(e){error(e)}};
+    $('connect').onclick=async()=>{token=$('token').value;try{const data=await api('/sessions');$('token').value='';show('login',false);show('list',true);$('sessions').replaceChildren();for(const session of data.sessions){const button=document.createElement('button');button.textContent=session.name;button.onclick=()=>open(session);$('sessions').append(button)}if(!data.sessions.length)$('sessions').textContent='还没有同步到会话';$('error').textContent=''}catch(e){error(e)}};
     async function open(session){current=session.id;cursor=null;show('list',false);show('chat',true);show('suggestion',false);$('title').textContent=session.name;$('messages').replaceChildren();await load().catch(error)}
     async function load(){const query=cursor?'?before='+encodeURIComponent(cursor):'';const data=await api('/sessions/'+encodeURIComponent(current)+'/messages'+query);const fragment=document.createDocumentFragment();for(const message of data.messages){const bubble=document.createElement('div');bubble.className='bubble'+(message.isSelf?' self':'');bubble.textContent=message.content||'[非文本消息]';fragment.append(bubble)}$('messages').prepend(fragment);cursor=data.next;$('more').disabled=!cursor}
     $('more').onclick=()=>load().catch(error);
     $('back').onclick=()=>{show('chat',false);show('suggestion',false);show('list',true)};
     $('suggest').onclick=async()=>{const button=$('suggest');button.disabled=true;button.textContent='生成中…';show('suggestion',false);try{const result=await api('/sessions/'+encodeURIComponent(current)+'/suggest',{method:'POST',body:'{}'});$('reply').textContent=result.reply;$('reason').textContent=result.reason;show('suggestion',true);$('error').textContent=''}catch(e){error(e)}finally{button.disabled=false;button.textContent='重新生成'}};
+    const pairedToken=new URLSearchParams(location.hash.slice(1)).get('token');
+    if(pairedToken){history.replaceState(null,'',location.pathname+location.search);$('token').value=pairedToken;$('connect').click()}
   </script>
 </body>
 </html>

@@ -7,6 +7,7 @@ import { WcdbSource } from './wcdb.js'
 import { WechatSync } from './sync.js'
 import { createApi } from './http.js'
 import { getPhoneToken, readKey } from './keychain.js'
+import { createPairingPage } from './pairing.js'
 
 export const name = 'wechat-coach'
 export const inject = ['webServer', 'llm']
@@ -33,18 +34,21 @@ export function apply(ctx, config) {
   catch (error) { store.close(); throw error }
   const sync = new WechatSync({ source, store, accountRoot: config.accountRoot, onError: (error) => console.error('[wechat-coach] 同步失败:', error.message) })
   const api = createApi({ store, sync, llm: ctx.llm, token, model: config })
+  const setup = createPairingPage({ token, port: config.lanPort, host: config.lanHost })
   const html = readFileSync(fileURLToPath(new URL('./mobile.html', import.meta.url)))
   const page = (req, res) => {
     if (req.method !== 'GET') { res.writeHead(405); res.end(); return }
-    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'" })
+    res.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'referrer-policy': 'no-referrer', 'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'" })
     res.end(html)
   }
   ctx.effect(async () => {
     const disposeApi = ctx.webServer.register({ kind: 'prefix', path: '/wechat-coach/api', handler: api })
     const disposePage = ctx.webServer.register({ kind: 'exact', path: '/wechat-coach', handler: page })
+    const disposeSetup = ctx.webServer.register({ kind: 'exact', path: '/wechat-coach/setup', handler: setup })
     const lanServer = createServer((req, res) => {
       const pathname = new URL(req.url, 'http://localhost').pathname
       if (pathname === '/wechat-coach') return page(req, res)
+      if (pathname === '/wechat-coach/setup') return setup(req, res)
       if (pathname === '/wechat-coach/api' || pathname.startsWith('/wechat-coach/api/')) return api(req, res)
       res.writeHead(404); res.end()
     })
@@ -55,13 +59,13 @@ export function apply(ctx, config) {
       })
       sync.start()
     } catch (error) {
-      disposePage(); disposeApi(); source.close(); store.close()
+      disposeSetup(); disposePage(); disposeApi(); source.close(); store.close()
       throw error
     }
     return async () => {
       sync.stop()
       await new Promise((resolve) => lanServer.close(resolve))
-      disposePage(); disposeApi(); source.close(); store.close()
+      disposeSetup(); disposePage(); disposeApi(); source.close(); store.close()
     }
   }, 'wechat-coach')
 }
