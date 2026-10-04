@@ -1,0 +1,1 @@
+`libWCDB.dylib` was taken from [WeFlow](https://github.com/iminc/WeFlow) for macOS arm64. It is used through its SQLite C interface. The original distribution's CC BY-NC-SA 4.0 license is included here as `LICENSE`. No TraceMemo binary is bundled.

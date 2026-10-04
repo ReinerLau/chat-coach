@@ -1,0 +1,39 @@
+name: Publish DSH plugin
+
+on:
+  workflow_dispatch:
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: master
+
+      - name: Set up Node.js and GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: https://npm.pkg.github.com
+          scope: "@reinerlau"
+          cache: npm
+          cache-dependency-path: dsh-plugin/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+        working-directory: dsh-plugin
+
+      - name: Run plugin tests
+        run: npm test
+        working-directory: dsh-plugin
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        working-directory: dsh-plugin
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
