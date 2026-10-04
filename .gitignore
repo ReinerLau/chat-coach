@@ -1,4 +1,6 @@
 __pycache__/
+.native/
+node_modules/
 *.py[cod]
 *.egg-info/
 dist/
