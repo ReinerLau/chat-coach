@@ -1,20 +1,25 @@
 import { spawnSync } from 'node:child_process'
-import { resolve } from 'node:path'
-import { existsSync, mkdirSync, statSync } from 'node:fs'
+import { createHash, randomBytes } from 'node:crypto'
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { homedir } from 'node:os'
+import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { randomBytes } from 'node:crypto'
 
 export const KEY_SERVICE = 'chat-coach.wechat-db.v2'
 export const TOKEN_SERVICE = 'chat-coach.phone-token'
 export const accountName = (root) => resolve(root).toLowerCase()
+export const keychainHelperPath = (home = homedir()) => join(home, '.dsh', 'wechat-coach', 'native', 'keychain')
 
 function helper() {
-  const binary = fileURLToPath(new URL('../.native/keychain', import.meta.url))
+  const binary = keychainHelperPath()
   const source = fileURLToPath(new URL('../native/keychain.c', import.meta.url))
-  if (!existsSync(binary) || statSync(binary).mtimeMs < statSync(source).mtimeMs) {
-    mkdirSync(fileURLToPath(new URL('../.native/', import.meta.url)), { recursive: true })
+  const digest = createHash('sha256').update(readFileSync(source)).digest('hex')
+  const marker = `${binary}.sha256`
+  if (!existsSync(binary) || !existsSync(marker) || readFileSync(marker, 'utf8') !== digest) {
+    mkdirSync(dirname(binary), { recursive: true, mode: 0o700 })
     const result = spawnSync('clang', [source, '-framework', 'Security', '-framework', 'CoreFoundation', '-Wno-deprecated-declarations', '-o', binary], { encoding: 'utf8', maxBuffer: 4096 })
     if (result.status !== 0) throw new Error('无法编译 macOS 钥匙串辅助程序')
+    writeFileSync(marker, digest, { mode: 0o600 })
   }
   return binary
 }

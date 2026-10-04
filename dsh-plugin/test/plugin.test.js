@@ -7,6 +7,11 @@ import { MessageStore } from '../src/store.js'
 import { WechatSync } from '../src/sync.js'
 import { normalizeMessage } from '../src/normalize.js'
 import { generateSuggestion } from '../src/http.js'
+import { keychainHelperPath } from '../src/keychain.js'
+
+test('keychain helper lives in writable user data, outside the installed package', () => {
+  assert.equal(keychainHelperPath('/tmp/coach-home'), '/tmp/coach-home/.dsh/wechat-coach/native/keychain')
+})
 
 test('normalizes WCDB message direction and ids', () => {
   const message = normalizeMessage({ mesLocalID: 17, msgContent: '你好', mesDes: 0, msgCreateTime: '123', messageType: '1' }, 'friend')

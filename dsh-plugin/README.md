@@ -4,7 +4,7 @@ macOS 微信 4.x 的本地聊天记录由插件读取并同步到独立 SQLite �
 
 ## 环境
 
-- macOS arm64、已登录的微信 4.1.13；Node.js 22.13+；DSH 0.2.0-rc.2。
+- macOS arm64、已登录的微信 4.1.13；Node.js 22.13+；DSH 0.2.0-rc.2；可用的 `clang`（首次编译钥匙串辅助程序）。
 - 插件附带的 WCDB 库来自 WeFlow，适用其 CC BY-NC-SA 4.0 许可证，详见 `vendor/weflow/LICENSE`。插件运行时不连接 TraceMemo 或 WeFlow 应用。
 - 首次接入需要与当前微信账号匹配的 64 位数据库密钥。曾用 TraceMemo 验证过的账号可用下方命令一次性迁移；之后插件只读自己的 macOS 钥匙串项。其他账号可设置 `WECHAT_DB_KEY` 环境变量。
 
