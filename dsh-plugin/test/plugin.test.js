@@ -8,6 +8,11 @@ import { WechatSync } from '../src/sync.js'
 import { normalizeMessage } from '../src/normalize.js'
 import { generateSuggestion } from '../src/http.js'
 import { keychainHelperPath } from '../src/keychain.js'
+import { apply } from '../src/index.js'
+
+test('plugin refuses an externally bound DSH before opening the database', () => {
+  assert.throws(() => apply({ webServer: { host: '0.0.0.0' } }, {}), /DSH 监听 127\.0\.0\.1/)
+})
 
 test('keychain helper lives in writable user data, outside the installed package', () => {
   assert.equal(keychainHelperPath('/tmp/coach-home'), '/tmp/coach-home/.dsh/wechat-coach/native/keychain')

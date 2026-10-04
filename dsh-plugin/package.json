@@ -26,8 +26,7 @@
   },
   "dependencies": {
     "@deepseek-ai/schemastery": "~3.18.4",
-    "koffi": "^2.15.1",
-    "qrcode": "^1.5.4"
+    "koffi": "^2.15.1"
   },
   "peerDependencies": {
     "@deepseek-ai/cordis": "~4.0.4",

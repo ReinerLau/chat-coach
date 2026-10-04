@@ -36,7 +36,7 @@
 当前有两条运行路径：
 
 - 旧版飞书 Bot：聊天记录存储在飞书 Bitable；用户在飞书 1v1 私聊中模拟对方发消息。启动方式：`python3 -m chat_coach.bot`。
-- DSH 微信插件：`dsh-plugin/` 独立读取本机微信数据库并持久化消息；手机经局域网访问 DSH，按需生成建议，建议不留记录。安装与启动见 `dsh-plugin/README.md`。
+- DSH 微信插件：`dsh-plugin/` 独立读取本机微信数据库并持久化消息；页面挂在 DSH `/wechat-coach`，手机访问由 dsh-pocket 负责，按需生成建议，建议不留记录。安装与启动见 `dsh-plugin/README.md`。
 
 ## 开发流程
 
@@ -74,7 +74,7 @@
 
 7. **用户自测**：PR 创建后不等 CI，用户立即在本地验证本次改动涉及的运行路径：
    1. 飞书 Bot 改动：运行 `python3 -m chat_coach.bot`，在飞书 1v1 私聊中模拟对话。
-   2. DSH 插件改动：按 `dsh-plugin/README.md` 启动 DSH，在电脑打开本机配对页并用手机扫码，查看同步消息并按需生成一条建议。
+   2. DSH 插件改动：按 `dsh-plugin/README.md` 启动 DSH，在电脑「设置 → 手机访问」中用 dsh-pocket 配对，手机登录后打开 `/wechat-coach`，查看同步消息并按需生成一条建议。
    3. 确认行为符合预期且无报错，告知 AI “验证通过”或描述问题，进入第 8 步。
 
 8. **判断验证结果**：AI 根据用户反馈判断：

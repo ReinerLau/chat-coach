@@ -1,10 +1,32 @@
-import { timingSafeEqual } from 'node:crypto'
+import { readFileSync } from 'node:fs'
 
-function authorized(request, token) {
-  const value = request.headers.authorization?.replace(/^Bearer /i, '') ?? ''
-  const a = Buffer.from(value)
-  const b = Buffer.from(token)
-  return a.length === b.length && timingSafeEqual(a, b)
+// DSH 自定义路由不经过主界面的鉴权；远程请求由 Pocket 验证后从本机转发。
+export function isLocalRequest(request) {
+  if (!['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(request.socket.remoteAddress)) return false
+  const host = request.headers.host
+  try {
+    const url = new URL(`http://${host}`)
+    if (url.host !== host || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname)) return false
+  } catch { return false }
+  const origin = request.headers.origin
+  if (origin && origin !== `http://${host}`) return false
+  const site = request.headers['sec-fetch-site']
+  return !site || ['same-origin', 'none'].includes(site)
+}
+
+export function registerWebRoutes(webServer, api) {
+  const html = readFileSync(new URL('./page.html', import.meta.url))
+  const page = (request, response) => {
+    if (!isLocalRequest(request)) return json(response, 403, { error: '仅允许本机或 dsh-pocket 转发访问' })
+    if (request.method !== 'GET') { response.writeHead(405, { allow: 'GET' }); response.end(); return }
+    response.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store', 'referrer-policy': 'no-referrer', 'content-security-policy': "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'" })
+    response.end(html)
+  }
+  const disposeApi = webServer.register({ kind: 'prefix', path: '/wechat-coach/api', handler: api })
+  let disposePage
+  try { disposePage = webServer.register({ kind: 'exact', path: '/wechat-coach', handler: page }) }
+  catch (error) { disposeApi(); throw error }
+  return () => { disposePage(); disposeApi() }
 }
 
 function json(response, status, body) {
@@ -51,9 +73,9 @@ export async function generateSuggestion(llm, config, messages, signal) {
   return { reply: parsed.reply.trim(), reason: parsed.reason.trim() }
 }
 
-export function createApi({ store, sync, llm, token, model }) {
+export function createApi({ store, sync, llm, model }) {
   return async (request, response) => {
-    if (!authorized(request, token)) return json(response, 401, { error: '未授权' })
+    if (!isLocalRequest(request)) return json(response, 403, { error: '仅允许本机或 dsh-pocket 转发访问' })
     const url = new URL(request.url, 'http://localhost')
     try {
       if (url.pathname === '/wechat-coach/api/sessions' && request.method === 'GET') {
@@ -77,6 +99,7 @@ export function createApi({ store, sync, llm, token, model }) {
         return json(response, 200, { messages, next })
       }
       if (match[2] === 'suggest' && request.method === 'POST') {
+        if (request.headers['content-type']?.split(';')[0].trim().toLowerCase() !== 'application/json') return json(response, 415, { error: '需要 application/json 请求' })
         await body(request)
         await sync.sync()
         const messages = store.messages(sessionId, 30)
