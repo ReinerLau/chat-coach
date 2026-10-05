@@ -83,6 +83,7 @@ for (const exitMethod of ['EOF', 'SIGTERM', 'SIGINT']) {
       protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test', version: '1.0.0' }
     })
     assert.equal(initialized.result.serverInfo.name, 'wechat-mcp')
+    assert.equal(initialized.result.serverInfo.version, '0.3.1')
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n')
     const tools = await request('tools/list', {})
     assert.equal(tools.result.tools.length, 2)
