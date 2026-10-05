@@ -36,7 +36,7 @@
 当前有两条运行路径：
 
 - 旧版飞书 Bot：聊天记录存储在飞书 Bitable；用户在飞书 1v1 私聊中模拟对方发消息。启动方式：`python3 -m chat_coach.bot`。
-- 微信历史 MCP：`mcp-server/` 独立读取本机微信数据库并持久化消息；通过私有 MCP 隧道供 ChatGPT 查找会话和读取历史，不调用模型或发送微信消息。包名 `@reinerlau/wechat-mcp`，命令 `wechat-history` 打开本机管理页并确保服务运行，`wechat-history stop` 关闭全部后台；`wechat-mcp` 为 stdio 入口。修改微信服务、管理页或隧道运行逻辑前阅读 `mcp-server/README.md`。
+- 微信历史 MCP：`mcp-server/` 独立读取本机微信数据库并持久化消息；通过私有 MCP 隧道供 ChatGPT 查找会话和读取历史，不调用模型或发送微信消息。包名 `@reinerlau/wechat-mcp`，命令 `wechat-history` 打开管理页并在前台等待，Ctrl+C 关闭全部服务；`--background` 后台启动，`wechat-history stop` 关闭全部后台；`wechat-mcp` 为 stdio 入口。修改微信服务、管理页或隧道运行逻辑前阅读 `mcp-server/README.md`。
 
 ## 开发流程
 
