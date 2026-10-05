@@ -36,7 +36,7 @@
 当前有两条运行路径：
 
 - 旧版飞书 Bot：聊天记录存储在飞书 Bitable；用户在飞书 1v1 私聊中模拟对方发消息。启动方式：`python3 -m chat_coach.bot`。
-- 微信历史 MCP：`mcp-server/` 独立读取本机微信数据库并持久化消息；通过私有 MCP 隧道供 ChatGPT 查找会话和读取历史，不调用模型或发送微信消息。包名 `@reinerlau/wechat-history-mcp`，命令 `wechat-history-mcp`；安装、密钥准备和隧道接入见 `mcp-server/README.md`。
+- 微信历史 MCP：`mcp-server/` 独立读取本机微信数据库并持久化消息；通过私有 MCP 隧道供 ChatGPT 查找会话和读取历史，不调用模型或发送微信消息。包名 `@reinerlau/wechat-history-mcp`，命令 `wechat-history` 打开本机管理页并确保服务运行，`wechat-history stop` 关闭全部后台；`wechat-history-mcp` 为 stdio 入口。修改微信服务、管理页或隧道运行逻辑前阅读 `mcp-server/README.md`。
 
 ## 开发流程
 
@@ -74,7 +74,7 @@
 
 7. **用户自测**：PR 创建后不等 CI，用户立即在本地验证本次改动涉及的运行路径：
    1. 飞书 Bot 改动：运行 `python3 -m chat_coach.bot`，在飞书 1v1 私聊中模拟对话。
-   2. 微信 MCP 改动：按 `mcp-server/README.md` 配置独立服务和私有隧道，在 ChatGPT 查找指定联系人、读取近期消息、向前翻页，并验证新微信消息能增量同步。
+   2. 微信 MCP 改动：按 `mcp-server/README.md` 配置独立服务和私有隧道，验证管理页自动刷新、启停重启和停止后页面仍可用；在 ChatGPT 查找指定联系人、读取近期消息、向前翻页，并验证新微信消息能增量同步。
    3. 确认行为符合预期且无报错，告知 AI “验证通过”或描述问题，进入第 8 步。
 
 8. **判断验证结果**：AI 根据用户反馈判断：

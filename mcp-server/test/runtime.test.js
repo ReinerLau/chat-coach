@@ -15,8 +15,9 @@ test('CLI configuration isolates caches by account and accepts explicit data fil
   assert.notEqual(first, defaultDataFile('/wechat/two', '/tmp/coach-home'))
   assert.equal(first, defaultDataFile('/wechat/one/', '/tmp/coach-home'))
   assert.equal(parseConfig(['--account-root', '/wechat/one', '--data-file', '/tmp/cache.sqlite']).dataFile, '/tmp/cache.sqlite')
+  assert.equal(parseConfig(['--account-root', '/a', '--status-file', '/tmp/status.json']).statusFile, '/tmp/status.json')
   assert.equal(parseConfig(['--help']).help, true)
-  for (const args of [[], ['--account-root', ''], ['--account-root', '/a', '--data-file', ''], ['--wrong'], ['positional']]) {
+  for (const args of [[], ['--account-root', ''], ['--account-root', '/a', '--data-file', ''], ['--account-root', '/a', '--status-file', ''], ['--wrong'], ['positional']]) {
     assert.throws(() => parseConfig(args))
   }
 })

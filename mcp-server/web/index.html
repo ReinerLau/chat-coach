@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>微信历史 · 服务管理</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<body>
+  <main>
+    <header><div class="brand"><span class="mark" aria-hidden="true">W</span><div><strong>微信历史</strong><span class="local">本机服务管理</span></div></div><span class="privacy"><i></i>仅本机访问</span></header>
+    <section class="hero">
+      <div><p class="eyebrow">服务概览</p><h1>聊天历史，随时可用。</h1><p class="subtitle">让 ChatGPT 只读访问你的微信历史。</p></div>
+      <div class="service"><span id="status" class="badge">正在连接管理后台</span><p id="summary">正在读取本机服务状态…</p><div class="actions"><button data-action="start" id="start" class="primary">启动服务</button><button data-action="restart" id="restart">重启</button><button data-action="stop" id="stop">停止</button></div></div>
+    </section>
+    <div id="error" role="alert" hidden></div>
+    <section class="cards" aria-label="服务状态">
+      <article class="card"><div class="card-top"><span class="icon" aria-hidden="true">↔</span><h2>微信 MCP</h2></div><strong id="mcp" class="value">—</strong><p>查找会话、读取和翻页聊天历史</p><div class="card-foot">只读服务</div></article>
+      <article class="card"><div class="card-top"><span class="icon" aria-hidden="true">⌁</span><h2>私有隧道</h2></div><strong id="tunnel" class="value">—</strong><p>连接你的个人 ChatGPT 工作区</p><div class="card-foot"><a id="diagnostics" target="_blank" rel="noopener noreferrer" hidden>打开隧道诊断 ↗</a><span id="diagnostics-empty">服务启动后可查看诊断</span></div></article>
+      <article class="card"><div class="card-top"><span class="icon" aria-hidden="true">⟳</span><h2>微信同步</h2></div><strong id="sync" class="value">—</strong><p id="last-sync">尚无同步记录</p><div class="card-foot" id="sync-note">监听本机微信数据库变化</div></article>
+    </section>
+    <section class="stats" aria-label="缓存统计"><div><span>缓存会话</span><strong id="sessions">—</strong></div><div><span>缓存消息</span><strong id="messages">—</strong></div><p>数据保留在本机，停止服务不会删除历史缓存。</p></section>
+    <section class="logs-section"><div class="section-heading"><div><h2>最近诊断</h2><p>最多显示 100 条记录，不含密钥或聊天正文。</p></div><span id="refreshed">每 2 秒更新</span></div><div class="logs" id="logs" aria-label="诊断日志"><p class="empty">暂无诊断记录</p></div></section>
+    <footer><span>关闭浏览器后，服务继续在后台运行。</span><span>微信历史 MCP <b>0.2.0</b></span></footer>
+  </main>
+</body></html>
