@@ -10,7 +10,7 @@ export function createHistoryRuntime(config, {
   sourceFactory = (options) => new WcdbSource(options),
   storeFactory = (file) => new MessageStore(file),
   syncFactory = (options) => new WechatSync(options),
-  log = (message) => console.error(`[wechat-history-mcp] ${message}`)
+  log = (message) => console.error(`[wechat-mcp] ${message}`)
 } = {}) {
   const key = env.WECHAT_DB_KEY || keyReader(config.accountRoot)
   if (!/^[a-f0-9]{64}$/i.test(key ?? '')) throw new Error('缺少有效微信数据库密钥，请设置 WECHAT_DB_KEY 或保存到钥匙串')

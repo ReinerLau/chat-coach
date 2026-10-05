@@ -7,12 +7,23 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
-const entry = fileURLToPath(new URL('../bin/wechat-history-mcp.js', import.meta.url))
+const entry = fileURLToPath(new URL('../bin/wechat-mcp.js', import.meta.url))
+
+test('the published command starts the renamed CLI and identifies errors with the new name', () => {
+  const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
+  assert.equal(manifest.name, '@reinerlau/wechat-mcp')
+  assert.deepEqual(Object.keys(manifest.bin), ['wechat-mcp'])
+  const command = fileURLToPath(new URL(`../${manifest.bin['wechat-mcp']}`, import.meta.url))
+  const invalid = spawnSync(process.execPath, [command, '--unknown'], { encoding: 'utf8' })
+  assert.equal(invalid.status, 2)
+  assert.match(invalid.stderr, /wechat-mcp --account-root/)
+  assert.doesNotMatch(invalid.stderr, /wechat-history-mcp/)
+})
 
 test('CLI help and invalid arguments work without a database or DSH', () => {
   const help = spawnSync(process.execPath, [entry, '--help'], { encoding: 'utf8' })
   assert.equal(help.status, 0)
-  assert.match(help.stdout, /wechat-history-mcp --account-root/)
+  assert.match(help.stdout, /wechat-mcp --account-root/)
   const invalid = spawnSync(process.execPath, [entry, '--unknown'], { encoding: 'utf8' })
   assert.equal(invalid.status, 2)
   assert.equal(invalid.stdout, '')
@@ -56,7 +67,7 @@ for (const exitMethod of ['EOF', 'SIGTERM', 'SIGINT']) {
     const initialized = await request('initialize', {
       protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test', version: '1.0.0' }
     })
-    assert.equal(initialized.result.serverInfo.name, 'wechat-history-mcp')
+    assert.equal(initialized.result.serverInfo.name, 'wechat-mcp')
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n')
     const tools = await request('tools/list', {})
     assert.equal(tools.result.tools.length, 2)

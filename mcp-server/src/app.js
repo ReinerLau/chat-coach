@@ -8,7 +8,7 @@ export async function runServer(runtime) {
     if (!closing) closing = (async () => {
       process.exitCode = code
       try { await runtime.close() }
-      catch { console.error('[wechat-history-mcp] 关闭数据库失败'); process.exitCode = 1 }
+      catch { console.error('[wechat-mcp] 关闭数据库失败'); process.exitCode = 1 }
       finally {
         await server.close()
         process.stdin.pause()
@@ -26,7 +26,7 @@ export async function runServer(runtime) {
   process.once('SIGTERM', onTerminate)
   process.stdin.once('end', onEnd)
   server.server.onclose = onEnd
-  server.server.onerror = () => console.error('[wechat-history-mcp] MCP 通信错误')
+  server.server.onerror = () => console.error('[wechat-mcp] MCP 通信错误')
   try {
     await server.connect(new StdioServerTransport())
     runtime.start()
