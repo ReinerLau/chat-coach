@@ -16,7 +16,7 @@ async function request(path, post = false) {
       ...(post ? { method: 'POST', body: '{}' } : {}),
       headers: { 'X-Wechat-Manager-Token': token || '', ...(post ? { 'Content-Type': 'application/json' } : {}) }
     })
-  } catch { throw new Error('无法连接管理后台，请重新运行 wechat-history 打开页面。') }
+  } catch { throw new Error('无法连接管理后台，请重新运行 wechat-mcp 打开页面。') }
   const result = await response.json()
   if (!response.ok) throw new Error(result.error || '操作未完成。')
   return result
@@ -71,7 +71,7 @@ async function refresh() {
   try { render(await request('status')) }
   catch (error) {
     $('status').textContent = '管理后台不可用'; $('status').className = 'badge error'; showError(error.message)
-    $('summary').textContent = '重新运行 wechat-history 可恢复服务并打开管理页。'
+    $('summary').textContent = '重新运行 wechat-mcp 可恢复服务并打开管理页。'
     document.querySelectorAll('[data-action]').forEach((button) => { button.disabled = true })
   } finally { refreshing = false }
 }

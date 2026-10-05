@@ -12,22 +12,37 @@ const entry = fileURLToPath(new URL('../bin/wechat-mcp.js', import.meta.url))
 test('the published command starts the renamed CLI and identifies errors with the new name', () => {
   const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
   assert.equal(manifest.name, '@reinerlau/wechat-mcp')
-  assert.deepEqual(Object.keys(manifest.bin), ['wechat-mcp', 'wechat-history'])
+  assert.deepEqual(Object.keys(manifest.bin), ['wechat-mcp'])
   const command = fileURLToPath(new URL(`../${manifest.bin['wechat-mcp']}`, import.meta.url))
   const invalid = spawnSync(process.execPath, [command, '--unknown'], { encoding: 'utf8' })
-  assert.equal(invalid.status, 2)
-  assert.match(invalid.stderr, /wechat-mcp --account-root/)
+  assert.equal(invalid.status, 1)
+  assert.match(invalid.stderr, /^\[wechat-mcp\]/)
   assert.doesNotMatch(invalid.stderr, /wechat-history-mcp/)
 })
 
 test('CLI help and invalid arguments work without a database or DSH', () => {
-  const help = spawnSync(process.execPath, [entry, '--help'], { encoding: 'utf8' })
+  const help = spawnSync(process.execPath, [entry, 'stdio', '--help'], { encoding: 'utf8' })
   assert.equal(help.status, 0)
-  assert.match(help.stdout, /wechat-mcp --account-root/)
-  const invalid = spawnSync(process.execPath, [entry, '--unknown'], { encoding: 'utf8' })
+  assert.match(help.stdout, /wechat-mcp stdio --account-root/)
+  const invalid = spawnSync(process.execPath, [entry, 'stdio', '--unknown'], { encoding: 'utf8' })
   assert.equal(invalid.status, 2)
   assert.equal(invalid.stdout, '')
   assert.match(invalid.stderr, /用法/)
+})
+
+test('unified CLI rejects incomplete stdio and misplaced subcommands before starting services', () => {
+  for (const args of [['stdio'], ['stdio', 'stop'], ['stdio', '--background']]) {
+    const invalid = spawnSync(process.execPath, [entry, ...args], { encoding: 'utf8' })
+    assert.equal(invalid.status, 2)
+    assert.equal(invalid.stdout, '')
+    assert.match(invalid.stderr, /wechat-mcp stdio --account-root/)
+  }
+  for (const args of [['other'], ['--background', 'stdio'], ['stop', 'other'], ['--account-root', '/mock/account']]) {
+    const invalid = spawnSync(process.execPath, [entry, ...args], { encoding: 'utf8' })
+    assert.equal(invalid.status, 1)
+    assert.equal(invalid.stdout, '')
+    assert.match(invalid.stderr, /wechat-mcp/)
+  }
 })
 
 for (const exitMethod of ['EOF', 'SIGTERM', 'SIGINT']) {

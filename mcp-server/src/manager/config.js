@@ -38,9 +38,10 @@ export function loadTunnelConfig(paths, env = process.env) {
   try {
     args = parseShell(commands[0].command, () => { throw new Error() })
     if (!args.every((arg) => typeof arg === 'string') || basename(args[0]) !== 'node' || !/^wechat-(?:mcp|history-mcp)(?:\.js)?$/.test(basename(args[1]))) throw new Error()
-    config = parseConfig(args.slice(2))
+    const offset = args[2] === 'stdio' && /^wechat-mcp(?:\.js)?$/.test(basename(args[1])) ? 3 : 2
+    config = parseConfig(args.slice(offset))
     if (config.help || !isAbsolute(config.accountRoot)) throw new Error()
-  } catch { throw new ManagerError('无法识别微信 MCP 启动参数。请使用 README 中的 node + wechat-mcp 启动格式。') }
+  } catch { throw new ManagerError('无法识别微信 MCP 启动参数。请使用 README 中的 node + wechat-mcp stdio 启动格式。') }
   const apiKey = profile.control_plane.api_key
   if (typeof apiKey !== 'string' || !/^(?:env:|file:).+/.test(apiKey)) throw new ManagerError('隧道运行密钥必须使用 env: 或 file: 引用；请勿将密钥值写入配置。')
   const baseUrl = profile.control_plane.base_url || 'https://api.openai.com'
@@ -60,6 +61,7 @@ export function validateRuntimeKey(config, env = process.env) {
 export function mcpCommand(config) {
   return quote([
     process.execPath, fileURLToPath(new URL('../../bin/wechat-mcp.js', import.meta.url)),
+    'stdio',
     '--account-root', config.accountRoot, '--data-file', config.dataFile, '--status-file', config.statusFile
   ])
 }

@@ -4,7 +4,7 @@ import { join, resolve } from 'node:path'
 import { parseArgs } from 'node:util'
 import { fileURLToPath } from 'node:url'
 
-export const usage = '用法：wechat-mcp --account-root <微信账号目录> [--data-file <SQLite 文件>] [--status-file <状态文件>]'
+export const usage = '用法：wechat-mcp stdio --account-root <微信账号目录> [--data-file <SQLite 文件>] [--status-file <状态文件>]'
 
 export function defaultDataFile(accountRoot, home = homedir()) {
   const account = createHash('sha256').update(resolve(accountRoot).toLowerCase()).digest('hex')

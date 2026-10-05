@@ -96,7 +96,7 @@ test('failed shutdown reports recovery instructions without claiming success', a
   const foreground = runForeground(h.options)
   await setImmediate()
   h.signals.emit('SIGINT')
-  await assert.rejects(foreground, /wechat-history stop/)
+  await assert.rejects(foreground, /wechat-mcp stop/)
   assert.doesNotMatch(h.logs.join('\n'), /已关闭|private failure/)
   assert.equal(h.signals.listenerCount('SIGINT'), 0)
 })

@@ -78,7 +78,7 @@ if (args[1] === 'status') console.log(JSON.stringify({ process_running: state.ru
     await writeFile(key, 'fake-runtime-key', { mode: 0o600 })
     await writeFile(join(configRoot, 'tunnel-client/wechat.yaml'), JSON.stringify({
       control_plane: { tunnel_id: `tunnel_${'a'.repeat(32)}`, api_key: `file:${key}` },
-      mcp: { commands: [{ channel: 'main', command: 'node /mock/wechat-mcp --account-root /mock/account' }] }
+      mcp: { commands: [{ channel: 'main', command: 'node /mock/wechat-mcp stdio --account-root /mock/account' }] }
     }))
     await Promise.all([cli(['--no-open', '--background']), cli(['--no-open', '--background'])])
     assert.equal((await readManager()).pid, manager.pid)
