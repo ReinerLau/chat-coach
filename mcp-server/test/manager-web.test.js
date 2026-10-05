@@ -17,7 +17,7 @@ test('page loses its backend gracefully with Chinese recovery instructions and d
   })
   await setImmediate()
   assert.equal(elements.get('status').textContent, '管理后台不可用')
-  assert.match(elements.get('error').textContent, /重新运行 wechat-history/)
+  assert.match(elements.get('error').textContent, /重新运行 wechat-mcp/)
   assert.doesNotMatch(elements.get('error').textContent, /Failed to fetch/)
   assert.ok(buttons.every((button) => button.disabled))
 })

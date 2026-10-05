@@ -35,7 +35,7 @@ export async function createManagerServer(controller, { onShutdown = () => {}, t
       } catch { json(500, { error: '管理页面资源缺失，请重新安装 npm 包。' }) }
       return
     }
-    if (!equalToken(request.headers['x-wechat-manager-token'], token)) return json(403, { error: '页面会话无效，请重新运行 wechat-history 打开管理页。' })
+    if (!equalToken(request.headers['x-wechat-manager-token'], token)) return json(403, { error: '页面会话无效，请重新运行 wechat-mcp 打开管理页。' })
     if (request.headers.origin && request.headers.origin !== origin) return json(403, { error: '拒绝跨站访问。' })
     if (request.method === 'GET' && path === '/api/status') {
       try { return json(200, await controller.snapshot()) }

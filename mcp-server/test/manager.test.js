@@ -4,6 +4,7 @@ import assert from 'node:assert/strict'
 import { mkdtemp, mkdir, readFile, writeFile, rm } from 'node:fs/promises'
 import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { parse as parseShell } from 'shell-quote'
 import { managerPaths, loadTunnelConfig, mcpCommand, validateRuntimeKey } from '../src/manager/config.js'
 import { TunnelRuntime, safeLogs, localUrl } from '../src/manager/tunnel.js'
 import { createManagerServer } from '../src/manager/server.js'
@@ -44,9 +45,29 @@ test('loads existing JSON/YAML profile and creates a quoted installed MCP comman
   assert.equal(config.statusFile, paths.statusFile)
   assert.match(mcpCommand(config), /--status-file/)
   assert.match(mcpCommand(config), /bin\/wechat-mcp\.js/)
+  assert.equal(parseShell(mcpCommand(config))[2], 'stdio')
   assert.match(mcpCommand(config), /account with spaces/)
   await writeFile(paths.profileFile, `control_plane:\n  tunnel_id: ${profile.control_plane.tunnel_id}\n  api_key: '${profile.control_plane.api_key}'\nmcp:\n  commands:\n    - channel: main\n      command: 'node /package/wechat-history-mcp --account-root /account'\n`)
   assert.equal(loadTunnelConfig(paths).accountRoot, '/account')
+})
+
+test('accepts canonical stdio subcommand and legacy profiles while rejecting manager operations', async (t) => {
+  const { paths, profile, save } = await fixture(t)
+  for (const command of [
+    'node /package/wechat-mcp.js stdio --account-root "/account with spaces"',
+    'node /package/wechat-mcp.js --account-root "/account with spaces"',
+    'node /package/wechat-history-mcp.js --account-root "/account with spaces"'
+  ]) {
+    profile.mcp.commands[0].command = command
+    await save()
+    assert.equal(loadTunnelConfig(paths).accountRoot, '/account with spaces')
+    assert.equal(parseShell(mcpCommand(loadTunnelConfig(paths)))[2], 'stdio')
+  }
+  for (const args of ['', 'stop', '--background', 'stdio --background', 'stdio stop', 'stdio']) {
+    profile.mcp.commands[0].command = `node /package/wechat-mcp.js ${args}`
+    await save()
+    assert.throws(() => loadTunnelConfig(paths), /wechat-mcp stdio/)
+  }
 })
 
 test('retains an existing history profile and alias while upgrading its legacy MCP command', async (t) => {

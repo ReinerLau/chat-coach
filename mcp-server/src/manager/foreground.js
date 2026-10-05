@@ -35,11 +35,11 @@ export async function runForeground({
     // Startup can fail after acquiring the manager (for example, opening a browser).
     if (!shutdownAttempted && manager) {
       try { await close() }
-      catch { throw new Error('启动未完成且无法关闭服务，请运行 wechat-history stop 重试。') }
+      catch { throw new Error('启动未完成且无法关闭服务，请运行 wechat-mcp stop 重试。') }
       if (reason === 'SIGINT' || reason === 'SIGTERM') return reason === 'SIGINT' ? 130 : 143
       throw error
     }
-    if (shutdownAttempted) throw new Error('关闭服务失败，请运行 wechat-history stop 重试。')
+    if (shutdownAttempted) throw new Error('关闭服务失败，请运行 wechat-mcp stop 重试。')
     throw error
   } finally {
     clearInterval(monitor)

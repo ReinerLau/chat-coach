@@ -96,7 +96,7 @@ export async function launchManager({ stop = false, noOpen = false, onReady = ()
   catch (failure) { error = failure.message }
   if (!noOpen) {
     try { await execute('open', [`${manager.origin}/#${manager.token}`], { timeout: 5000 }) }
-    catch { throw new ManagerError('无法打开浏览器，请重试 wechat-history，或使用 --no-open 检查后台。') }
+    catch { throw new ManagerError('无法打开浏览器，请重试 wechat-mcp，或使用 --no-open 检查后台。') }
   }
   return { origin: manager.origin, error }
 }

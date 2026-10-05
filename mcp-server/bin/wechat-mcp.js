@@ -1,20 +1,25 @@
 #!/usr/bin/env node
-import { parseConfig, usage } from '../src/config.js'
-import { createHistoryRuntime } from '../src/runtime.js'
-import { runServer } from '../src/app.js'
+import { parseArgs } from 'node:util'
+import { launchManager } from '../src/manager/launcher.js'
+import { runForeground } from '../src/manager/foreground.js'
 
-let config
-try { config = parseConfig(process.argv.slice(2)) }
-catch { console.error(usage); process.exit(2) }
-if (config.help) { console.log(usage); process.exit(0) }
-if (process.platform !== 'darwin' || process.arch !== 'arm64') {
-  console.error('微信数据库读取需要 macOS arm64；Node.js 需要 22.13 或更新版本')
-  process.exit(1)
-}
-
-try {
-  await runServer(createHistoryRuntime(config))
+const usage = '用法：wechat-mcp [stop] [--no-open] [--background]\n      wechat-mcp stdio --account-root <微信账号目录> [--data-file <SQLite 文件>] [--status-file <状态文件>]\n打开管理页并在前台等待；Ctrl+C 关闭全部服务。--background 后台启动；stop 关闭全部服务。'
+if (process.argv[2] === 'stdio') {
+  await import('../src/stdio-cli.js')
+} else try {
+  const { values, positionals } = parseArgs({ options: { help: { type: 'boolean', short: 'h' }, 'no-open': { type: 'boolean' }, background: { type: 'boolean' } }, allowPositionals: true })
+  if (values.help) { console.log(usage) }
+  else {
+    if (positionals.length > 1 || (positionals.length === 1 && positionals[0] !== 'stop')) throw new Error(usage)
+    if (positionals[0] === 'stop' || values.background) {
+      const result = await launchManager({ stop: positionals[0] === 'stop', noOpen: values['no-open'] })
+      console.log(result.stopped ? '微信 MCP、隧道和管理后台已关闭。' : `${values['no-open'] ? '管理后台地址' : '管理页已打开'}：${result.origin}`)
+      if (result.error) { console.error(result.error); process.exitCode = 1 }
+    } else {
+      process.exitCode = await runForeground({ noOpen: values['no-open'] })
+    }
+  }
 } catch (error) {
-  console.error(`[wechat-mcp] ${error.message}`)
+  console.error(error.message === usage ? usage : `[wechat-mcp] ${error.message}`)
   process.exitCode = 1
 }
