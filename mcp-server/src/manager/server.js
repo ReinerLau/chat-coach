@@ -6,6 +6,7 @@ import { PreviewError } from './preview.js'
 
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
+  ['/icon.svg', ['icon.svg', 'image/svg+xml']],
   ['/app.js', ['app.js', 'text/javascript; charset=utf-8']],
   ['/preview.js', ['preview.js', 'text/javascript; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']]
