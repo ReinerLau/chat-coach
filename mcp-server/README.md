@@ -23,7 +23,7 @@ wechat-mcp --help
 wechat-mcp stdio --help
 ```
 
-包版本 `0.3.0` 增加本机缓存预览，统一使用 `wechat-mcp` 启动管理服务，`wechat-mcp stdio` 启动 stdio MCP。前台运行时 Ctrl+C 关闭全部服务。维护者合并后手动运行 **Publish WeChat MCP** 工作流发布；发布前可用 `npm pack` 生成本地安装包验证。
+包版本 `0.3.1` 包含管理页绿色 W 图标和本机缓存预览，统一使用 `wechat-mcp` 启动管理服务，`wechat-mcp stdio` 启动 stdio MCP。前台运行时 Ctrl+C 关闭全部服务。维护者合并后手动运行 **Publish WeChat MCP** 工作流发布；发布前可用 `npm pack` 生成本地安装包验证。项目的 Git 标签不会自动更新 npm 包，发布前需同步 `package.json`、lockfile、MCP 初始化与管理页中的包版本，并通过包验证；已有版本不可重复发布。
 
 ## 数据库密钥
 
