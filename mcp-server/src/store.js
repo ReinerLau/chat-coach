@@ -61,8 +61,15 @@ export class MessageStore {
     this.db.prepare('UPDATE sessions SET history_complete=1 WHERE id=?').run(sessionId)
   }
 
-  sessions() {
-    return this.db.prepare('SELECT id,name,updated_at AS updatedAt FROM sessions ORDER BY updated_at DESC').all()
+  sessions({ query = '', limit = 50, offset = 0 } = {}) {
+    return this.db.prepare(`SELECT id,name,updated_at AS updatedAt FROM sessions
+      WHERE instr(lower(name),lower(?)) > 0 OR instr(lower(id),lower(?)) > 0
+      ORDER BY updated_at DESC,id ASC LIMIT ? OFFSET ?`).all(query, query, limit, offset).map((row) => ({ ...row }))
+  }
+
+  session(id) {
+    const row = this.db.prepare('SELECT id,name,updated_at AS updatedAt FROM sessions WHERE id=?').get(id)
+    return row ? { ...row } : undefined
   }
 
   messages(sessionId, limit = 50, before = null) {

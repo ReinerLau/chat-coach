@@ -24,9 +24,9 @@ jobs:
           pip install -e .
 
       - name: Run tests
-        run: pytest tests/ -v
+        run: python3 -m pytest tests/ -v
 
-  plugin-test:
+  mcp-test:
     runs-on: ubuntu-latest
 
     steps:
@@ -37,10 +37,13 @@ jobs:
         with:
           node-version: "22"
           cache: npm
-          cache-dependency-path: dsh-plugin/package-lock.json
+          cache-dependency-path: mcp-server/package-lock.json
 
-      - name: Install plugin dependencies
-        run: npm ci --prefix dsh-plugin
+      - name: Install MCP dependencies
+        run: npm ci --prefix mcp-server
 
-      - name: Run plugin tests
-        run: npm test --prefix dsh-plugin
+      - name: Run MCP tests
+        run: npm test --prefix mcp-server
+
+      - name: Verify standalone package
+        run: npm run test:package --prefix mcp-server

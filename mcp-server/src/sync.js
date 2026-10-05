@@ -1,5 +1,6 @@
 import { watch } from 'node:fs'
 import { join } from 'node:path'
+import { setImmediate } from 'node:timers/promises'
 import { normalizeMessage, normalizeSession } from './normalize.js'
 
 export class WechatSync {
@@ -13,23 +14,28 @@ export class WechatSync {
     this.dirty = false
     this.watcher = null
     this.timer = null
+    this.stopped = false
   }
 
   sync() {
+    if (this.stopped) return Promise.reject(new Error('同步已停止'))
     if (this.inFlight) { this.dirty = true; return this.inFlight }
     this.inFlight = this.run().finally(() => { this.inFlight = null })
     return this.inFlight
   }
 
   async run() {
+    await setImmediate()
+    if (this.stopped) return
     do {
         this.dirty = false
         for (const raw of this.source.sessions()) {
+          if (this.stopped) return
           const session = normalizeSession(raw)
           if (!session) continue
           const historyComplete = this.store.isHistoryComplete?.(session.id) ?? true
-          const cutoff = Math.max(0, (this.store.latestTime?.(session.id) ?? 0) - 30)
-          let latest = 0
+          let latest = this.store.latestTime?.(session.id) ?? 0
+          const cutoff = Math.max(0, latest - 30)
           const pages = this.source.messagePages ? this.source.messagePages(session.id, this.pageSize) : this.legacyPages(session.id)
           for (const rows of pages) {
             if (!Array.isArray(rows)) throw new Error('WCDB 消息结果不是数组')
@@ -47,11 +53,14 @@ export class WechatSync {
             }
             this.store.saveMessages(pending)
             if (reachedKnown) break
+            await setImmediate()
+            if (this.stopped) return
           }
           this.store.saveSession(session, latest)
           this.store.markHistoryComplete?.(session.id)
+          await setImmediate()
         }
-    } while (this.dirty)
+    } while (this.dirty && !this.stopped)
   }
 
   *legacyPages(sessionId) {
@@ -72,8 +81,9 @@ export class WechatSync {
       clearTimeout(this.timer)
       this.timer = setTimeout(() => this.sync().catch(this.onError), 350)
     })
+    this.watcher.on('error', this.onError)
     this.sync().catch(this.onError)
   }
 
-  stop() { clearTimeout(this.timer); this.watcher?.close(); this.watcher = null }
+  stop() { this.stopped = true; clearTimeout(this.timer); this.watcher?.close(); this.watcher = null }
 }

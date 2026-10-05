@@ -1,14 +1,13 @@
 import { spawnSync } from 'node:child_process'
-import { createHash, randomBytes } from 'node:crypto'
+import { createHash } from 'node:crypto'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 export const KEY_SERVICE = 'chat-coach.wechat-db.v2'
-export const TOKEN_SERVICE = 'chat-coach.phone-token'
 export const accountName = (root) => resolve(root).toLowerCase()
-export const keychainHelperPath = (home = homedir()) => join(home, '.dsh', 'wechat-coach', 'native', 'keychain')
+export const keychainHelperPath = (home = homedir()) => join(home, '.wechat-history-mcp', 'native', 'keychain')
 
 function helper() {
   const binary = keychainHelperPath()
@@ -42,13 +41,4 @@ export function readKey(root) {
 export function saveKey(root, key) {
   if (!/^[a-f0-9]{64}$/i.test(key)) throw new Error('数据库密钥格式错误')
   saveSecret(KEY_SERVICE, accountName(root), key)
-}
-
-export function getPhoneToken() {
-  let token = readSecret(TOKEN_SERVICE, 'local')
-  if (!token) {
-    token = randomBytes(24).toString('hex')
-    saveSecret(TOKEN_SERVICE, 'local', token)
-  }
-  return token
 }

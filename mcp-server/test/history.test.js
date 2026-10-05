@@ -6,11 +6,10 @@ import { tmpdir } from 'node:os'
 import { MessageStore } from '../src/store.js'
 import { WechatSync } from '../src/sync.js'
 import { normalizeMessage } from '../src/normalize.js'
-import { generateSuggestion } from '../src/http.js'
 import { keychainHelperPath } from '../src/keychain.js'
 
 test('keychain helper lives in writable user data, outside the installed package', () => {
-  assert.equal(keychainHelperPath('/tmp/coach-home'), '/tmp/coach-home/.dsh/wechat-coach/native/keychain')
+  assert.equal(keychainHelperPath('/tmp/coach-home'), '/tmp/coach-home/.wechat-history-mcp/native/keychain')
 })
 
 test('normalizes WCDB message direction and ids', () => {
@@ -36,23 +35,6 @@ test('sync imports all pages, persists messages, then deduplicates updates', asy
   } finally { store.close(); rmSync(dir, { recursive: true, force: true }) }
 })
 
-test('suggestion uses current messages without writing a suggestion record', async () => {
-  const dir = mkdtempSync(join(tmpdir(), 'coach-'))
-  const store = new MessageStore(join(dir, 'messages.sqlite'))
-  try {
-    store.saveSession({ id: 'friend', name: '朋友' })
-    store.saveMessages([{ sessionId: 'friend', localId: '1', serverId: '', createdAt: 1, type: 1, isSelf: false, content: '今晚有空吗', senderId: '' }])
-    const llm = { async *stream(options) {
-      assert.equal(options.messages.length, 1)
-      yield { type: 'text-delta', text: '{"reply":"今晚可以，几点方便？","reason":"直接回应并确认时间"}' }
-      yield { type: 'finish', reason: { kind: 'stop' } }
-    } }
-    const result = await generateSuggestion(llm, { provider: 'test', model: 'test' }, store.messages('friend'), undefined)
-    assert.equal(result.reply, '今晚可以，几点方便？')
-    assert.equal(store.messages('friend').length, 1)
-  } finally { store.close(); rmSync(dir, { recursive: true, force: true }) }
-})
-
 test('interrupted initial import resumes past already saved messages', async () => {
   const dir = mkdtempSync(join(tmpdir(), 'coach-'))
   const store = new MessageStore(join(dir, 'messages.sqlite'))
@@ -63,6 +45,7 @@ test('interrupted initial import resumes past already saved messages', async () 
     await new WechatSync({ source, store, accountRoot: dir, pageSize: 2 }).sync()
     assert.equal(store.messages('friend', 10).length, 3)
     assert.equal(store.isHistoryComplete('friend'), true)
+    assert.equal(store.session('friend').updatedAt, 3)
   } finally { store.close(); rmSync(dir, { recursive: true, force: true }) }
 })
 
