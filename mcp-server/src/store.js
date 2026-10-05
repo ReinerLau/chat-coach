@@ -3,7 +3,11 @@ import { mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
 
 export class MessageStore {
-  constructor(file) {
+  constructor(file, { readOnly = false } = {}) {
+    if (readOnly) {
+      this.db = new DatabaseSync(file, { readOnly: true })
+      return
+    }
     mkdirSync(dirname(file), { recursive: true, mode: 0o700 })
     this.db = new DatabaseSync(file)
     this.db.exec(`PRAGMA journal_mode=WAL;

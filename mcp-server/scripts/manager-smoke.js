@@ -6,6 +6,7 @@ import { createServer } from 'node:http'
 import { createConnection } from 'node:net'
 import { mkdir, readFile, writeFile, access } from 'node:fs/promises'
 import { join } from 'node:path'
+import { DatabaseSync } from 'node:sqlite'
 
 const execute = promisify(execFile)
 
@@ -45,6 +46,11 @@ if (args[1] === 'status') console.log(JSON.stringify({ process_running: state.ru
   const children = []
   const readManager = async () => JSON.parse(await readFile(join(root, 'manager.json'), 'utf8'))
   const status = async () => (await fetch(`${manager.origin}/api/status`, { headers: { 'X-Wechat-Manager-Token': manager.token } })).json()
+  const preview = async (path) => {
+    const response = await fetch(`${manager.origin}/api/preview/${path}`, { headers: { 'X-Wechat-Manager-Token': manager.token } })
+    assert.equal(response.status, 200)
+    return response.json()
+  }
   const action = async (name) => {
     const response = await fetch(`${manager.origin}/api/${name}`, { method: 'POST', headers: { Origin: manager.origin, 'Content-Type': 'application/json', 'X-Wechat-Manager-Token': manager.token }, body: '{}' })
     assert.equal(response.status, 200)
@@ -76,18 +82,36 @@ if (args[1] === 'status') console.log(JSON.stringify({ process_running: state.ru
     assert.equal((await status()).state, 'error')
     const key = join(scratch, 'mock-key')
     await writeFile(key, 'fake-runtime-key', { mode: 0o600 })
+    const dataFile = join(scratch, 'preview cache.sqlite')
+    const cache = new DatabaseSync(dataFile)
+    try {
+      cache.exec(`CREATE TABLE sessions(id TEXT PRIMARY KEY, name TEXT, updated_at INTEGER);
+        CREATE TABLE messages(session_id TEXT, local_id TEXT, server_id TEXT, created_at INTEGER, type INTEGER, is_self INTEGER, content TEXT, sender_id TEXT);
+        INSERT INTO sessions VALUES('friend', '模拟朋友', 2);
+        INSERT INTO messages VALUES('friend', '1', '', 1, 1, 0, '模拟消息', 'friend');
+        INSERT INTO messages VALUES('friend', '2', '', 2, 3, 1, 'private image metadata', '');`)
+    } finally { cache.close() }
     await writeFile(join(configRoot, 'tunnel-client/wechat.yaml'), JSON.stringify({
       control_plane: { tunnel_id: `tunnel_${'a'.repeat(32)}`, api_key: `file:${key}` },
-      mcp: { commands: [{ channel: 'main', command: 'node /mock/wechat-mcp stdio --account-root /mock/account' }] }
+      mcp: { commands: [{ channel: 'main', command: `node /mock/wechat-mcp stdio --account-root /mock/account --data-file "${dataFile}"` }] }
     }))
     await Promise.all([cli(['--no-open', '--background']), cli(['--no-open', '--background'])])
     assert.equal((await readManager()).pid, manager.pid)
     assert.equal((await status()).state, 'running')
     assert.equal((await fetch(`${manager.origin}/`)).status, 200)
     assert.equal((await fetch(`${manager.origin}/style.css`)).status, 200)
+    assert.match(await (await fetch(`${manager.origin}/`)).text(), /聊天数据预览/)
+    assert.match(await (await fetch(`${manager.origin}/preview.js`)).text(), /preview\/history/)
+    const sessions = await preview('sessions?query=模拟')
+    assert.equal(sessions.sessions[0].id, 'friend')
+    const history = await preview('history?session_id=friend&limit=1')
+    assert.equal(history.messages[0].content, '[非文本消息：类型 3]')
+    assert.equal(history.messages[0].isSelf, true)
+    assert.equal((await preview(`history?session_id=friend&before=${history.next}`)).messages[0].content, '模拟消息')
     assert.deepEqual(JSON.parse(await readFile(runtimeFile, 'utf8')).calls, ['connect'])
     assert.equal((await action('stop')).state, 'stopped')
     assert.equal((await fetch(`${manager.origin}/`)).status, 200)
+    assert.equal((await preview('history?session_id=friend')).messages.length, 2)
     await action('start')
     await action('restart')
     preconnect = createConnection({ host: '127.0.0.1', port: Number(new URL(manager.origin).port) })
