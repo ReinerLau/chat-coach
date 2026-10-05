@@ -198,6 +198,25 @@ test('diagnostic logs retain only allowed event text and cap the result at 100',
   assert.doesNotMatch(JSON.stringify(safe), /sk-secret|private body|private chat/)
 })
 
+test('manager serves a shared favicon and brand icon with static asset security headers', async (t) => {
+  const manager = await createManagerServer({})
+  t.after(() => new Promise((resolve) => manager.server.close(resolve)))
+  const html = await (await fetch(`${manager.origin}/`)).text()
+  assert.match(html, /<link rel="icon" type="image\/svg\+xml" sizes="any" href="\/icon.svg">/)
+  assert.match(html, /<img class="mark" src="\/icon.svg" width="44" height="44" alt="">/)
+  const icon = await fetch(`${manager.origin}/icon.svg`)
+  assert.equal(icon.status, 200)
+  assert.equal(icon.headers.get('content-type'), 'image/svg+xml')
+  assert.equal(icon.headers.get('cache-control'), 'no-store')
+  assert.equal(icon.headers.get('x-content-type-options'), 'nosniff')
+  assert.match(icon.headers.get('content-security-policy'), /img-src 'self' data:/)
+  assert.equal(await icon.text(), await readFile(new URL('../web/icon.svg', import.meta.url), 'utf8'))
+  assert.equal(await new Promise((resolve, reject) => {
+    const req = request(`${manager.origin}/icon.svg`, { headers: { Host: 'evil.example' } }, (res) => { res.resume(); resolve(res.statusCode) })
+    req.on('error', reject); req.end()
+  }), 403)
+})
+
 test('manager HTTP serves packed assets, rejects cross-site and arbitrary commands, survives service stop', async (t) => {
   const { runtime } = await fixture(t)
   let shutDown = false

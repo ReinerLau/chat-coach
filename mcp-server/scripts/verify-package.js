@@ -16,7 +16,7 @@ function run(command, args, cwd = root) {
 try {
   const [packed] = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', scratch]))
   const files = new Set(packed.files.map((file) => file.path))
-  for (const required of ['bin/wechat-mcp.js', 'src/stdio-cli.js', 'web/index.html', 'web/app.js', 'web/preview.js', 'web/style.css', 'src/manager/daemon.js', 'src/manager/preview.js', 'src/history.js', 'src/store.js', 'src/server.js', 'native/keychain.c', 'vendor/weflow/libWCDB.dylib', 'vendor/weflow/LICENSE']) {
+  for (const required of ['bin/wechat-mcp.js', 'src/stdio-cli.js', 'web/index.html', 'web/app.js', 'web/preview.js', 'web/style.css', 'web/icon.svg', 'src/manager/daemon.js', 'src/manager/preview.js', 'src/history.js', 'src/store.js', 'src/server.js', 'native/keychain.c', 'vendor/weflow/libWCDB.dylib', 'vendor/weflow/LICENSE']) {
     assert.ok(files.has(required), `Missing package file: ${required}`)
   }
   assert.ok(!files.has('bin/wechat-history-mcp.js'))

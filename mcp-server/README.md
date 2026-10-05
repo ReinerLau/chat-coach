@@ -61,7 +61,7 @@ wechat-mcp stop
 
 需要命令立即返回并在后台继续运行时使用 `wechat-mcp --background`；之后用 `wechat-mcp stop` 关闭。`wechat-mcp --no-open` 只是不打开浏览器，仍保持前台等待；脚本中使用 `wechat-mcp --background --no-open`。源码启动使用 `node mcp-server/bin/wechat-mcp.js`。macOS 的 `open` 用于打开默认浏览器。
 
-管理页绑定 `127.0.0.1` 的自动分配端口；访问地址和页面会话令牌保存在 `~/.wechat-history-mcp/manager.json`（仅当前用户可读）。请通过命令打开页面，不共享包含令牌的链接。接口校验 Host、Origin 和会话令牌，拒绝跨站请求，仅提供固定启停操作和只读缓存查询。
+管理页绑定 `127.0.0.1` 的自动分配端口；浏览器标签页和页头共用绿色 W 图标，资源随 npm 包提供，无需联网加载。访问地址和页面会话令牌保存在 `~/.wechat-history-mcp/manager.json`（仅当前用户可读）。请通过命令打开页面，不共享包含令牌的链接。接口校验 Host、Origin 和会话令牌，拒绝跨站请求，仅提供固定启停操作和只读缓存查询。
 
 管理后台复用 `${XDG_CONFIG_HOME:-~/.config}/tunnel-client/wechat.yaml`（若已有 `wechat-history.yaml` 则优先复用），要求单个 `main` stdio 通道，启动命令采用下方的 `node + wechat-mcp stdio` 格式；运行密钥使用 `env:变量名` 或 `file:/绝对路径` 引用。文件引用适合后台运行，环境变量必须在首次启动管理后台的终端中设置。管理后台的环境会沿用到服务重启；更换环境变量后先 `wechat-mcp stop` 再启动。
 
