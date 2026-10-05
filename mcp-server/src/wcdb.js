@@ -11,7 +11,6 @@ export class WcdbSource {
     this.root = join(accountRoot, 'db_storage')
     this.sessionDb = join(this.root, 'session/session.db')
     this.contactDb = join(this.root, 'contact/contact.db')
-    this.messageDbs = readdirSync(join(this.root, 'message')).filter((name) => /^message_\d+\.db$/.test(name)).map((name) => join(this.root, 'message', name))
     this.ownUsername = basename(accountRoot).replace(/_[a-f0-9]{4}$/i, '')
     this.tableBySession = new Map()
     this.senderByDb = new Map()
@@ -20,6 +19,7 @@ export class WcdbSource {
   refresh() {
     this.tableBySession.clear()
     this.senderByDb.clear()
+    this.messageDbs = readdirSync(join(this.root, 'message')).filter((name) => /^message_\d+\.db$/.test(name)).map((name) => join(this.root, 'message', name))
     const candidates = new Set(this.db.query(this.sessionDb, 'SELECT username FROM SessionTable').map((row) => row.username))
     for (const path of this.messageDbs) {
       const names = this.db.query(path, 'SELECT user_name FROM Name2Id').map((row) => row.user_name)
@@ -61,13 +61,15 @@ export class WcdbSource {
     const paths = this.tableBySession.get(sessionId) ?? []
     const table = tableName(sessionId)
     const cursors = []
-    for (const path of paths) {
-      const shard = Number(basename(path).match(/\d+/)?.[0] ?? 0)
-      const senders = this.senderByDb.get(path)
-      const iterator = this.db.iterate(path, `SELECT local_id,server_id,local_type,real_sender_id,create_time,message_content FROM "${table}" ORDER BY create_time DESC, local_id DESC`)
-      cursors.push({ iterator, head: iterator.next(), shard, senders })
-    }
     try {
+      for (const path of paths) {
+        const shard = Number(basename(path).match(/\d+/)?.[0] ?? 0)
+        const senders = this.senderByDb.get(path)
+        const iterator = this.db.iterate(path, `SELECT local_id,server_id,local_type,real_sender_id,create_time,message_content FROM "${table}" ORDER BY create_time DESC, local_id DESC`)
+        const cursor = { iterator, head: null, shard, senders }
+        cursors.push(cursor)
+        cursor.head = iterator.next()
+      }
       let page = []
       while (true) {
         const active = cursors.filter((cursor) => !cursor.head.done)

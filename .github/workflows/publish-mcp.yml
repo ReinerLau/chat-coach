@@ -1,4 +1,4 @@
-name: Publish DSH plugin
+name: Publish WeChat history MCP
 
 on:
   workflow_dispatch:
@@ -22,18 +22,22 @@ jobs:
           registry-url: https://npm.pkg.github.com
           scope: "@reinerlau"
           cache: npm
-          cache-dependency-path: dsh-plugin/package-lock.json
+          cache-dependency-path: mcp-server/package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: dsh-plugin
+        working-directory: mcp-server
 
-      - name: Run plugin tests
+      - name: Run MCP tests
         run: npm test
-        working-directory: dsh-plugin
+        working-directory: mcp-server
+
+      - name: Verify standalone package
+        run: npm run test:package
+        working-directory: mcp-server
 
       - name: Publish to GitHub Packages
         run: npm publish
-        working-directory: dsh-plugin
+        working-directory: mcp-server
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
