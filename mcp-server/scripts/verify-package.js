@@ -27,7 +27,7 @@ try {
   const manifest = JSON.parse(readFileSync(join(installed, 'node_modules/@reinerlau/wechat-mcp/package.json')))
   assert.equal(manifest.name, '@reinerlau/wechat-mcp')
   assert.deepEqual(manifest.bin, { 'wechat-mcp': 'bin/wechat-mcp.js' })
-  assert.equal(manifest.version, '0.2.2')
+  assert.equal(manifest.version, '0.3.0')
   assert.ok(!manifest.peerDependencies)
   assert.ok(!Object.keys(manifest.dependencies).some((name) => name.includes('deepseek') || name === 'qrcode'))
   const help = run(join(installed, 'node_modules/.bin/wechat-mcp'), ['--help'], scratch)
