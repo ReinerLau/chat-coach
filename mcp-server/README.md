@@ -1,6 +1,6 @@
-# 微信聊天历史 MCP
+# wechat MCP
 
-`@reinerlau/wechat-history-mcp` 独立读取本机微信数据库，将消息同步到按账号隔离的 SQLite 缓存，通过 stdio MCP 向 ChatGPT 提供会话查找和历史分页。服务自行同步，不需要启动 DSH，也不调用模型或发送微信消息。
+`@reinerlau/wechat-mcp` 独立读取本机微信数据库，将消息同步到按账号隔离的 SQLite 缓存，通过 stdio MCP 向 ChatGPT 提供会话查找和历史分页。服务自行同步，不需要启动 DSH，也不调用模型或发送微信消息。
 
 ## 环境与安装
 
@@ -12,21 +12,21 @@
 
 ```sh
 npm ci --prefix mcp-server
-node mcp-server/bin/wechat-history-mcp.js --help
+node mcp-server/bin/wechat-mcp.js --help
 ```
 
 发布后，新包只托管在 GitHub Packages。按 [GitHub Packages npm 认证说明](https://docs.github.com/en/packages/working-with-a-github-packages-registry/working-with-the-npm-registry) 为本机 npm 配置 `@reinerlau:registry=https://npm.pkg.github.com` 和具有 `read:packages` 权限的认证，然后安装：
 
 ```sh
-npm install -g @reinerlau/wechat-history-mcp
-wechat-history-mcp --help
+npm install -g @reinerlau/wechat-mcp
+wechat-mcp --help
 ```
 
-源码新增的包在发布工作流执行前尚不可通过上述包名安装。初始包版本为 `0.1.0`；维护者合并后手动运行 **Publish WeChat history MCP** 工作流发布。
+源码新增的包在发布工作流执行前尚不可通过上述包名安装。初始包版本为 `0.1.0`；维护者合并后手动运行 **Publish WeChat MCP** 工作流发布。
 
 ## 数据库密钥
 
-继续使用原 `chat-coach.wechat-db.v2` macOS 钥匙串项，已有密钥无需迁移。辅助程序改存于 `~/.wechat-history-mcp/native/keychain`。
+继续使用原 `chat-coach.wechat-db.v2` macOS 钥匙串项，已有密钥无需迁移。辅助程序位于 `~/.wechat-history-mcp/native/keychain`。
 
 如果还没有保存密钥，在源码目录运行以下命令并安全输入（输入不回显）：
 
@@ -45,12 +45,14 @@ node mcp-server/bin/import-tracememo-key.js "/Users/you/Library/Containers/com.t
 ## 启动与数据存储
 
 ```sh
-wechat-history-mcp --account-root "/Users/you/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/<账号目录>"
+wechat-mcp --account-root "/Users/you/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/<账号目录>"
 ```
 
-源码启动可将命令替换为 `node /absolute/path/to/chat-coach/mcp-server/bin/wechat-history-mcp.js`。MCP 客户端或隧道启动并保持该进程；直接在终端运行时会等待 stdin 中的 MCP 请求，不会打开页面。
+源码启动可将命令替换为 `node /absolute/path/to/chat-coach/mcp-server/bin/wechat-mcp.js`。MCP 客户端或隧道启动并保持该进程；直接在终端运行时会等待 stdin 中的 MCP 请求，不会打开页面。
 
 缓存默认位于 `~/.wechat-history-mcp/accounts/<账号路径哈希>/messages.sqlite`，首次导入全部可读消息，后续监听 `db_storage` 变化并去重同步。可用 `--data-file /absolute/path/messages.sqlite` 指定缓存，每个账号应使用不同文件。旧 DSH 缓存和配置不会自动迁移或删除；新服务会自行重新同步。
+
+服务改名为 `wechat-mcp` 后，继续使用原 `~/.wechat-history-mcp/` 数据目录，以复用已有缓存和钥匙串辅助程序。升级时将 MCP 客户端或隧道配置里的旧命令 `wechat-history-mcp`（源码入口 `bin/wechat-history-mcp.js`）替换为 `wechat-mcp`（`bin/wechat-mcp.js`）；已有隧道 profile 可继续使用，不必重建。
 
 初始化和工具发现不需要等待全量导入；查询会等待当前同步完成，首次查询耗时取决于历史量。同步失败会返回明确错误，不把失败当成空历史。退出或 stdin 关闭时停止监听并关闭数据库。日志仅写 stderr，不含密钥或聊天正文；stdout 仅用于 MCP 协议（`--help` 除外）。
 
@@ -66,18 +68,18 @@ wechat-history-mcp --account-root "/Users/you/Library/Containers/com.tencent.xin
 ```sh
 tunnel-client init \
   --sample sample_mcp_stdio_local \
-  --profile wechat-history \
+  --profile wechat \
   --tunnel-id "tunnel_<你的隧道ID>" \
-  --mcp-command 'node "/absolute/path/to/chat-coach/mcp-server/bin/wechat-history-mcp.js" --account-root "/Users/you/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/<账号目录>"'
+  --mcp-command 'node "/absolute/path/to/chat-coach/mcp-server/bin/wechat-mcp.js" --account-root "/Users/you/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/<账号目录>"'
 
-tunnel-client doctor --profile wechat-history --explain
-tunnel-client run --profile wechat-history
+tunnel-client doctor --profile wechat --explain
+tunnel-client run --profile wechat
 ```
 
-5. 在 ChatGPT 开启开发者模式，创建私有应用，Connection 选择 **Tunnel** 并选择对应隧道。stdio 服务依靠隧道访问权限，无需额外 OAuth；仅关联需要使用的本人工作区，不发布到公共目录。
+5. 在 ChatGPT 开启开发者模式，创建私有应用，名称填写 **wechat**，Connection 选择 **Tunnel** 并选择对应隧道。已有「微信历史」应用需在 ChatGPT 应用设置中改名为 **wechat**；MCP 服务名不会自动修改应用显示名。stdio 服务依靠隧道访问权限，无需额外 OAuth；仅关联需要使用的本人工作区，不发布到公共目录。
 6. 在新对话中启用该应用，然后请求：
 
-> 用微信历史工具查找“小王”，如有多个同名联系人先让我确认。读取最近 50 条消息，再给一条克制自然的回复和一句简短思路。
+> 用 wechat 工具查找“小王”，如有多个同名联系人先让我确认。读取最近 50 条消息，再给一条克制自然的回复和一句简短思路。
 
 调用时需要电脑在线、微信数据库可读，并保持 `tunnel-client run` 运行。服务和缓存留在本机，工具返回的消息会进入 ChatGPT 当前对话。
 

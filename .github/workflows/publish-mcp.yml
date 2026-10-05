@@ -1,4 +1,4 @@
-name: Publish WeChat history MCP
+name: Publish WeChat MCP
 
 on:
   workflow_dispatch:

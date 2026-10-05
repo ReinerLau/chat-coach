@@ -15,6 +15,6 @@ if (process.platform !== 'darwin' || process.arch !== 'arm64') {
 try {
   await runServer(createHistoryRuntime(config))
 } catch (error) {
-  console.error(`[wechat-history-mcp] ${error.message}`)
+  console.error(`[wechat-mcp] ${error.message}`)
   process.exitCode = 1
 }
