@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="zh-CN">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>微信历史 · 服务管理</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>微信历史 · 服务管理</title><link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script><script src="/preview.js" defer></script></head>
 <body>
   <main>
     <header><div class="brand"><span class="mark" aria-hidden="true">W</span><div><strong>微信历史</strong><span class="local">本机服务管理</span></div></div><span class="privacy"><i></i>仅本机访问</span></header>
@@ -15,7 +15,26 @@
       <article class="card"><div class="card-top"><span class="icon" aria-hidden="true">⟳</span><h2>微信同步</h2></div><strong id="sync" class="value">—</strong><p id="last-sync">尚无同步记录</p><div class="card-foot" id="sync-note">监听本机微信数据库变化</div></article>
     </section>
     <section class="stats" aria-label="缓存统计"><div><span>缓存会话</span><strong id="sessions">—</strong></div><div><span>缓存消息</span><strong id="messages">—</strong></div><p>数据保留在本机，停止服务不会删除历史缓存。</p></section>
+    <section class="preview-section" aria-label="聊天数据预览">
+      <div class="section-heading"><div><h2>聊天数据预览</h2><p>只读查看已同步的本机缓存。新消息同步后，点击刷新查看。</p></div><button id="preview-refresh" type="button">刷新预览</button></div>
+      <div class="preview-layout">
+        <aside class="preview-sessions" aria-label="会话列表">
+          <form id="preview-search" class="preview-search"><label class="sr-only" for="preview-query">会话名称或 ID</label><input id="preview-query" type="search" maxlength="200" placeholder="搜索会话名称或 ID"><button type="submit">搜索</button></form>
+          <p id="preview-sessions-error" class="preview-error" role="alert" hidden></p>
+          <p id="preview-sessions-state" class="preview-state" role="status">正在读取会话…</p>
+          <div id="preview-session-list" class="preview-session-list"></div>
+          <button id="preview-more-sessions" class="preview-more" type="button" hidden>加载更多会话</button>
+        </aside>
+        <article class="preview-history" aria-label="消息预览">
+          <div class="preview-history-heading"><h3 id="preview-session-name">请选择会话</h3><p id="preview-session-id"></p></div>
+          <p id="preview-history-error" class="preview-error" role="alert" hidden></p>
+          <p id="preview-history-state" class="preview-state" role="status">选择左侧会话，查看最近消息。</p>
+          <button id="preview-earlier" class="preview-more" type="button" hidden>加载更早消息</button>
+          <div id="preview-history-scroll" class="preview-history-scroll"><div id="preview-message-list"></div></div>
+        </article>
+      </div>
+    </section>
     <section class="logs-section"><div class="section-heading"><div><h2>最近诊断</h2><p>最多显示 100 条记录，不含密钥或聊天正文。</p></div><span id="refreshed">每 2 秒更新</span></div><div class="logs" id="logs" aria-label="诊断日志"><p class="empty">暂无诊断记录</p></div></section>
-    <footer><span>关闭浏览器后，服务继续在后台运行。</span><span>微信历史 MCP <b>0.2.0</b></span></footer>
+    <footer><span>关闭浏览器后，服务继续在后台运行。</span><span>微信历史 MCP <b>0.3.0</b></span></footer>
   </main>
 </body></html>

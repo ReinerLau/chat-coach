@@ -2,6 +2,7 @@ import { open, unlink, writeFile } from 'node:fs/promises'
 import { managerPaths } from './config.js'
 import { TunnelRuntime } from './tunnel.js'
 import { createManagerServer } from './server.js'
+import { CachePreview } from './preview.js'
 
 const paths = managerPaths()
 let lock
@@ -28,7 +29,7 @@ try {
   lock = await open(paths.lockFile, 'wx', 0o600)
   await lock.writeFile(String(process.pid))
   const controller = new TunnelRuntime(paths)
-  managed = await createManagerServer(controller, { onShutdown: () => { void cleanup() } })
+  managed = await createManagerServer(controller, { preview: new CachePreview(paths), onShutdown: () => { void cleanup() } })
   await writeFile(paths.stateFile, JSON.stringify({ pid: process.pid, origin: managed.origin, token: managed.token }), { mode: 0o600 })
   process.send?.({ ready: true })
   process.disconnect?.()

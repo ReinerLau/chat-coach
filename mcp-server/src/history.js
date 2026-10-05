@@ -18,7 +18,12 @@ const cursorSchema = z.object({
   localId: z.string().min(1)
 }).strict()
 
-export class HistoryError extends Error {}
+export class HistoryError extends Error {
+  constructor(message, status = 400) {
+    super(message)
+    this.status = status
+  }
+}
 
 function decodeCursor(value, sessionId) {
   if (value === undefined) return null
@@ -32,30 +37,22 @@ function decodeCursor(value, sessionId) {
   } catch { throw new HistoryError('分页游标无效或属于其他会话') }
 }
 
-export class WechatHistory {
-  constructor({ store, sync }) {
+export class CachedHistory {
+  constructor({ store }) {
     this.store = store
-    this.sync = sync
   }
 
-  async refresh() {
-    try { await this.sync.sync() }
-    catch { throw new HistoryError('微信同步失败，请检查数据库密钥、微信账号目录和本机服务状态') }
-  }
-
-  async sessions(input) {
+  sessions(input) {
     const { query, limit, offset } = sessionInput.parse(input)
-    await this.refresh()
     const rows = this.store.sessions({ query, limit: limit + 1, offset })
     return { sessions: rows.slice(0, limit), nextOffset: rows.length > limit ? offset + limit : null }
   }
 
-  async messages(input) {
+  messages(input) {
     const { session_id: sessionId, limit, before } = historyInput.parse(input)
     const cursor = decodeCursor(before, sessionId)
-    await this.refresh()
     const session = this.store.session(sessionId)
-    if (!session) throw new HistoryError('会话不存在，请先查找会话并使用返回的 ID')
+    if (!session) throw new HistoryError('会话不存在，请先查找会话并使用返回的 ID', 404)
     const rows = this.store.messages(sessionId, limit + 1, cursor)
     const messages = rows.slice(-limit).map((row) => ({
       ...row,
@@ -66,5 +63,30 @@ export class WechatHistory {
       sessionId, createdAt: oldest.createdAt, localId: oldest.localId
     })).toString('base64url') : null
     return { session, messages, next }
+  }
+}
+
+export class WechatHistory extends CachedHistory {
+  constructor({ store, sync }) {
+    super({ store })
+    this.sync = sync
+  }
+
+  async refresh() {
+    try { await this.sync.sync() }
+    catch { throw new HistoryError('微信同步失败，请检查数据库密钥、微信账号目录和本机服务状态') }
+  }
+
+  async sessions(input) {
+    const parsed = sessionInput.parse(input)
+    await this.refresh()
+    return super.sessions(parsed)
+  }
+
+  async messages(input) {
+    const parsed = historyInput.parse(input)
+    decodeCursor(parsed.before, parsed.session_id)
+    await this.refresh()
+    return super.messages(parsed)
   }
 }
