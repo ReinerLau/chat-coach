@@ -8,7 +8,7 @@ import { localUrl } from './tunnel.js'
 const execute = promisify(execFile)
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
 
-function isAlive(pid) {
+export function isAlive(pid) {
   if (!Number.isInteger(pid) || pid < 1) return false
   try { process.kill(pid, 0); return true } catch { return false }
 }
@@ -68,7 +68,18 @@ export async function requestAction(manager, action) {
   return result
 }
 
-export async function launchManager({ stop = false, noOpen = false } = {}) {
+export async function stopManager(manager) {
+  if (!isAlive(manager.pid)) return { stopped: true }
+  try { await requestAction(manager, 'shutdown') }
+  catch (error) { if (isAlive(manager.pid)) throw error }
+  for (let i = 0; i < 400; i++) {
+    if (!isAlive(manager.pid)) return { stopped: true }
+    await sleep(100)
+  }
+  throw new ManagerError('服务已停止，但管理后台尚未退出，请检查状态后重试。')
+}
+
+export async function launchManager({ stop = false, noOpen = false, onReady = () => {} } = {}) {
   const paths = managerPaths()
   let manager = await readManager(paths)
   if (stop && !manager) {
@@ -78,14 +89,8 @@ export async function launchManager({ stop = false, noOpen = false } = {}) {
     return { stopped: true }
   }
   if (!manager) manager = await ensureManager(paths)
-  if (stop) {
-    await requestAction(manager, 'shutdown')
-    for (let i = 0; i < 400; i++) {
-      if (!isAlive(manager.pid)) return { stopped: true }
-      await sleep(100)
-    }
-    throw new ManagerError('服务已停止，但管理后台尚未退出，请检查状态后重试。')
-  }
+  if (stop) return stopManager(manager)
+  onReady(manager)
   let error
   try { await requestAction(manager, 'start') }
   catch (failure) { error = failure.message }

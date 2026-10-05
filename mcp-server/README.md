@@ -23,7 +23,7 @@ wechat-history --help
 wechat-mcp --help
 ```
 
-包版本 `0.2.0` 增加本机管理页。维护者合并后手动运行 **Publish WeChat MCP** 工作流发布；发布前可用 `npm pack` 生成本地安装包验证。
+包版本 `0.2.1` 支持前台运行及 Ctrl+C 关闭全部服务。维护者合并后手动运行 **Publish WeChat MCP** 工作流发布；发布前可用 `npm pack` 生成本地安装包验证。
 
 ## 数据库密钥
 
@@ -51,13 +51,15 @@ node mcp-server/bin/import-tracememo-key.js "/Users/you/Library/Containers/com.t
 wechat-history
 ```
 
-命令会确保服务运行并自动打开中文管理页。再次运行复用同一后台，关闭浏览器不会停止服务。页面提供启动、停止和重启；页面中的停止只关闭 MCP 与隧道，管理后台继续运行。关闭全部服务和管理后台：
+命令会确保服务运行并自动打开中文管理页，然后在终端前台等待。按 `Ctrl+C` 会关闭 MCP、隧道和管理后台，确认后台退出后才结束命令；启动过程中中断也会等待启动操作结束并清理服务，关闭期间连续按 Ctrl+C 不会跳过清理。关闭浏览器不会停止服务。
+
+再次运行会复用同一后台；任一前台终端按 Ctrl+C 都会关闭这个共享服务，其他前台终端会随后台退出而结束。页面提供启动、停止和重启；页面中的停止只关闭 MCP 与隧道，管理后台和前台终端继续运行。也可从另一个终端关闭全部服务和管理后台：
 
 ```sh
 wechat-history stop
 ```
 
-`wechat-history --no-open` 可在不打开浏览器时启动并检查结果。源码启动使用 `node mcp-server/bin/wechat-history.js`。macOS 的 `open` 用于打开默认浏览器。
+需要命令立即返回并在后台继续运行时使用 `wechat-history --background`；之后用 `wechat-history stop` 关闭。`wechat-history --no-open` 只是不打开浏览器，仍保持前台等待；脚本中使用 `wechat-history --background --no-open`。源码启动使用 `node mcp-server/bin/wechat-history.js`。macOS 的 `open` 用于打开默认浏览器。
 
 管理页绑定 `127.0.0.1` 的自动分配端口；访问地址和页面会话令牌保存在 `~/.wechat-history-mcp/manager.json`（仅当前用户可读）。请通过命令打开页面，不共享包含令牌的链接。接口校验 Host、Origin 和会话令牌，仅接受固定启停操作。
 
@@ -131,6 +133,6 @@ npm test --prefix mcp-server
 npm run test:package --prefix mcp-server
 ```
 
-自动测试使用模拟数据，覆盖 stdio 初始化、工具发现与调用、消息分页、同步失败、退出清理、管理页安全校验、重复启动、串行启停、超时和独立安装产物的两个 npm 命令及页面资源。CI 不读取真实微信或 macOS 钥匙串。
+自动测试使用模拟数据，覆盖 stdio 初始化、工具发现与调用、消息分页、同步失败、退出清理、管理页安全校验、重复启动、串行启停、超时、前台信号中断（含启动途中和重复中断）、外部停止及独立安装产物的两个 npm 命令及页面资源。CI 不读取真实微信或 macOS 钥匙串。
 
-用户实机自测：运行 `wechat-history`，检查状态自动刷新；停止后页面仍可用，再启动及重启。关闭页面后服务继续运行，`wechat-history stop` 关闭全部后台。不启动 DSH，在 ChatGPT 查找指定联系人，读取近期消息并向前翻页；在微信收到新消息后再次读取，确认能看到增量同步的消息。确认符合预期后反馈“验证通过”或描述问题。
+用户实机自测：运行 `wechat-history`，确认终端保持前台，按 Ctrl+C 后全部进程退出且管理页端口关闭；再次运行可恢复。验证 `--background` 会立即返回，另一个终端的 `wechat-history stop` 能结束前台命令。检查状态自动刷新；停止后页面仍可用，再启动及重启。关闭页面后服务继续运行，`wechat-history stop` 关闭全部后台。不启动 DSH，在 ChatGPT 查找指定联系人，读取近期消息并向前翻页；在微信收到新消息后再次读取，确认能看到增量同步的消息。确认符合预期后反馈“验证通过”或描述问题。
