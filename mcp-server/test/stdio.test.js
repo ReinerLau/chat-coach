@@ -12,7 +12,7 @@ const entry = fileURLToPath(new URL('../bin/wechat-mcp.js', import.meta.url))
 test('the published command starts the renamed CLI and identifies errors with the new name', () => {
   const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
   assert.equal(manifest.name, '@reinerlau/wechat-mcp')
-  assert.deepEqual(Object.keys(manifest.bin), ['wechat-mcp'])
+  assert.deepEqual(Object.keys(manifest.bin), ['wechat-mcp', 'wechat-history'])
   const command = fileURLToPath(new URL(`../${manifest.bin['wechat-mcp']}`, import.meta.url))
   const invalid = spawnSync(process.execPath, [command, '--unknown'], { encoding: 'utf8' })
   assert.equal(invalid.status, 2)

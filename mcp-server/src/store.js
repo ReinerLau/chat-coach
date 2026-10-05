@@ -57,6 +57,13 @@ export class MessageStore {
     return this.db.prepare('SELECT MAX(created_at) AS time FROM messages WHERE session_id=?').get(sessionId)?.time ?? 0
   }
 
+  stats() {
+    return {
+      sessions: this.db.prepare('SELECT COUNT(*) AS n FROM sessions').get().n,
+      messages: this.db.prepare('SELECT COUNT(*) AS n FROM messages').get().n
+    }
+  }
+
   markHistoryComplete(sessionId) {
     this.db.prepare('UPDATE sessions SET history_complete=1 WHERE id=?').run(sessionId)
   }

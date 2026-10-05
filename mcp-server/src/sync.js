@@ -4,11 +4,12 @@ import { setImmediate } from 'node:timers/promises'
 import { normalizeMessage, normalizeSession } from './normalize.js'
 
 export class WechatSync {
-  constructor({ source, store, accountRoot, onError = () => {}, pageSize = 200 }) {
+  constructor({ source, store, accountRoot, onError = () => {}, onState = () => {}, pageSize = 200 }) {
     this.source = source
     this.store = store
     this.accountRoot = accountRoot
     this.onError = onError
+    this.onState = onState
     this.pageSize = pageSize
     this.inFlight = null
     this.dirty = false
@@ -20,7 +21,13 @@ export class WechatSync {
   sync() {
     if (this.stopped) return Promise.reject(new Error('同步已停止'))
     if (this.inFlight) { this.dirty = true; return this.inFlight }
-    this.inFlight = this.run().finally(() => { this.inFlight = null })
+    this.onState({ phase: 'syncing', error: null })
+    this.inFlight = this.run().then(() => {
+      if (!this.stopped) this.onState({ phase: 'idle', lastSuccessAt: new Date().toISOString(), error: null })
+    }, (error) => {
+      this.onState({ phase: 'error', error: '同步失败，请检查微信数据库、数据库密钥和账号目录。' })
+      throw error
+    }).finally(() => { this.inFlight = null })
     return this.inFlight
   }
 
@@ -52,6 +59,7 @@ export class WechatSync {
               latest = Math.max(latest, message.createdAt)
             }
             this.store.saveMessages(pending)
+            this.onState({ phase: 'syncing' })
             if (reachedKnown) break
             await setImmediate()
             if (this.stopped) return
@@ -81,7 +89,10 @@ export class WechatSync {
       clearTimeout(this.timer)
       this.timer = setTimeout(() => this.sync().catch(this.onError), 350)
     })
-    this.watcher.on('error', this.onError)
+    this.watcher.on('error', () => {
+      this.onState({ phase: 'error', error: '数据库监听失败，请重启服务并检查账号目录。' })
+      this.onError()
+    })
     this.sync().catch(this.onError)
   }
 

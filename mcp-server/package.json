@@ -1,6 +1,6 @@
 {
   "name": "@reinerlau/wechat-mcp",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ReinerLau/chat-coach.git",
@@ -14,11 +14,13 @@
     "bin/",
     "native/",
     "src/",
+    "web/",
     "vendor/"
   ],
   "type": "module",
   "bin": {
-    "wechat-mcp": "bin/wechat-mcp.js"
+    "wechat-mcp": "bin/wechat-mcp.js",
+    "wechat-history": "bin/wechat-history.js"
   },
   "engines": {
     "node": ">=22.13"
@@ -30,6 +32,8 @@
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.0",
     "koffi": "^2.15.1",
+    "shell-quote": "^1.12.0",
+    "yaml": "^2.9.1",
     "zod": "^4.0.0"
   }
 }
