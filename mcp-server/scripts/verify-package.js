@@ -16,19 +16,21 @@ function run(command, args, cwd = root) {
 try {
   const [packed] = JSON.parse(run('npm', ['pack', '--json', '--pack-destination', scratch]))
   const files = new Set(packed.files.map((file) => file.path))
-  for (const required of ['bin/wechat-history-mcp.js', 'bin/wechat-history.js', 'web/index.html', 'web/app.js', 'web/style.css', 'src/manager/daemon.js', 'src/server.js', 'native/keychain.c', 'vendor/weflow/libWCDB.dylib', 'vendor/weflow/LICENSE']) {
+  for (const required of ['bin/wechat-mcp.js', 'bin/wechat-history.js', 'web/index.html', 'web/app.js', 'web/style.css', 'src/manager/daemon.js', 'src/server.js', 'native/keychain.c', 'vendor/weflow/libWCDB.dylib', 'vendor/weflow/LICENSE']) {
     assert.ok(files.has(required), `Missing package file: ${required}`)
   }
+  assert.ok(!files.has('bin/wechat-history-mcp.js'))
   assert.ok(![...files].some((file) => /mobile\.html|src\/http\.js|src\/pairing\.js|src\/index\.js/.test(file)))
   const installed = join(scratch, 'installed')
   run('npm', ['install', '--prefix', installed, '--no-audit', '--no-fund', join(scratch, packed.filename)])
-  const manifest = JSON.parse(readFileSync(join(installed, 'node_modules/@reinerlau/wechat-history-mcp/package.json')))
-  assert.equal(manifest.name, '@reinerlau/wechat-history-mcp')
+  const manifest = JSON.parse(readFileSync(join(installed, 'node_modules/@reinerlau/wechat-mcp/package.json')))
+  assert.equal(manifest.name, '@reinerlau/wechat-mcp')
+  assert.deepEqual(manifest.bin, { 'wechat-mcp': 'bin/wechat-mcp.js', 'wechat-history': 'bin/wechat-history.js' })
   assert.equal(manifest.version, '0.2.0')
   assert.ok(!manifest.peerDependencies)
   assert.ok(!Object.keys(manifest.dependencies).some((name) => name.includes('deepseek') || name === 'qrcode'))
-  const help = run(join(installed, 'node_modules/.bin/wechat-history-mcp'), ['--help'], scratch)
-  assert.match(help, /wechat-history-mcp --account-root/)
+  const help = run(join(installed, 'node_modules/.bin/wechat-mcp'), ['--help'], scratch)
+  assert.match(help, /wechat-mcp --account-root/)
   assert.match(run(join(installed, 'node_modules/.bin/wechat-history'), ['--help'], scratch), /wechat-history/)
   await verifyManager(join(installed, 'node_modules/.bin/wechat-history'), scratch)
   console.log('Package verified: both commands, independent manager, assets, lifecycle, WCDB library and license.')

@@ -1,5 +1,5 @@
 {
-  "name": "@reinerlau/wechat-history-mcp",
+  "name": "@reinerlau/wechat-mcp",
   "version": "0.2.0",
   "repository": {
     "type": "git",
@@ -19,7 +19,7 @@
   ],
   "type": "module",
   "bin": {
-    "wechat-history-mcp": "bin/wechat-history-mcp.js",
+    "wechat-mcp": "bin/wechat-mcp.js",
     "wechat-history": "bin/wechat-history.js"
   },
   "engines": {

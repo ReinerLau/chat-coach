@@ -43,7 +43,7 @@ export async function safeLogs(file) {
         const time = typeof row.time === 'string' && Number.isFinite(Date.parse(row.time)) ? new Date(row.time).toISOString() : ''
         return [{ time, level: ['INFO', 'WARN', 'ERROR', 'DEBUG'].includes(row.level) ? row.level : 'INFO', message }]
       } catch {
-        if (line.startsWith('[wechat-history-mcp]')) return [{ time: '', level: 'ERROR', message: '微信 MCP 报告错误，请检查账号配置或重启服务。' }]
+        if (line.startsWith('[wechat-mcp]') || line.startsWith('[wechat-history-mcp]')) return [{ time: '', level: 'ERROR', message: '微信 MCP 报告错误，请检查账号配置或重启服务。' }]
         return []
       }
     }).slice(-100)
@@ -70,7 +70,7 @@ export class TunnelRuntime {
       const { stdout } = await this.run(executable, args, { env: this.env, timeout, maxBuffer: 4 * 1024 * 1024, killSignal: 'SIGTERM' })
       return stdout
     } catch (error) {
-      if (['status', 'stop'].includes(args[1]) && /^alias wechat-history is not known; run create or connect first\s*$/.test(error.stderr || '')) {
+      if (['status', 'stop'].includes(args[1]) && /^alias (?:wechat|wechat-history) is not known; run create or connect first\s*$/.test(error.stderr || '')) {
         throw Object.assign(new ManagerError('尚未创建本机隧道运行实例。'), { code: 'RUNTIME_NOT_FOUND' })
       }
       if (error.killed || error.code === 'ETIMEDOUT') throw new ManagerError('隧道操作超时，请查看诊断状态后重试。')
@@ -80,7 +80,7 @@ export class TunnelRuntime {
 
   async rawStatus(timeout) {
     let output
-    try { output = await this.client(['runtimes', 'status', 'wechat-history', '--json'], timeout) }
+    try { output = await this.client(['runtimes', 'status', this.paths.profileName, '--json'], timeout) }
     catch (error) {
       if (error.code === 'RUNTIME_NOT_FOUND') return { process_running: false, healthy: false, ready: false }
       throw error
@@ -153,7 +153,7 @@ export class TunnelRuntime {
   }
 
   async stop() {
-    try { await this.client(['runtimes', 'stop', 'wechat-history']) }
+    try { await this.client(['runtimes', 'stop', this.paths.profileName]) }
     catch (error) { if (error.code !== 'RUNTIME_NOT_FOUND') throw error }
     const status = await this.rawStatus()
     if (status.process_running || status.healthy || status.ready) throw new ManagerError('旧服务尚未停止，已取消后续启动，避免同一隧道运行多个实例。')
@@ -166,7 +166,7 @@ export class TunnelRuntime {
     if (previous.process_running && previous.healthy && previous.ready && await this.mcpHealth(previous) === 'running') return
     if (previous.process_running || previous.healthy || previous.ready) await this.stop()
     await this.client([
-      'runtimes', 'connect', '--alias', 'wechat-history', '--profile', 'wechat-history',
+      'runtimes', 'connect', '--alias', this.paths.profileName, '--profile', this.paths.profileName,
       '--profile-dir', this.paths.profileDir, '--tunnel-id', config.tunnelId,
       '--runtime-api-key', config.apiKey, '--control-plane-base-url', config.baseUrl, '--mcp-command', mcpCommand(config)
     ])

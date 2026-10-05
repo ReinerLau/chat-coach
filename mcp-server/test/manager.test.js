@@ -43,9 +43,24 @@ test('loads existing JSON/YAML profile and creates a quoted installed MCP comman
   assert.equal(config.accountRoot, '/account with spaces')
   assert.equal(config.statusFile, paths.statusFile)
   assert.match(mcpCommand(config), /--status-file/)
+  assert.match(mcpCommand(config), /bin\/wechat-mcp\.js/)
   assert.match(mcpCommand(config), /account with spaces/)
   await writeFile(paths.profileFile, `control_plane:\n  tunnel_id: ${profile.control_plane.tunnel_id}\n  api_key: '${profile.control_plane.api_key}'\nmcp:\n  commands:\n    - channel: main\n      command: 'node /package/wechat-history-mcp --account-root /account'\n`)
   assert.equal(loadTunnelConfig(paths).accountRoot, '/account')
+})
+
+test('retains an existing history profile and alias while upgrading its legacy MCP command', async (t) => {
+  const { home, paths, profile, runtime, calls } = await fixture(t)
+  assert.equal(paths.profileName, 'wechat')
+  await writeFile(join(paths.profileDir, 'wechat-history.yaml'), JSON.stringify(profile))
+  const legacy = managerPaths(home, {})
+  assert.equal(legacy.profileName, 'wechat-history')
+  assert.match(mcpCommand(loadTunnelConfig(legacy)), /bin\/wechat-mcp\.js/)
+  runtime.paths = legacy
+  await runtime.action('start')
+  const connect = calls.find((args) => args[1] === 'connect')
+  assert.equal(connect[connect.indexOf('--alias') + 1], 'wechat-history')
+  assert.equal(connect[connect.indexOf('--profile') + 1], 'wechat-history')
 })
 
 test('rejects missing config, shell operations, other programs and raw keys without leaking values', async (t) => {
@@ -106,7 +121,7 @@ test('an initialized profile can start before its official managed alias exists'
   let known = false
   runtime.run = async (file, args) => {
     if (args[1] === 'connect') known = true
-    if (!known && ['status', 'stop'].includes(args[1])) throw Object.assign(new Error('unknown alias'), { stderr: 'alias wechat-history is not known; run create or connect first\n' })
+    if (!known && ['status', 'stop'].includes(args[1])) throw Object.assign(new Error('unknown alias'), { stderr: 'alias wechat is not known; run create or connect first\n' })
     return original(file, args)
   }
   assert.equal((await runtime.snapshot()).state, 'stopped')

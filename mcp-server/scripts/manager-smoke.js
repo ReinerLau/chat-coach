@@ -27,7 +27,7 @@ const args = process.argv.slice(2);
 const file = process.env.MOCK_RUNTIME_FILE;
 let state = { running: false, calls: [] };
 if (!fs.existsSync(file) && ['status', 'stop'].includes(args[1])) {
-  console.error('alias wechat-history is not known; run create or connect first'); process.exit(1);
+  console.error('alias wechat is not known; run create or connect first'); process.exit(1);
 }
 try { state = JSON.parse(fs.readFileSync(file, 'utf8')); } catch {}
 if (args[1] === 'connect') { state.running = true; state.calls.push('connect'); }
@@ -53,9 +53,9 @@ if (args[1] === 'status') console.log(JSON.stringify({ process_running: state.ru
     assert.equal((await status()).state, 'error')
     const key = join(scratch, 'mock-key')
     await writeFile(key, 'fake-runtime-key', { mode: 0o600 })
-    await writeFile(join(configRoot, 'tunnel-client/wechat-history.yaml'), JSON.stringify({
+    await writeFile(join(configRoot, 'tunnel-client/wechat.yaml'), JSON.stringify({
       control_plane: { tunnel_id: `tunnel_${'a'.repeat(32)}`, api_key: `file:${key}` },
-      mcp: { commands: [{ channel: 'main', command: 'node /mock/wechat-history-mcp --account-root /mock/account' }] }
+      mcp: { commands: [{ channel: 'main', command: 'node /mock/wechat-mcp --account-root /mock/account' }] }
     }))
     await Promise.all([cli(['--no-open']), cli(['--no-open'])])
     assert.equal((await readManager()).pid, manager.pid)

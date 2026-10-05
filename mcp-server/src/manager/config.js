@@ -1,4 +1,4 @@
-import { accessSync, constants, readFileSync } from 'node:fs'
+import { accessSync, constants, existsSync, readFileSync } from 'node:fs'
 import { homedir } from 'node:os'
 import { basename, isAbsolute, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -11,7 +11,8 @@ export class ManagerError extends Error {}
 export function managerPaths(home = homedir(), env = process.env) {
   const root = env.WECHAT_HISTORY_HOME || join(home, '.wechat-history-mcp')
   const profileDir = join(env.XDG_CONFIG_HOME || join(home, '.config'), 'tunnel-client')
-  return { root, profileDir, profileFile: join(profileDir, 'wechat-history.yaml'), stateFile: join(root, 'manager.json'), lockFile: join(root, 'manager.lock'), statusFile: join(root, 'sync-status.json') }
+  const profileName = existsSync(join(profileDir, 'wechat-history.yaml')) ? 'wechat-history' : 'wechat'
+  return { root, profileDir, profileName, profileFile: join(profileDir, `${profileName}.yaml`), stateFile: join(root, 'manager.json'), lockFile: join(root, 'manager.lock'), statusFile: join(root, 'sync-status.json') }
 }
 
 export function findTunnelClient(home = homedir(), env = process.env) {
@@ -28,18 +29,18 @@ export function findTunnelClient(home = homedir(), env = process.env) {
 export function loadTunnelConfig(paths, env = process.env) {
   let profile
   try { profile = parseYaml(readFileSync(paths.profileFile, 'utf8'), { logLevel: 'silent', maxAliasCount: 20 }) }
-  catch { throw new ManagerError('无法读取 wechat-history 隧道配置。请按 README 完成 tunnel-client init 配置。') }
+  catch { throw new ManagerError('无法读取微信隧道配置。请按 README 完成 tunnel-client init 配置。') }
   const tunnelId = profile?.control_plane?.tunnel_id
-  if (typeof tunnelId !== 'string' || !/^tunnel_[a-f0-9]{32}$/i.test(tunnelId)) throw new ManagerError('隧道 ID 无效，请检查 wechat-history 配置。')
+  if (typeof tunnelId !== 'string' || !/^tunnel_[a-f0-9]{32}$/i.test(tunnelId)) throw new ManagerError('隧道 ID 无效，请检查微信隧道配置。')
   const commands = profile?.mcp?.commands
   if (!Array.isArray(commands) || commands.length !== 1 || commands[0].channel !== 'main') throw new ManagerError('管理页只支持一个 main 通道的微信 stdio 服务，请检查隧道配置。')
   let args, config
   try {
     args = parseShell(commands[0].command, () => { throw new Error() })
-    if (!args.every((arg) => typeof arg === 'string') || basename(args[0]) !== 'node' || !/^wechat-history-mcp(?:\.js)?$/.test(basename(args[1]))) throw new Error()
+    if (!args.every((arg) => typeof arg === 'string') || basename(args[0]) !== 'node' || !/^wechat-(?:mcp|history-mcp)(?:\.js)?$/.test(basename(args[1]))) throw new Error()
     config = parseConfig(args.slice(2))
     if (config.help || !isAbsolute(config.accountRoot)) throw new Error()
-  } catch { throw new ManagerError('无法识别微信 MCP 启动参数。请使用 README 中的 node + wechat-history-mcp 启动格式。') }
+  } catch { throw new ManagerError('无法识别微信 MCP 启动参数。请使用 README 中的 node + wechat-mcp 启动格式。') }
   const apiKey = profile.control_plane.api_key
   if (typeof apiKey !== 'string' || !/^(?:env:|file:).+/.test(apiKey)) throw new ManagerError('隧道运行密钥必须使用 env: 或 file: 引用；请勿将密钥值写入配置。')
   const baseUrl = profile.control_plane.base_url || 'https://api.openai.com'
@@ -58,7 +59,7 @@ export function validateRuntimeKey(config, env = process.env) {
 
 export function mcpCommand(config) {
   return quote([
-    process.execPath, fileURLToPath(new URL('../../bin/wechat-history-mcp.js', import.meta.url)),
+    process.execPath, fileURLToPath(new URL('../../bin/wechat-mcp.js', import.meta.url)),
     '--account-root', config.accountRoot, '--data-file', config.dataFile, '--status-file', config.statusFile
   ])
 }
