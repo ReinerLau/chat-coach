@@ -23,7 +23,7 @@ wechat-mcp --help
 wechat-mcp stdio --help
 ```
 
-包版本 `0.3.1` 包含管理页绿色 W 图标和本机缓存预览，统一使用 `wechat-mcp` 启动管理服务，`wechat-mcp stdio` 启动 stdio MCP。前台运行时 Ctrl+C 关闭全部服务。维护者合并后手动运行 **Publish WeChat MCP** 工作流发布；发布前可用 `npm pack` 生成本地安装包验证。项目的 Git 标签不会自动更新 npm 包，发布前需同步 `package.json`、lockfile、MCP 初始化与管理页中的包版本，并通过包验证；已有版本不可重复发布。
+当前包版本以 `mcp-server/package.json` 为准。统一使用 `wechat-mcp` 启动管理服务，`wechat-mcp stdio` 启动 stdio MCP；前台运行时按 Ctrl+C 关闭全部服务。PR 合并后，Auto Tag 工作流依据 PR label 更新 `package.json` 和 lockfile 并创建对应 Git tag。维护者仍需手动运行 **Publish WeChat MCP** 工作流发布；发布前可用 `npm run test:package --prefix mcp-server` 验证安装包，已有版本不可重复发布。
 
 ## 数据库密钥
 
@@ -65,7 +65,7 @@ wechat-mcp stop
 
 管理后台复用 `${XDG_CONFIG_HOME:-~/.config}/tunnel-client/wechat.yaml`（若已有 `wechat-history.yaml` 则优先复用），要求单个 `main` stdio 通道，启动命令采用下方的 `node + wechat-mcp stdio` 格式；运行密钥使用 `env:变量名` 或 `file:/绝对路径` 引用。文件引用适合后台运行，环境变量必须在首次启动管理后台的终端中设置。管理后台的环境会沿用到服务重启；更换环境变量后先 `wechat-mcp stop` 再启动。
 
-客户端从 PATH 查找，也可通过 `TUNNEL_CLIENT_BIN=/绝对路径/tunnel-client` 指定。后台调用官方 `tunnel-client runtimes connect/status/stop`，确认进程、健康、就绪和 MCP 子进程状态。首次升级已运行的旧服务后，在页面点一次重启以启用同步状态报告。旧 Python 启动脚本应退出 PATH 或备份后替换为 npm 命令；现有隧道 ID、钥匙串和账号缓存保留。
+客户端从 PATH 查找，也可通过 `TUNNEL_CLIENT_BIN=/绝对路径/tunnel-client` 指定。后台调用官方 `tunnel-client runtimes connect/status/stop`，确认进程、健康、就绪和 MCP 子进程状态。首次升级已运行的旧服务后，在页面点一次重启以启用同步状态报告；现有隧道 ID、钥匙串和账号缓存保留。
 
 服务状态每 2 秒刷新，显示同步成功时间、缓存会话及消息数和最近 100 条经过筛选的诊断记录；状态和诊断记录不包含聊天正文或密钥。官方隧道诊断页入口仅指向本机地址。停止后的统计标记为历史数据；新服务的实时状态不会采用旧进程报告。缺少配置、客户端或运行密钥时页面给出准备步骤，启动失败时不会显示成功。缺少微信数据库密钥时按上方“数据库密钥”准备，再重启。
 
