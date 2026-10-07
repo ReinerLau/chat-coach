@@ -1,0 +1,230 @@
+{
+  "version": 1,
+  "dimensions": [
+    "material",
+    "action",
+    "expression",
+    "stop",
+    "diversity"
+  ],
+  "cases": [
+    {
+      "id": "arrived-no-context",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：到了"
+      ],
+      "request": "帮我回一句，稳一点。",
+      "failure_signals": [
+        "凭空说对方累、辛苦或终于到了",
+        "没有上下文却擅自说“我下来”“我去接你”",
+        "额外开启新话题"
+      ]
+    },
+    {
+      "id": "arrived-with-plan",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "我：你到楼下跟我说一声，我下来",
+        "对方：到了"
+      ],
+      "request": "帮我回。",
+      "failure_signals": [
+        "忽略已有约定而继续追问信息",
+        "添加与下楼无关的寒暄、关心或总结"
+      ]
+    },
+    {
+      "id": "simple-status",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：我到家了"
+      ],
+      "request": "怎么回比较自然？",
+      "failure_signals": [
+        "无依据判断对方很累或今天很辛苦",
+        "自动加“你呢？”或另起话题",
+        "回复明显长于当前沟通需要"
+      ]
+    },
+    {
+      "id": "playful-question",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：哈哈哈",
+        "对方：你怎么突然问这个"
+      ],
+      "request": "帮我回一句。",
+      "failure_signals": [
+        "擅自分析对方情绪或关系",
+        "把轻松一句话扩成解释、总结或人生道理",
+        "为了活人感强塞网络词"
+      ]
+    },
+    {
+      "id": "serious-boundary",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：这件事我真的不太舒服，我觉得你越界了"
+      ],
+      "request": "帮我回，认真一点。",
+      "failure_signals": [
+        "开玩笑、接梗或用轻佻语气词",
+        "替对方分析更深层心理",
+        "回避对方明确提出的边界问题"
+      ]
+    },
+    {
+      "id": "explicit-low-mood",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：今天被老板说了，挺难受的"
+      ],
+      "request": "我该怎么回？",
+      "failure_signals": [
+        "把难受扩写成输入中没有的严重状态",
+        "未经请求开始给职场建议",
+        "一次回复同时安慰、分析、建议并追问多件事"
+      ]
+    },
+    {
+      "id": "direct-refusal",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：今晚能帮我搬家吗？"
+      ],
+      "request": "我今晚去不了，帮我回。",
+      "failure_signals": [
+        "没有明确表达去不了",
+        "编造不能去的原因",
+        "为了缓和拒绝而承诺输入中没有的补偿"
+      ]
+    },
+    {
+      "id": "clarification-needed",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：你把那个发我一下"
+      ],
+      "request": "前面没有更多上下文，帮我回。",
+      "failure_signals": [
+        "擅自猜“那个”具体是什么",
+        "在无法完成动作时不澄清对象",
+        "追问之外又追加无关寒暄"
+      ]
+    },
+    {
+      "id": "direct-info-answer",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：几点到？"
+      ],
+      "request": "我大概七点到，帮我回。",
+      "failure_signals": [
+        "加入不存在的行程细节或原因",
+        "回答时间后继续强行追问或闲聊",
+        "把简单信息写成完整说明段落"
+      ]
+    },
+    {
+      "id": "ambiguous-relationship",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：想你了"
+      ],
+      "request": "没有其他关系背景，给我两个稳一点的回复。",
+      "failure_signals": [
+        "默认双方是恋爱或暧昧关系",
+        "两个候选只是语气词或近义词替换",
+        "主动升级亲密程度"
+      ]
+    },
+    {
+      "id": "multiple-candidates",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop",
+        "diversity"
+      ],
+      "context": [
+        "对方：周六有空吗，一起吃饭？"
+      ],
+      "request": "我周六有空。给我四个自然一点的候选。",
+      "failure_signals": [
+        "四个候选基本只是“可以/行/好啊”的同义改写",
+        "候选添加输入中不存在的地点、菜系或关系设定",
+        "每个候选都强行塞多个后续问题"
+      ]
+    },
+    {
+      "id": "hurt-feedback",
+      "target": [
+        "material",
+        "action",
+        "expression",
+        "stop"
+      ],
+      "context": [
+        "对方：你昨天那样说我很难受"
+      ],
+      "request": "帮我回，别太官方。",
+      "failure_signals": [
+        "替对方定义具体受伤原因而输入未提供",
+        "用模板化长篇道歉解释自己",
+        "道歉后立刻要求对方安慰、理解或继续解释"
+      ]
+    }
+  ]
+}
