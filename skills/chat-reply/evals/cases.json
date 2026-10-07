@@ -100,6 +100,39 @@
       ]
     },
     {
+      "id": "do-not-invent-user-details",
+      "context": ["对方：今晚出来吃饭吗"],
+      "request": "你不想去，除此之外没有提供理由或改天再约的打算。给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["material", "action", "stop"],
+      "failure_conditions": [
+        {"id": "invent-user-reason", "description": "替用户编造疲惫、加班、生病等未提供的拒绝理由。", "critical": true},
+        {"id": "invent-user-commitment", "description": "替用户承诺改天请客或另约时间。", "critical": true}
+      ]
+    },
+    {
+      "id": "shared-background-no-repetition",
+      "context": ["此前已确认：周六搬家，对方会来帮忙。", "对方：几点过去？"],
+      "request": "你已确定十点开始。根据上下文给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["material", "expression", "stop"],
+      "failure_conditions": [
+        {"id": "repeat-shared-background", "description": "无助于消歧或确认，却重新复述双方已经知道的搬家和帮忙背景。", "critical": false},
+        {"id": "miss-needed-time", "description": "没有回答对方当前询问的时间。", "critical": false}
+      ]
+    },
+    {
+      "id": "select-relevant-point",
+      "context": ["对方：今天忙死了，午饭都没吃，刚下班。你到店了吗"],
+      "request": "你已经到店。给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["action", "expression", "stop"],
+      "failure_conditions": [
+        {"id": "answer-every-detail", "description": "机械逐项复述或回应对方的忙碌、没吃饭和下班等背景，导致当前到店确认被淹没。", "critical": false},
+        {"id": "miss-direct-question", "description": "没有回答是否到店。", "critical": false}
+      ]
+    },
+    {
       "id": "candidate-diversity-dinner",
       "context": ["对方：晚上吃饭吗"],
       "request": "你愿意去。给出 4 个不同思路的候选回复。",
