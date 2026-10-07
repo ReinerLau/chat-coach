@@ -68,6 +68,7 @@
    - **必须补新测试**：每次改动如果涉及可测试的逻辑（新增函数、修 Bug、改行为），必须同步补测试。纯配置/文档类改动可跳过。
    - **改完再跑一次**：提交前再跑一次全量测试，确保全部通过。微信 MCP 改动还需运行 `npm test --prefix mcp-server` 和 `npm run test:package --prefix mcp-server`；自动测试使用模拟数据，不依赖真实微信或钥匙串。
    - **AI 行为**：开发完成后主动用子 Agent 跑测试，主上下文只看结果摘要，不要把跑测试这件事丢给用户。如果测试失败，修复后再提交。
+   - **Skill 行为评测**：修改 `skills/chat-reply/**` 时，必须按 `skills/chat-reply/EVAL.md` 运行隔离 A/B eval：Skill 组手动调用 Skill，Baseline 组不读取 Skill，Blind Judge 不读取 Skill 或本次 diff；生成和评分都必须使用独立上下文。无法提供独立上下文时，将结果标记为 `invalid`，不得声称 Skill eval 通过。
 
 5. **文档整理**：测试通过后，运行 `/neat-freak` 整理项目文档和规则文件，清理残留，确保 AGENTS.md 和代码实际行为一致。
 
