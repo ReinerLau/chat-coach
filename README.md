@@ -1,11 +1,8 @@
 # chat-coach
 
-回复教练：根据对话给出克制、自然的回复建议，并解释一句回复思路。
+回复教练：通过本机微信历史为 ChatGPT 提供对话上下文，帮助生成克制、自然的回复建议，并解释回复思路。
 
-当前有两种运行方式：
-
-- [微信历史 MCP](mcp-server/README.md)：独立同步本机微信消息，通过私有 MCP 隧道供 ChatGPT 查找会话、读取历史并生成回复建议。npm 包为 `@reinerlau/wechat-mcp`，运行 `wechat-mcp` 打开本机管理页并在前台等待，Ctrl+C 关闭全部服务；`--background` 后台运行；`wechat-mcp stop` 关闭全部后台，`wechat-mcp stdio` 为 stdio 入口。
-- 旧版飞书 Bot：运行 `python3 -m chat_coach.bot`，在飞书 1v1 私聊中模拟对话，记录保存在飞书 Bitable。
+当前运行入口是 [微信历史 MCP](mcp-server/README.md)：它独立读取并同步本机微信消息，通过私有 MCP 隧道供 ChatGPT 查找会话、读取历史。npm 包为 `@reinerlau/wechat-mcp`，运行 `wechat-mcp` 打开本机管理页并在前台等待，Ctrl+C 关闭全部服务；`--background` 后台运行；`wechat-mcp stop` 关闭全部后台，`wechat-mcp stdio` 为 stdio 入口。
 
 ## 微信 MCP 接口
 
@@ -43,4 +40,11 @@
 
 非文本消息只返回 `[非文本消息：类型 X]` 占位文本，不读取图片、视频、文件等附件内容。当前不暴露发送微信消息、按关键词搜索消息、按时间范围筛选消息、读取附件内容或独立枚举微信通讯录的工具。
 
-测试：`python3 -m pytest tests/ -v`；MCP 测试使用 Node.js 22.13+ 执行 `npm test --prefix mcp-server`，安装产物验证使用 `npm run test:package --prefix mcp-server`。
+## 测试
+
+需要 Node.js 22.13+：
+
+```bash
+npm test --prefix mcp-server
+npm run test:package --prefix mcp-server
+```

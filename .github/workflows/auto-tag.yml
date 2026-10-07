@@ -66,13 +66,10 @@ jobs:
           echo "tag=v$NEW" >> $GITHUB_OUTPUT
           echo "ver=$NEW" >> $GITHUB_OUTPUT
 
-      - name: Sync pyproject.toml and tag
+      - name: Create tag
         run: |
-          sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.ver }}\"/" pyproject.toml
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
-          git commit -m "chore: bump version to ${{ steps.version.outputs.ver }}"
           git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
-          git push origin master "${{ steps.version.outputs.tag }}"
-          echo "Done: ${{ steps.version.outputs.tag }} | synced pyproject.toml"
+          git push origin "${{ steps.version.outputs.tag }}"
+          echo "Done: ${{ steps.version.outputs.tag }}"
