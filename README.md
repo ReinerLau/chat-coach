@@ -2,6 +2,11 @@
 
 回复教练：根据对话给出克制、自然的回复建议，并解释一句回复思路。
 
+回复生成有两份面向不同运行环境的规则入口：
+
+- `skills/chat-reply/SKILL.md`：给支持 Agent Skills 的模型使用，详细自然感规则放在同目录 reference 中。
+- `prompts/reply.md`：旧版飞书 Bot 实际加载的 system prompt，与 Skill 保持相同的“材料 → 动作 → 表达 → 停止”原则。
+
 当前有两种运行方式：
 
 - [微信历史 MCP](mcp-server/README.md)：独立同步本机微信消息，通过私有 MCP 隧道供 ChatGPT 查找会话、读取历史并生成回复建议。npm 包为 `@reinerlau/wechat-mcp`，运行 `wechat-mcp` 打开本机管理页并在前台等待，Ctrl+C 关闭全部服务；`--background` 后台运行；`wechat-mcp stop` 关闭全部后台，`wechat-mcp stdio` 为 stdio 入口。
