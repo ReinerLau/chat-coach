@@ -20,3 +20,4 @@ description: 基于真实聊天上下文生成或改写自然、克制的中文�
 
 需要更细的判断规则和例子时，读取 [references/naturalness.md](references/naturalness.md)。
 
+修改本 Skill 或其 references 后，按 [EVAL.md](EVAL.md) 使用隔离子 Agent 跑固定回归评测。
