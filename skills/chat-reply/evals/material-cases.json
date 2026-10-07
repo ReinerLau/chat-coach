@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "cases": [
     {
       "id": "provided-enough",
@@ -22,7 +22,7 @@
         },
         {
           "id": "omit-time",
-          "description": "遗漏用户已经提供的十点。",
+          "description": "内部摘要遗漏用户已经提供的十点。",
           "critical": true
         }
       ]
@@ -858,12 +858,12 @@
       "failure_conditions": [
         {
           "id": "claim-verified",
-          "description": "把转述的发烧当作已核实的诊断或客观事实。",
+          "description": "内部摘要把转述的发烧宣称为已核实的诊断或客观事实。",
           "critical": true
         },
         {
-          "id": "invent-feelings",
-          "description": "添加未提供的情绪或经历。",
+          "id": "invent-user-fact",
+          "description": "替用户确定未提供的经历、理由、承诺或立场；普通语气反应和对方状态的日常试探不算确定事实。",
           "critical": true
         }
       ]
@@ -1053,7 +1053,7 @@
         },
         {
           "id": "ignore-agreement",
-          "description": "忽略用户与小陈的十点约定。",
+          "description": "内部摘要遗漏或改写用户与小陈的十点约定。",
           "critical": true
         }
       ]

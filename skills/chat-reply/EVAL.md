@@ -1,41 +1,44 @@
 # Chat Reply Skill Evaluation
 
-这个评测用于验证回复行为与材料准备流程，并确保测试过程与修改 Skill 的主 Agent 隔离。每次评测同时运行固定回复回归和独立材料层场景，不调用真实微信 MCP。
+验证当前 Skill 是否改善中文聊天回复的活人感，并检查是否代填用户事实。每轮同时运行固定回复回归和独立材料层功能评测，不调用真实微信 MCP。不评价聊天效果，也不能据此声称“保证对方无法识别 AI”。
 
 ## 隔离要求
 
-每次修改 `skills/chat-reply/**` 后，使用 3 个全新的子 Agent，全部设置 `fork_context=false`，并尽量使用相同模型与 reasoning 配置：
+每次修改 `skills/chat-reply/**` 后，使用 3 个全新的子 Agent，全部设置 `fork_context=false`，尽量使用相同模型与 reasoning 配置：
 
-1. **Baseline Agent**：只接收测试输入、模拟工具调用说明和输出格式要求。明确禁止读取、加载或引用 `skills/chat-reply/SKILL.md` 及其 references。
-2. **Skill Agent**：接收与 Baseline 完全相同的输入和工具说明，并显式加载当前工作区中的 `skills/chat-reply/SKILL.md` 后作答。
-3. **Judge Agent**：只接收测试用例、两套 rubric 和匿名化后的 A/B 输出及实际调用记录。禁止读取 Skill，也不能知道 A/B 分别来自哪个 Agent。
+1. **Baseline Agent**：只接收测试用例、模拟工具接口和输出格式要求。明确禁止读取、加载或引用 Skill、references、举例文档和 Judge rubric。
+2. **Skill Agent**：接收完全相同的用例、模拟工具接口和输出格式要求，并显式加载当前工作区的 [SKILL.md](SKILL.md)，按其中指针读取参考。
+3. **Judge Agent**：只接收测试用例、[judge-rubric.md](evals/judge-rubric.md) 和匿名化后的 A/B 输出；材料层另提供 material-rubric 与模拟器的实际调用记录。禁止读取 Skill、references、举例文档和生成 Agent 的身份。
 
-主 Agent 只负责调度、匿名化和汇总结果，不生成候选回复，也不参与判分。
+主 Agent 只负责调度、格式验证、匿名化和汇总，不生成候选回复，也不参与判分。Baseline 和 Judge 是仓库“生成或评审中文聊天回复时使用 chat-reply Skill”要求的例外。
 
-仓库默认要求“生成或评审中文聊天回复时使用 chat-reply Skill”。本评测中的 **Baseline Agent 和 Judge Agent 是唯一例外**，否则基线和盲评会被 Skill 污染。
+## 固定输入与生成输出
 
-## 输入
+固定用例在 [cases.json](evals/cases.json)。用例版本变更应在评测启动前完成；评测期间不得为了通过而调整输入，也不要加入 golden reply 或期望措辞。修复 Skill 后仍用同一组固定用例重跑；用例本身有错误时先记录原因并更新版本，再重新开始整个评测。
 
-固定用例在 `evals/cases.json`。不要在评测前临时改写 case，也不要把 golden reply 或期望措辞加入 case。
+每个 case 声明 `expected_mode`（`reply` 或 `clarify`）、`candidate_count`、`question_count`。这三项是验收信息，**不交给生成 Agent**，以验证它会自行判断直接回复还是先向用户补问。生成 Agent 只接收每个 case 的 `id`、`context` 和 `request`；数量需求写在 request 中。也不传 focus 或 failure_conditions，以免泄露判分规则。
 
-Baseline Agent 和 Skill Agent 对每个 case 只返回严格 JSON：
+两位生成 Agent 收到相同的输出格式要求：
+
+- 每个 case 只生成可发送的回复，或先向用户补问关键事实；两者不能同时出现。
+- 每个输出都包含 `case_id`、`replies`、`questions`；未使用的列表为空。
+- 不附加解释，只返回严格 JSON：
 
 ```json
 {
   "cases": [
-    {
-      "case_id": "material-boundary-arrived",
-      "replies": ["候选 1"]
-    }
-  ]
+    {"case_id": "arrived", "replies": ["候选 1"], "questions": []},
+    {"case_id": "clarify-real-reason", "replies": [], "questions": ["向用户补问的问题"]}
+  ],
+  "material_cases": []
 }
 ```
 
-`replies` 数量必须等于 case 的 `candidate_count`，不要附加解释。
+最终 JSON 顶层同时包含 `cases` 和 `material_cases`，两组各自完整（示例只展示部分 case）。主 Agent 验证 case 按用例顺序完整且唯一、三个字段的类型、输出模式及两类列表的数量。澄清用例的候选数为 0，问题数为 1；直接回复用例的问题数为 0。
 
 ## 材料层场景与模拟工具
 
-独立场景在 `evals/material-cases.json`，评测规则在 [evals/material-rubric.md](evals/material-rubric.md)。固定回复用例保持原样；新增场景不包含 golden reply。两个作答 Agent 仅取得以下命令输出的材料层输入，不得读取 fixture、模拟器实现、rubric 或对方输出：
+独立场景在 `evals/material-cases.json`，评测规则在 [evals/material-rubric.md](evals/material-rubric.md)。材料用例不包含 golden reply；材料版本变更也必须在评测前完成。两个作答 Agent 仅取得以下命令输出的材料层输入，不得读取 fixture、模拟器实现、rubric 或对方输出：
 
 ```sh
 node skills/chat-reply/evals/mock-mcp.mjs --cases
@@ -75,47 +78,36 @@ node skills/chat-reply/evals/mock-mcp.mjs <trace-dir> <case-id> get_wechat_histo
 
 三种信息数组均使用 speaker、content、source、time 四个字段；time 为提供的时间字符串、工具时间戳或未提供时的 null。read_status 为 not_needed、ok、empty、error 或 unavailable。outcome 为 ready 时按 candidate_count 返回回复，clarification 为 null；需要向用户澄清时为 clarify，replies 为空数组，clarification 写明待补充内容。
 
-两个作答 Agent 的最终 JSON 顶层同时包含 `cases`（原固定输出格式）和 `material_cases`。摘要展示仅用于检查材料交接，不改变 Skill 默认输出。
+两个作答 Agent 的最终 JSON 顶层同时包含 `cases`（含 replies 和 questions）和 `material_cases`。摘要展示仅用于检查材料交接，不改变 Skill 默认输出。
 
-## 匿名化
+材料评分 acquisition、attribution、sufficiency、handoff 只验证上下文获取、来源、缺口处理和摘要交接是否正确，不是聊天质量的优化目标。日常猜测不进入事实摘要，但可以用试探语气出现在回复里，不因此判失败。材料层 critical 保留工具调用、事实归属和缺口处理的功能门槛；与固定回复的用户事实 critical 分开汇总。
 
-主 Agent 在交给 Judge 前按 case 在 `cases.json` 中的顺序固定映射：
+材料层按自身用例顺序重新从奇数映射开始。Judge 另见 A/B 摘要、clarification 与模拟器实际调用记录，不见运行目录或 Agent 身份。材料 Judge 输出项仍为 `case_id`、A/B 的 `scores` 和 `failures`、`winner`，四项功能分数均为 0–2；顶层与固定回复判分一起包含 `cases` 和 `material_cases`。
 
-- 奇数 case：Baseline = A，Skill = B
-- 偶数 case：Skill = A，Baseline = B
+## 匿名化与 Judge 输出
 
-Judge 只能看到 `case_id`、case 内容、A/B 候选和 rubric。
+主 Agent 按 cases.json 的顺序固定映射：
 
-材料层按自身用例顺序重新从奇数映射开始；Judge 另见 A/B 摘要、澄清与模拟器实际调用记录，不见运行目录或 Agent 身份。
+- 奇数 case：Baseline = A，Skill = B。
+- 偶数 case：Skill = A，Baseline = B。
 
-## Judge 输出
-
-Judge 对每个 case 分别评价 A 和 B。评分维度为：
-
-- `material`
-- `action`
-- `expression`
-- `stop`
-- `diversity`
-
-每项 0–2 分，并列出命中的 `failure_conditions`。然后给出 `winner`：`A`、`B` 或 `tie`。材料边界和标记为 `critical: true` 的失败优先级高于语言润色。
-
-Judge 只返回严格 JSON：
+Judge 只能看到 case_id、完整 case、A/B 的 replies 和 questions，以及 rubric。每组只评 `human_likeness`（0–2），附 `reason` 和命中的 `failures`；winner 为 `A`、`B` 或 `tie`。
 
 ```json
 {
   "cases": [
     {
-      "case_id": "material-boundary-arrived",
-      "A": {"scores": {"material": 2, "action": 2, "expression": 2, "stop": 2, "diversity": 2}, "failures": []},
-      "B": {"scores": {"material": 2, "action": 2, "expression": 2, "stop": 2, "diversity": 2}, "failures": []},
-      "winner": "tie"
+      "case_id": "arrived",
+      "A": {"human_likeness": 2, "reason": "可见表达的判断依据", "failures": []},
+      "B": {"human_likeness": 1, "reason": "可见表达的判断依据", "failures": []},
+      "winner": "A"
     }
-  ]
+  ],
+  "material_cases": []
 }
 ```
 
-完整 Judge 输出顶层同时包含 `cases` 和 `material_cases`；后者格式相同，评分维度改为材料 rubric 中的 acquisition、attribution、sufficiency、handoff。
+主 Agent 验证 Judge case 完整且唯一，分数为 0–2 的整数，reason 非空，failure id 来自对应 case，winner 为合法枚举，然后解码身份汇总。主 Agent 不修改 Judge 的判分。
 
 ## 结果校验与汇总
 
@@ -133,16 +125,20 @@ node skills/chat-reply/evals/run-eval.mjs report <run-dir>
 
 脚本校验评分结构和 failure ID，解码身份，生成 report.json。运行目录和原始模拟输出留在仓库外；记录汇总时注明用例数量、门槛和模拟工具的验证范围。
 
-## 回归门槛
+## 回归门槛与报告
 
-解码 A/B 身份后，当前 Skill 必须同时满足：
+固定回复回归与材料层场景分别满足门槛，不用一组的胜场抵消另一组的失败。固定回复 Skill 必须同时满足：
 
-1. 所有 Agent 输出都能按约定 JSON 结构解析，case 完整且候选数量正确。
-2. Skill 输出命中的 critical failure 数量为 **0**。
-3. Skill 相对 Baseline 的 `loss` 数量不超过 **2**。
+1. 所有输出均符合上述格式，case 完整且数量和模式正确。
+2. Skill 命中的用户事实 critical failure 数量为 **0**。
+3. Skill 相对 Baseline 的 `loss` 不超过 **2**。
 
-固定回复回归和材料层场景分别满足以上门槛，不用一组的胜场抵消另一组的失败。材料层还需通过摘要结构检查，其工具调用行为由 Judge 依据真实模拟调用记录判断。
+材料层也必须结构正确、critical 为 0、loss 不超过 2。分别报告 `win / loss / tie`、critical 数量、格式验证结果和本轮输入版本。只有 `win > loss` 才能声称观察到活人感的正向改进；否则即使通过回归门槛，也不能宣称优于基线。
 
-另外报告 `win / loss / tie`。只有 `win > loss` 时才能声称这次修改带来了正向改进；`win <= loss` 不等于回归失败，但不能宣称 Skill 优于基线。
+评测不通过时先修复 Skill 或有错误的评测资产，再使用 3 个全新的隔离 Agent 从头重跑，不复用旧 Agent 上下文。未达门槛不得提交 PR。
 
-如果评测不通过，先修复 Skill 或评测资产，然后用 3 个全新的 `fork_context=false` Agent 从头重跑完整流程，不复用旧 Agent 上下文。
+评测脚本自身的格式校验与汇总回归可执行：
+
+```sh
+node --test skills/chat-reply/evals/run-eval.test.mjs
+```
