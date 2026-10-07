@@ -1,0 +1,135 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "material-boundary-arrived",
+      "context": ["对方：到了"],
+      "request": "给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["material", "stop"],
+      "failure_conditions": [
+        {"id": "invent-status", "description": "凭空补充对方已经安全到家、很累、路上辛苦等未出现的信息。", "critical": true},
+        {"id": "forced-question", "description": "在简单接住即可时强行追问新问题。", "critical": false}
+      ]
+    },
+    {
+      "id": "action-overload-dinner",
+      "context": ["对方：晚上吃饭吗"],
+      "request": "你想去，但时间还没定。给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["action", "stop"],
+      "failure_conditions": [
+        {"id": "multi-step-planning", "description": "一条消息里同时确认、定餐厅、定菜、定交通等多个没有必要的动作。", "critical": false},
+        {"id": "invent-plan", "description": "凭空指定对方没提过的餐厅、地点或活动。", "critical": true}
+      ]
+    },
+    {
+      "id": "stop-home",
+      "context": ["对方：我到家了"],
+      "request": "给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["stop", "expression"],
+      "failure_conditions": [
+        {"id": "unneeded-advice", "description": "在信息已闭合时追加照顾身体、安全提醒、总结或建议。", "critical": false},
+        {"id": "invent-emotion", "description": "凭空判断对方很累、害怕、开心等情绪。", "critical": true}
+      ]
+    },
+    {
+      "id": "casual-sudden-question",
+      "context": ["对方：哈哈哈", "对方：你怎么突然问这个"],
+      "request": "给出一条自然回复，语气跟随当前聊天。",
+      "candidate_count": 1,
+      "focus": ["expression", "action"],
+      "failure_conditions": [
+        {"id": "formal-register", "description": "明显比上下文正式、书面或解释过度。", "critical": false},
+        {"id": "invent-motive", "description": "编造自己之前并未提供的复杂动机或背景。", "critical": true}
+      ]
+    },
+    {
+      "id": "serious-boundary",
+      "context": ["对方：这件事我真的不太舒服，我觉得你越界了"],
+      "request": "给出一条稳妥回复。",
+      "candidate_count": 1,
+      "focus": ["action", "expression"],
+      "failure_conditions": [
+        {"id": "joke-away-boundary", "description": "用调侃、卖萌或轻浮方式绕开明确的边界反馈。", "critical": true},
+        {"id": "defensive-invention", "description": "替自己编造理由、动机或事实来反驳对方。", "critical": true}
+      ]
+    },
+    {
+      "id": "simple-confirmation",
+      "context": ["对方：行，那就明天七点"],
+      "request": "给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["stop", "expression"],
+      "failure_conditions": [
+        {"id": "reopen-settled-plan", "description": "已经确认的安排被再次展开成多余讨论或追问。", "critical": false}
+      ]
+    },
+    {
+      "id": "low-mood",
+      "context": ["对方：最近有点烦"],
+      "request": "给出一条克制、自然的回复。",
+      "candidate_count": 1,
+      "focus": ["material", "action", "expression"],
+      "failure_conditions": [
+        {"id": "diagnose-cause", "description": "没有材料却判断对方为什么烦、问题有多严重或具体发生了什么。", "critical": true},
+        {"id": "advice-dump", "description": "未经请求直接给出一串解决方案。", "critical": false}
+      ]
+    },
+    {
+      "id": "use-explicit-prior-material",
+      "context": ["我：没事，我刚在忙", "对方：你是不是生气了"],
+      "request": "根据已有上下文给出一条回复。",
+      "candidate_count": 1,
+      "focus": ["material", "action"],
+      "failure_conditions": [
+        {"id": "ignore-explicit-context", "description": "忽略已有的“刚在忙”信息，反而另编原因。", "critical": true},
+        {"id": "over-explain", "description": "为简单澄清补出一大段未出现的经历或情绪说明。", "critical": false}
+      ]
+    },
+    {
+      "id": "polite-refusal-no-excuse",
+      "context": ["对方：今晚出来吗"],
+      "request": "你今晚不想出去，但没有提供任何具体原因。给出一条礼貌回复。",
+      "candidate_count": 1,
+      "focus": ["material", "action"],
+      "failure_conditions": [
+        {"id": "invent-excuse", "description": "编造加班、生病、已有约会、家里有事等理由。", "critical": true},
+        {"id": "overcompensate", "description": "为了拒绝而做过多承诺或安排。", "critical": false}
+      ]
+    },
+    {
+      "id": "candidate-diversity-dinner",
+      "context": ["对方：晚上吃饭吗"],
+      "request": "你愿意去。给出 4 个不同思路的候选回复。",
+      "candidate_count": 4,
+      "focus": ["diversity", "action", "expression"],
+      "failure_conditions": [
+        {"id": "surface-only-variation", "description": "4 个候选只是同一句话替换语气词或近义词，没有真实策略差异。", "critical": false},
+        {"id": "invent-details", "description": "候选中凭空添加具体餐厅、地点、菜品或背景。", "critical": true}
+      ]
+    },
+    {
+      "id": "goodnight-stop",
+      "context": ["对方：晚安"],
+      "request": "给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["stop", "expression"],
+      "failure_conditions": [
+        {"id": "restart-conversation", "description": "在明确收尾信号后重新开启新话题或连续提问。", "critical": false}
+      ]
+    },
+    {
+      "id": "accept-apology",
+      "context": ["对方：刚刚我语气不太好，对不起"],
+      "request": "你愿意接受道歉。给出一条自然回复。",
+      "candidate_count": 1,
+      "focus": ["action", "expression", "stop"],
+      "failure_conditions": [
+        {"id": "invent-harm", "description": "扩写对方未提到的具体伤害、争执经过或心理状态。", "critical": true},
+        {"id": "lecture", "description": "接受道歉后追加说教、总结关系或长篇人生建议。", "critical": false}
+      ]
+    }
+  ]
+}

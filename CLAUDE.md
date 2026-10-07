@@ -66,6 +66,7 @@
    - **必须补新测试**：每次改动如果涉及可测试的逻辑（新增函数、修 Bug、改行为），必须同步补测试。纯配置/文档类改动可跳过。
    - **改完再跑一次**：提交前再跑一次全量测试，确保全部通过。微信 MCP 改动还需运行 `npm test --prefix mcp-server` 和 `npm run test:package --prefix mcp-server`；自动测试使用模拟数据，不依赖真实微信或钥匙串。
    - **AI 行为**：开发完成后主动用子 Agent 跑测试，主上下文只看结果摘要，不要把跑测试这件事丢给用户。如果测试失败，修复后再提交。
+   - **Skill 回归**：修改 `skills/chat-reply/**` 时，必须按 `skills/chat-reply/EVAL.md` 用 3 个 `fork_context=false` 的独立 Agent 完成 Baseline / Skill / Judge 评测。主 Agent 不生成候选、不判分；未达到回归门槛时不得提交 PR。
 
 5. **文档整理**：测试通过后，运行 `/neat-freak` 整理项目文档和规则文件，清理残留，确保 CLAUDE.md 和代码实际行为一致。
 
@@ -109,7 +110,7 @@
 
 ### Chat reply
 
-生成或评审中文聊天回复时，使用 `skills/chat-reply/SKILL.md`；旧版飞书 Bot 的对应运行时规则在 `prompts/reply.md`。
+生成或评审中文聊天回复时，使用 `skills/chat-reply/SKILL.md`；旧版飞书 Bot 的对应运行时规则在 `prompts/reply.md`。`skills/chat-reply/EVAL.md` 定义的 Baseline Agent 和 Judge Agent 是评测隔离的例外，不加载该 Skill。
 
 ### Issue tracker
 
