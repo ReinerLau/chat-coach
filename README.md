@@ -4,7 +4,7 @@
 
 ## 回复 Skill
 
-`skills/chat-reply/SKILL.md` 为模型提供中文聊天回复建议的判断规则，强调依据对话材料、一次只做必要动作、贴合语气并及时停止。细节见 [自然表达参考](skills/chat-reply/references/naturalness.md)，隔离评测流程见 [EVAL.md](skills/chat-reply/EVAL.md)。
+`skills/chat-reply/SKILL.md` 提供“材料准备 → 回复生成”两层流程。[材料模块](skills/chat-reply/references/materials.md) 优先整理用户已提供的上下文，明确要求或关键材料不足时通过只读微信 MCP 补查，并保留双方信息的来源、时间和缺失；只处理当前任务，不维护长期人物档案。[回复参考](skills/chat-reply/references/naturalness.md) 负责沟通动作、自然表达、停止条件和候选差异。隔离评测流程见 [EVAL.md](skills/chat-reply/EVAL.md)，包含固定回复回归和模拟 MCP 材料层评测。
 
 想通过聊天例子理解这些规则，可以阅读 [规则举例说明](docs/chat-reply-examples.md)：按材料、动作、表达、停止和多候选差异逐条解释，并对照合适与不合适的回复。
 
