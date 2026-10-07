@@ -107,6 +107,10 @@
 
 ## Agent skills
 
+### Chat reply
+
+生成或评审中文聊天回复时，使用 `skills/chat-reply/SKILL.md`；旧版飞书 Bot 的对应运行时规则在 `prompts/reply.md`。
+
 ### Issue tracker
 
 Issues and specs for this repo live as markdown files under `.scratch/<feature>/`. See `docs/agents/issue-tracker.md`.

@@ -2,6 +2,7 @@
 
 import json
 import re
+from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 from chat_coach.reply import (
@@ -18,6 +19,32 @@ from chat_coach.reply import (
     handle_card_action,
     generate_reply,
 )
+
+
+def test_reply_prompt_enforces_evidence_action_and_stop_rules():
+    """系统提示词应约束编造、过度完成和强行续聊。"""
+    prompt = (
+        Path(__file__).resolve().parent.parent / "prompts" / "reply.md"
+    ).read_text()
+
+    assert "材料只来自聊天" in prompt
+    assert "默认只做一个主要动作" in prompt
+    assert "不要为了让对话继续而硬加" in prompt
+    assert "候选要有真实差异" in prompt
+    assert "有没有多做一步" in prompt
+
+
+def test_chat_reply_skill_contains_naturalness_reference():
+    """仓库内 Skill 应保留核心聊天自然感约束，并能发现详细规则。"""
+    root = Path(__file__).resolve().parent.parent / "skills" / "chat-reply"
+    skill = (root / "SKILL.md").read_text()
+    reference = (root / "references" / "naturalness.md").read_text()
+
+    assert "只使用聊天记录里实际出现的信息和信号" in skill
+    assert "默认只做一个主要动作" in skill
+    assert "references/naturalness.md" in skill
+    assert "不要为了“自然推进”强行提问" in reference
+    assert "这条回复有没有多做一步" in reference
 
 
 # ── _parse_suggestions ──────────────────────────────────────────

@@ -38,6 +38,8 @@
 - 旧版飞书 Bot：聊天记录存储在飞书 Bitable；用户在飞书 1v1 私聊中模拟对方发消息。启动方式：`python3 -m chat_coach.bot`。
 - 微信历史 MCP：`mcp-server/` 独立读取本机微信数据库并持久化消息；通过私有 MCP 隧道供 ChatGPT 查找会话和读取历史，不调用模型或发送微信消息。包名 `@reinerlau/wechat-mcp`，命令 `wechat-mcp` 打开管理页并在前台等待，Ctrl+C 关闭全部服务；`--background` 后台启动，`wechat-mcp stop` 关闭全部后台；`wechat-mcp stdio` 为 stdio 入口。修改微信服务、管理页或隧道运行逻辑前阅读 `mcp-server/README.md`。
 
+生成或评审中文聊天回复时，使用 `skills/chat-reply/SKILL.md`；旧版飞书 Bot 的对应运行时规则在 `prompts/reply.md`。
+
 ## 开发流程
 
 **自检规则**：收到开发任务时，步骤 1 已由用户手动完成（用户用 `Codex --worktree` 启动新 worktree）。AI 必须先用 `TaskCreate` 把步骤 2-11 全部创建为任务（当前步骤标 `in_progress`，其余标 `pending`），然后按序执行。每一步完成后立即标记 `completed`，再开始下一步。如果一个步骤被跳过，它会留在任务列表里——这就是自检信号。步骤 6（提交 PR）和步骤 11（回归主线）由 AI 自动执行，不询问用户。
