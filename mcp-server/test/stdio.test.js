@@ -8,9 +8,9 @@ import { tmpdir } from 'node:os'
 import { fileURLToPath } from 'node:url'
 
 const entry = fileURLToPath(new URL('../bin/wechat-mcp.js', import.meta.url))
+const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
 
 test('the published command starts the renamed CLI and identifies errors with the new name', () => {
-  const manifest = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'))
   assert.equal(manifest.name, '@reinerlau/wechat-mcp')
   assert.deepEqual(Object.keys(manifest.bin), ['wechat-mcp'])
   const command = fileURLToPath(new URL(`../${manifest.bin['wechat-mcp']}`, import.meta.url))
@@ -83,7 +83,7 @@ for (const exitMethod of ['EOF', 'SIGTERM', 'SIGINT']) {
       protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'test', version: '1.0.0' }
     })
     assert.equal(initialized.result.serverInfo.name, 'wechat-mcp')
-    assert.equal(initialized.result.serverInfo.version, '0.3.1')
+    assert.equal(initialized.result.serverInfo.version, manifest.version)
     child.stdin.write(JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) + '\n')
     const tools = await request('tools/list', {})
     assert.equal(tools.result.tools.length, 2)

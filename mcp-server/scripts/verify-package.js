@@ -7,6 +7,10 @@ import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = fileURLToPath(new URL('..', import.meta.url))
+const sourceManifest = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'))
+const sourceLock = JSON.parse(readFileSync(join(root, 'package-lock.json'), 'utf8'))
+assert.equal(sourceLock.version, sourceManifest.version)
+assert.equal(sourceLock.packages[''].version, sourceManifest.version)
 const scratch = mkdtempSync(join(tmpdir(), 'wechat-mcp-package-'))
 function run(command, args, cwd = root) {
   const result = spawnSync(command, args, { cwd, encoding: 'utf8', timeout: 60000 })
@@ -27,7 +31,7 @@ try {
   const manifest = JSON.parse(readFileSync(join(installed, 'node_modules/@reinerlau/wechat-mcp/package.json')))
   assert.equal(manifest.name, '@reinerlau/wechat-mcp')
   assert.deepEqual(manifest.bin, { 'wechat-mcp': 'bin/wechat-mcp.js' })
-  assert.equal(manifest.version, '0.3.1')
+  assert.equal(manifest.version, sourceManifest.version)
   assert.ok(!manifest.peerDependencies)
   assert.ok(!Object.keys(manifest.dependencies).some((name) => name.includes('deepseek') || name === 'qrcode'))
   const help = run(join(installed, 'node_modules/.bin/wechat-mcp'), ['--help'], scratch)
