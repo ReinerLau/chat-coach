@@ -1,51 +1,21 @@
 # chat-coach
 
-回复教练：根据对话给出克制、自然的回复建议，并解释一句回复思路。
+克制、自然的中文回复教练，由回复 Skill 和微信历史 MCP 两部分组成。
 
-回复生成有两份面向不同运行环境的规则入口：
+## 回复 Skill
 
-- `skills/chat-reply/SKILL.md`：给支持 Agent Skills 的模型使用，详细自然感规则放在同目录 reference 中。
-- `prompts/reply.md`：旧版飞书 Bot 实际加载的 system prompt，与 Skill 保持相同的“材料 → 动作 → 表达 → 停止”原则。
+`skills/chat-reply/SKILL.md` 为模型提供中文聊天回复建议的判断规则，强调依据对话材料、一次只做必要动作、贴合语气并及时停止。细节见 [自然表达参考](skills/chat-reply/references/naturalness.md)，隔离评测流程见 [EVAL.md](skills/chat-reply/EVAL.md)。
 
-当前有两种运行方式：
+## 微信历史 MCP
 
-- [微信历史 MCP](mcp-server/README.md)：独立同步本机微信消息，通过私有 MCP 隧道供 ChatGPT 查找会话、读取历史并生成回复建议。npm 包为 `@reinerlau/wechat-mcp`，运行 `wechat-mcp` 打开本机管理页并在前台等待，Ctrl+C 关闭全部服务；`--background` 后台运行；`wechat-mcp stop` 关闭全部后台，`wechat-mcp stdio` 为 stdio 入口。
-- 旧版飞书 Bot：运行 `python3 -m chat_coach.bot`，在飞书 1v1 私聊中模拟对话，记录保存在飞书 Bitable。
+[`mcp-server/`](mcp-server/README.md) 同步本机微信消息，并通过只读工具供 MCP 客户端查找会话、分页读取历史。它不调用模型，也不发送微信消息。安装、隧道配置和运行说明见 [MCP 文档](mcp-server/README.md)。
 
-## 微信 MCP 接口
+## 开发与验证
 
-当前 MCP Server 只暴露 2 个只读工具。标准调用顺序是先查会话，再用返回的会话 ID 读取历史：
+```sh
+npm ci --prefix mcp-server
+npm test --prefix mcp-server
+npm run test:package --prefix mcp-server
+```
 
-`list_wechat_sessions` → `session_id` → `get_wechat_history`
-
-两次调用都会先触发一次微信数据库增量同步，再从本地缓存读取结果。
-
-### `list_wechat_sessions`
-
-查找当前微信账号已有的联系人会话或群聊，并取得后续读取消息所需的会话 ID。
-
-| 参数 | 类型 | 必填 | 说明 |
-|---|---|---|---|
-| `query` | string | 否 | 按会话名称或微信 ID 做部分匹配；默认空字符串，最大 200 字符 |
-| `limit` | integer | 否 | 每页会话数，默认 50，范围 1–200 |
-| `offset` | integer | 否 | 会话分页位置，默认 0；继续翻页时传上一页 `nextOffset`，更换 `query` 时应重置为 0 |
-
-返回 `sessions` 和 `nextOffset`。`sessions` 中每项包含 `id`、`name`、`updatedAt`，按最近活动时间降序排列；没有更多结果时 `nextOffset` 为 `null`。
-
-### `get_wechat_history`
-
-读取一个指定会话的最近消息，或继续向前读取更早历史。`session_id` 必须来自 `list_wechat_sessions`，不能直接传联系人名称。
-
-| 参数 | 类型 | 必填 | 说明 |
-|---|---|---|---|
-| `session_id` | string | 是 | `list_wechat_sessions` 返回的会话 `id`，最大 500 字符 |
-| `limit` | integer | 否 | 每页消息数，默认 50，范围 1–200 |
-| `before` | string | 否 | 上一页返回的 `next` 游标；省略时读取最近消息，最大 2048 字符 |
-
-返回 `session`、按时间正序排列的 `messages` 和更早历史游标 `next`；没有更多消息时 `next` 为 `null`。
-
-每条消息包含 `sessionId`、`localId`、`serverId`、Unix 秒时间戳 `createdAt`、微信消息 `type`、`isSelf`、`content` 和 `senderId`。分页同时使用时间和本地消息 ID，因此同一秒内的多条消息也可以完整翻页；`before` 游标只能用于生成它的原会话。
-
-非文本消息只返回 `[非文本消息：类型 X]` 占位文本，不读取图片、视频、文件等附件内容。当前不暴露发送微信消息、按关键词搜索消息、按时间范围筛选消息、读取附件内容或独立枚举微信通讯录的工具。
-
-测试：`python3 -m pytest tests/ -v`；MCP 测试使用 Node.js 22.13+ 执行 `npm test --prefix mcp-server`，安装产物验证使用 `npm run test:package --prefix mcp-server`。
+修改 `skills/chat-reply/**` 时，按该 Skill 的 EVAL 流程使用独立 Agent 进行 Baseline、Skill 和 Judge 评测。

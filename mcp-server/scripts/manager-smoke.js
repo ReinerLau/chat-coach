@@ -106,7 +106,7 @@ if (args[1] === 'status') console.log(JSON.stringify({ process_running: state.ru
     assert.match(await icon.text(), /<svg[^>]+viewBox="0 0 64 64"/)
     const html = await (await fetch(`${manager.origin}/`)).text()
     assert.match(html, /聊天数据预览/)
-    assert.match(html, /微信历史 MCP <b>0\.3\.1<\/b>/)
+    assert.match(html, /<span>微信历史 MCP<\/span>/)
     assert.match(await (await fetch(`${manager.origin}/preview.js`)).text(), /preview\/history/)
     const sessions = await preview('sessions?query=模拟')
     assert.equal(sessions.sessions[0].id, 'friend')

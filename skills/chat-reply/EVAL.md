@@ -1,101 +1,82 @@
-# Chat Reply Eval
+# Chat Reply Skill Evaluation
 
-这套评测只验证 `chat-reply` Skill 被**手动调用后**的行为效果，不测试自动触发率。
-
-## 目标
-
-验证 Skill 是否稳定改善这些行为：
-
-- **材料边界**：不把猜测写成事实，不编造情绪、关系、经历或潜台词。
-- **动作克制**：优先完成当前最必要的一个动作，避免回应、分析、建议、追问一起堆上去。
-- **表达匹配**：跟随当前聊天的正式程度、长度和情绪强度。
-- **及时停止**：任务完成就停，不自动加“你呢？”、总结、建议或无依据的关心。
-- **候选差异**：多个候选提供不同沟通策略，而不是同义改写。
-
-固定案例位于 [evals/cases.json](evals/cases.json)。案例只定义输入、目标维度和失败信号，不保存标准回复。
+这个评测用于验证 `skills/chat-reply/SKILL.md` 是否真的改善中文聊天回复行为，并确保测试过程与修改 Skill 的主 Agent 隔离。
 
 ## 隔离要求
 
-一次有效评测必须使用三个彼此隔离的角色。主 Agent 只负责调度和汇总，不参与回复生成或打分。
+每次修改 `skills/chat-reply/**` 后，使用 3 个全新的子 Agent，全部设置 `fork_context=false`，并尽量使用相同模型与 reasoning 配置：
 
-### 1. Skill Generator
+1. **Baseline Agent**：只接收测试用例和输出格式要求。明确禁止读取、加载或引用 `skills/chat-reply/SKILL.md` 及其 references。
+2. **Skill Agent**：接收与 Baseline 完全相同的测试用例，并显式加载当前工作区中的 `skills/chat-reply/SKILL.md` 后作答。
+3. **Judge Agent**：只接收测试用例、`evals/judge-rubric.md` 和匿名化后的 A/B 输出。禁止读取 Skill，也不能知道 A/B 分别来自哪个 Agent。
 
-- 使用全新的上下文；支持子 Agent 时必须使用不继承当前会话的模式（例如 `fork_context=false`）。
-- 只接收当前案例的 `context`、`request` 和“手动使用 `skills/chat-reply/SKILL.md`”这一条指令。
-- 可以读取 Skill 明确引用的 reference。
-- 不接收预期答案、失败信号、评分结果或当前改动意图。
+主 Agent 只负责调度、匿名化和汇总结果，不生成候选回复，也不参与判分。
 
-### 2. Baseline Generator
+仓库默认要求“生成或评审中文聊天回复时使用 chat-reply Skill”。本评测中的 **Baseline Agent 和 Judge Agent 是唯一例外**，否则基线和盲评会被 Skill 污染。
 
-- 使用另一个全新的上下文。
-- 使用与 Skill Generator 相同的模型和可调配置。
-- 接收完全相同的 `context` 与 `request`。
-- 不允许读取或调用 `skills/chat-reply/**`。
-- 不接收预期答案、失败信号、评分结果或当前改动意图。
+## 输入
 
-### 3. Blind Judge
+固定用例在 `evals/cases.json`。不要在评测前临时改写 case，也不要把 golden reply 或期望措辞加入 case。
 
-- 使用第三个全新的上下文。
-- 不读取 `SKILL.md`、reference 或本次 Skill diff。
-- 只接收案例、评分规则以及匿名的两组结果 `X` / `Y`。
-- 不知道哪组使用了 Skill。
-- 对每条结果逐项打分，不根据“更像某种风格”猜测实验组。
+Baseline Agent 和 Skill Agent 对每个 case 只返回严格 JSON：
 
-如果运行环境无法提供真正独立的新上下文，评测结果必须标记为 **invalid**，不能声称 Skill 已通过隔离测试。
+```json
+{
+  "cases": [
+    {
+      "case_id": "material-boundary-arrived",
+      "replies": ["候选 1"]
+    }
+  ]
+}
+```
 
-## 执行方式
+`replies` 数量必须等于 case 的 `candidate_count`，不要附加解释。
 
-默认对每个案例执行 **3 个独立重复**。每次重复都重新创建 Skill Generator 和 Baseline Generator；不要在同一生成上下文里连续重试同一个案例。
+## 匿名化
 
-每次重复：
+主 Agent 在交给 Judge 前按 case 在 `cases.json` 中的顺序固定映射：
 
-1. 从 `cases.json` 读取一个案例。
-2. 在隔离上下文中得到 Skill 输出。
-3. 在另一个隔离上下文中得到 Baseline 输出。
-4. 主 Agent 将两条输出匿名为 `X` / `Y`，映射不提供给 Judge。
-5. Blind Judge 按下面规则评分。
-6. 主 Agent 解开映射，只记录分数和失败原因。
+- 奇数 case：Baseline = A，Skill = B
+- 偶数 case：Skill = A，Baseline = B
 
-案例执行顺序可以变化，但两组必须使用同一批案例、同一模型配置和相同重复次数。
+Judge 只能看到 `case_id`、case 内容、A/B 候选和 rubric。
 
-## 评分
+## Judge 输出
 
-每个适用维度只有 `pass` / `fail`，不使用主观的 1–10 分。
+Judge 对每个 case 分别评价 A 和 B。评分维度为：
 
-| 维度 | Pass 条件 |
-|---|---|
-| `material` | 回复只使用输入中存在的事实和信号；没有擅自定义关系、情绪、经历或动机 |
-| `action` | 当前沟通任务被完成，且没有明显多做无关动作 |
-| `expression` | 长度、正式程度、碎片化程度和情绪强度与场景匹配 |
-| `stop` | 删除末尾没有必要；不存在强行续聊、重复解释、无依据关心或额外总结 |
-| `diversity` | 仅多候选案例适用；候选在下一步沟通策略上有真实差异 |
+- `material`
+- `action`
+- `expression`
+- `stop`
+- `diversity`
 
-### Hard failure
+每项 0–2 分，并列出命中的 `failure_conditions`。然后给出 `winner`：`A`、`B` 或 `tie`。材料边界和标记为 `critical: true` 的失败优先级高于语言润色。
 
-以下任一情况直接记为 hard failure：
+Judge 只返回严格 JSON：
 
-- 编造会影响沟通判断的事实、关系、情绪或意图。
-- 严肃边界/冲突场景中使用明显轻佻、接梗或敷衍表达。
-- 用户明确要拒绝、澄清或确认时，回复反而模糊掉关键边界。
-- 多候选要求下，候选基本只是近义词替换，导致用户没有真实选择。
+```json
+{
+  "cases": [
+    {
+      "case_id": "material-boundary-arrived",
+      "A": {"scores": {"material": 2, "action": 2, "expression": 2, "stop": 2, "diversity": 2}, "failures": []},
+      "B": {"scores": {"material": 2, "action": 2, "expression": 2, "stop": 2, "diversity": 2}, "failures": []},
+      "winner": "tie"
+    }
+  ]
+}
+```
 
-## 结果判定
+## 回归门槛
 
-一次 Skill 修改的 eval 结论分三种：
+解码 A/B 身份后，当前 Skill 必须同时满足：
 
-- **pass**：Skill 组没有新增 hard failure；核心维度总通过率不低于 baseline；且本次修改所针对的维度没有回归。
-- **regression**：出现新增 hard failure，或任一目标维度相对 baseline 明显变差。
-- **inconclusive**：没有明显回归，但样本不足、两组完全持平，或隔离/模型配置无法保持一致。
+1. 所有 Agent 输出都能按约定 JSON 结构解析，case 完整且候选数量正确。
+2. Skill 输出命中的 critical failure 数量为 **0**。
+3. Skill 相对 Baseline 的 `loss` 数量不超过 **2**。
 
-不要因为一两条“看起来不错”的回复判定通过。报告至少包含：案例数、重复次数、两组各维度通过率、hard failure 数和所有失败案例 ID。
+另外报告 `win / loss / tie`。只有 `win > loss` 时才能声称这次修改带来了正向改进；`win <= loss` 不等于回归失败，但不能宣称 Skill 优于基线。
 
-## 回归案例
-
-评测发现真实失败后：
-
-1. 先保留原始失败输入。
-2. 如果它代表一个此前未覆盖的模式，把它精简成新的 case 加入 `evals/cases.json`。
-3. 只记录客观失败信号，不加入“正确答案”。
-4. 修 Skill 后重新跑完整 eval，不只重跑失败案例。
-
-这样测试集会积累真实回归场景，同时避免把 Skill 优化成背标准答案。
+如果评测不通过，先修复 Skill 或评测资产，然后用 3 个全新的 `fork_context=false` Agent 从头重跑完整流程，不复用旧 Agent 上下文。

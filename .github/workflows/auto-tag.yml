@@ -37,17 +37,7 @@ jobs:
       - name: Calculate next version
         id: version
         run: |
-          LATEST=$(git tag --sort=-v:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -1)
-
-          if [ -z "$LATEST" ]; then
-            NEW="1.0.0"
-            echo "No existing tag, starting at v$NEW"
-            echo "tag=v$NEW" >> $GITHUB_OUTPUT
-            echo "ver=$NEW" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-
-          VER="${LATEST#v}"
+          VER=$(node -p "require('./mcp-server/package.json').version")
           MAJOR=$(echo "$VER" | cut -d. -f1)
           MINOR=$(echo "$VER" | cut -d. -f2)
           PATCH=$(echo "$VER" | cut -d. -f3)
@@ -62,17 +52,22 @@ jobs:
           esac
 
           NEW="${MAJOR}.${MINOR}.${PATCH}"
-          echo "Latest: $LATEST -> New: v$NEW"
+          TAG="v$NEW"
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            echo "::error::Tag $TAG already exists"
+            exit 1
+          fi
+          echo "MCP package: $VER -> $NEW"
           echo "tag=v$NEW" >> $GITHUB_OUTPUT
           echo "ver=$NEW" >> $GITHUB_OUTPUT
 
-      - name: Sync pyproject.toml and tag
+      - name: Sync MCP package version and tag
         run: |
-          sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.ver }}\"/" pyproject.toml
+          npm version "${{ steps.version.outputs.ver }}" --no-git-tag-version --prefix mcp-server
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add pyproject.toml
+          git add mcp-server/package.json mcp-server/package-lock.json
           git commit -m "chore: bump version to ${{ steps.version.outputs.ver }}"
           git tag -a "${{ steps.version.outputs.tag }}" -m "Release ${{ steps.version.outputs.tag }}"
           git push origin master "${{ steps.version.outputs.tag }}"
-          echo "Done: ${{ steps.version.outputs.tag }} | synced pyproject.toml"
+          echo "Done: ${{ steps.version.outputs.tag }} | synced MCP package metadata"
