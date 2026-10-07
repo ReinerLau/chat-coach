@@ -8,6 +8,8 @@
 
 想通过聊天例子理解这些规则，可以阅读 [规则举例说明](docs/chat-reply-examples.md)：通过长回复、情绪、追问、补问和多个候选等场景，对照自然表达与 AI 痕迹。
 
+想了解评测具体考什么，可以阅读 [测试用例中文阅读版](docs/chat-reply-test-cases.md)：逐题查看聊天上下文、用户需求、考察重点和失败条件。
+
 ## 微信历史 MCP
 
 [`mcp-server/`](mcp-server/README.md) 同步本机微信消息，并通过只读工具供 MCP 客户端查找会话、分页读取历史。它不调用模型，也不发送微信消息。安装、隧道配置和运行说明见 [MCP 文档](mcp-server/README.md)。
@@ -17,7 +19,8 @@
 ```text
 chat-coach/
 ├── docs/
-│   └── chat-reply-examples.md
+│   ├── chat-reply-examples.md
+│   └── chat-reply-test-cases.md
 ├── mcp-server/
 └── skills/
     └── chat-reply/
@@ -33,6 +36,7 @@ chat-coach/
 | 位置 | 干什么的 |
 | --- | --- |
 | [docs/chat-reply-examples.md](docs/chat-reply-examples.md) | 用聊天例子解释回复规则，对照合适与不合适的回复。 |
+| [docs/chat-reply-test-cases.md](docs/chat-reply-test-cases.md) | 15 个固定测试用例的中文阅读版，说明聊天上下文、用户需求和失败条件。 |
 | [mcp-server/](mcp-server/README.md) | 微信历史 MCP 的实现、安装、配置与验证说明。 |
 | [skills/chat-reply/SKILL.md](skills/chat-reply/SKILL.md) | 回复 Skill 入口，定义活人感目标、生成顺序与事实补问。 |
 | [skills/chat-reply/EVAL.md](skills/chat-reply/EVAL.md) | Baseline、Skill、Judge 隔离评测流程与回归门槛。 |
