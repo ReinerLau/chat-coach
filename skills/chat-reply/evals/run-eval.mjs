@@ -3,7 +3,7 @@ import { join } from 'node:path'
 
 const read = (path) => JSON.parse(readFileSync(path, 'utf8'))
 const suites = [
-  { key: 'cases', fixtures: read(new URL('./cases.json', import.meta.url)).cases, dimensions: ['material', 'action', 'expression', 'stop', 'diversity'] },
+  { key: 'cases', fixtures: read(new URL('./cases.json', import.meta.url)).cases },
   { key: 'material_cases', fixtures: read(new URL('./material-cases.json', import.meta.url)).cases, dimensions: ['acquisition', 'attribution', 'sufficiency', 'handoff'] }
 ]
 function check(condition, message) { if (!condition) throw new Error(message) }
@@ -23,7 +23,9 @@ function validateOutput(output) {
       check(item.case_id === testCase.id, `Wrong case order: ${testCase.id}`)
       check(Array.isArray(item.replies) && item.replies.every((reply) => typeof reply === 'string' && reply.trim()), `Invalid replies: ${testCase.id}`)
       if (key === 'cases') {
-        check(exactKeys(item, ['case_id', 'replies']) && item.replies.length === testCase.candidate_count, `Invalid fixed output: ${testCase.id}`)
+        check(exactKeys(item, ['case_id', 'replies', 'questions']), `Invalid fixed output: ${testCase.id}`)
+        check(Array.isArray(item.questions) && item.questions.every((question) => typeof question === 'string' && question.trim()), `Invalid questions: ${testCase.id}`)
+        check(item.replies.length === testCase.candidate_count && item.questions.length === testCase.question_count && (testCase.expected_mode === 'reply' ? item.questions.length === 0 && item.replies.length > 0 : item.replies.length === 0 && item.questions.length > 0), `Invalid reply/clarify mode: ${testCase.id}`)
         continue
       }
       check(exactKeys(item, ['case_id', 'summary', 'outcome', 'clarification', 'replies']), `Invalid material output: ${testCase.id}`)
@@ -70,7 +72,10 @@ if (command === 'prepare') {
       check(exactKeys(item, ['case_id', 'A', 'B', 'winner']) && item.case_id === testCase.id && ['A', 'B', 'tie'].includes(item.winner), `Invalid judgment: ${testCase.id}`)
       for (const side of ['A', 'B']) {
         const rating = item[side]
-        check(exactKeys(rating, ['scores', 'failures']) && exactKeys(rating.scores, dimensions) && Object.values(rating.scores).every((score) => Number.isInteger(score) && score >= 0 && score <= 2), `Invalid scores: ${testCase.id}/${side}`)
+        const validScore = (score) => Number.isInteger(score) && score >= 0 && score <= 2
+        check(key === 'cases'
+          ? exactKeys(rating, ['human_likeness', 'reason', 'failures']) && validScore(rating.human_likeness) && typeof rating.reason === 'string' && rating.reason.trim()
+          : exactKeys(rating, ['scores', 'failures']) && exactKeys(rating.scores, dimensions) && Object.values(rating.scores).every(validScore), `Invalid scores: ${testCase.id}/${side}`)
         check(Array.isArray(rating.failures) && new Set(rating.failures).size === rating.failures.length && rating.failures.every((id) => testCase.failure_conditions.some((failure) => failure.id === id)), `Invalid failure IDs: ${testCase.id}/${side}`)
       }
       const skillSide = index % 2 === 0 ? 'B' : 'A'

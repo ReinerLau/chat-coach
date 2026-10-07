@@ -1,12 +1,12 @@
 # chat-coach
 
-克制、自然的中文回复教练，由回复 Skill 和微信历史 MCP 两部分组成。
+以活人感为唯一优化目标的中文回复教练，由回复 Skill 和微信历史 MCP 两部分组成。
 
 ## 回复 Skill
 
-`skills/chat-reply/SKILL.md` 提供“材料准备 → 回复生成”两层流程。[材料模块](skills/chat-reply/references/materials.md) 优先整理用户已提供的上下文，明确要求或关键材料不足时通过只读微信 MCP 补查，并保留双方信息的来源、时间和缺失；只处理当前任务，不维护长期人物档案。[回复参考](skills/chat-reply/references/naturalness.md) 负责沟通动作、自然表达、停止条件和候选差异。隔离评测流程见 [EVAL.md](skills/chat-reply/EVAL.md)，包含固定回复回归和模拟 MCP 材料层评测。
+`skills/chat-reply/SKILL.md` 保留“材料准备 → 回复生成”两层流程。[材料模块](skills/chat-reply/references/materials.md) 按需整理已有上下文或通过只读微信 MCP 补查，保留来源和时间，只处理当前任务，不维护长期人物档案。回复生成帮助模型生成像普通真人聊天的中文回复建议，尽量减少 AI 痕迹，不以礼貌、稳妥或聊天结果评判好坏。缺少必须由用户提供的事实或态度时先补问，能够直接回复时不额外收集信息。细节见 [自然表达参考](skills/chat-reply/references/naturalness.md)，隔离评测流程见 [EVAL.md](skills/chat-reply/EVAL.md)，包含活人感盲评和模拟 MCP 材料层评测。
 
-想通过聊天例子理解这些规则，可以阅读 [规则举例说明](docs/chat-reply-examples.md)：按材料、动作、表达、停止和多候选差异逐条解释，并对照合适与不合适的回复。
+想通过聊天例子理解这些规则，可以阅读 [规则举例说明](docs/chat-reply-examples.md)：通过长回复、情绪、追问、补问和多个候选等场景，对照自然表达与 AI 痕迹。
 
 ## 微信历史 MCP
 
@@ -34,11 +34,11 @@ chat-coach/
 | --- | --- |
 | [docs/chat-reply-examples.md](docs/chat-reply-examples.md) | 用聊天例子解释回复规则，对照合适与不合适的回复。 |
 | [mcp-server/](mcp-server/README.md) | 微信历史 MCP 的实现、安装、配置与验证说明。 |
-| [skills/chat-reply/SKILL.md](skills/chat-reply/SKILL.md) | 回复 Skill 入口，定义材料、动作、表达与停止规则。 |
+| [skills/chat-reply/SKILL.md](skills/chat-reply/SKILL.md) | 回复 Skill 入口，定义活人感目标、生成顺序与事实补问。 |
 | [skills/chat-reply/EVAL.md](skills/chat-reply/EVAL.md) | Baseline、Skill、Judge 隔离评测流程与回归门槛。 |
 | [skills/chat-reply/references/naturalness.md](skills/chat-reply/references/naturalness.md) | 自然表达的细节与检查要点。 |
-| [skills/chat-reply/evals/cases.json](skills/chat-reply/evals/cases.json) | 固定评测用例、候选数量与失败条件。 |
-| [skills/chat-reply/evals/judge-rubric.md](skills/chat-reply/evals/judge-rubric.md) | 盲评的评分维度与判定规则。 |
+| [skills/chat-reply/evals/cases.json](skills/chat-reply/evals/cases.json) | 固定评测用例、回复或补问模式、数量与失败条件。 |
+| [skills/chat-reply/evals/judge-rubric.md](skills/chat-reply/evals/judge-rubric.md) | 活人感单项盲评与用户事实约束的判定规则。 |
 
 ## 开发与验证
 
