@@ -28,7 +28,7 @@ function judgment() {
     material_cases: materials.map((c) => entry(c, { scores: { acquisition: 2, attribution: 2, sufficiency: 2, handoff: 2 }, failures: [] }))
   }
 }
-function run(command, data, checkResult) {
+function run(command, data, checkResult, traces = {}) {
   const dir = mkdtempSync(join(tmpdir(), 'chat-reply-eval-test-'))
   try {
     if (command === 'prepare') {
@@ -38,6 +38,13 @@ function run(command, data, checkResult) {
       writeFileSync(join(dir, 'baseline', materials[0].id + '.jsonl'), JSON.stringify({ tool: 'trace-check', input: {}, result: {} }) + '\n')
     } else {
       writeFileSync(join(dir, 'judge.json'), JSON.stringify(data))
+      for (const role of ['baseline', 'skill']) {
+        const roleDir = join(dir, role)
+        mkdirSync(roleDir)
+        for (const [caseId, calls] of Object.entries(traces[role] ?? {})) {
+          writeFileSync(join(roleDir, `${caseId}.jsonl`), `${calls.map((call) => JSON.stringify(call)).join('\n')}\n`)
+        }
+      }
     }
     const result = spawnSync(process.execPath, [runner, command, dir], { encoding: 'utf8' })
     checkResult(result, dir)
@@ -117,6 +124,27 @@ test('a material critical failure fails the run independently of reply wins', ()
     assert.equal(report.cases.passed, true)
     assert.equal(report.material_cases.passed, false)
     assert.equal(report.passed, false)
+  })
+})
+
+test('report rejects miss-older when trace proves the expected previous page was read', () => {
+  const data = judgment()
+  const index = materials.findIndex((c) => c.id === 'history-pagination')
+  const testCase = materials[index]
+  const expectedPage = testCase.mocks.find((mock) => mock.tool === 'get_wechat_history' && mock.input.before)
+  const skillSide = index % 2 === 0 ? 'B' : 'A'
+  data.material_cases[index][skillSide].failures = ['miss-older']
+  run('report', data, (result) => {
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /miss-older despite a successful expected older-page read/)
+  }, {
+    skill: {
+      [testCase.id]: [{
+        tool: expectedPage.tool,
+        input: { session_id: expectedPage.input.session_id, before: expectedPage.input.before },
+        result: expectedPage.result
+      }]
+    }
   })
 })
 
