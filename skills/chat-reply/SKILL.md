@@ -30,4 +30,4 @@ description: 根据聊天上下文生成有活人感的中文回复建议。适�
 
 需要判断长回复、情绪表达、追问或刻意口语化是否自然时，读取 [references/naturalness.md](references/naturalness.md)。
 
-修改本 Skill 或其 references 后，按 [EVAL.md](EVAL.md) 使用隔离子 Agent 跑固定回复回归和独立材料层评测。
+修改本 Skill 或其 references 后，由用户手工测试。
