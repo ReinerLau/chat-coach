@@ -14,6 +14,20 @@ function trace(dir, id) {
   const path = join(dir, `${id}.jsonl`)
   return existsSync(path) ? readFileSync(path, 'utf8').trim().split('\n').filter(Boolean).map((line) => JSON.parse(line)) : []
 }
+function hasSuccessfulExpectedOlderRead(testCase, calls) {
+  const expected = testCase.mocks?.find(({ tool, input, result }) => tool === 'get_wechat_history' && input?.before !== undefined && Array.isArray(result?.messages) && result.messages.length > 0)
+  if (!expected) return false
+  return calls.some((call) => {
+    if (call.tool !== expected.tool || call.result?.isError || !Array.isArray(call.result?.messages)) return false
+    const inputMatches = Object.entries(expected.input).every(([key, value]) => {
+      if (key === 'limit' && call.input?.[key] === undefined) return value === 50
+      return call.input?.[key] === value
+    })
+    const messagesMatch = expected.result.messages.every((message) => call.result.messages.some((actual) =>
+      actual.content === message.content && actual.senderId === message.senderId))
+    return inputMatches && messagesMatch
+  })
+}
 function validateOutput(output) {
   check(exactKeys(output, ['cases', 'material_cases']), 'Invalid output suites')
   for (const { key, fixtures } of suites) {
@@ -77,6 +91,11 @@ if (command === 'prepare') {
           ? exactKeys(rating, ['human_likeness', 'reason', 'failures']) && validScore(rating.human_likeness) && typeof rating.reason === 'string' && rating.reason.trim()
           : exactKeys(rating, ['scores', 'failures']) && exactKeys(rating.scores, dimensions) && Object.values(rating.scores).every(validScore), `Invalid scores: ${testCase.id}/${side}`)
         check(Array.isArray(rating.failures) && new Set(rating.failures).size === rating.failures.length && rating.failures.every((id) => testCase.failure_conditions.some((failure) => failure.id === id)), `Invalid failure IDs: ${testCase.id}/${side}`)
+        if (key === 'material_cases' && rating.failures.includes('miss-older')) {
+          const role = index % 2 === 0 ? { A: 'baseline', B: 'skill' }[side] : { A: 'skill', B: 'baseline' }[side]
+          const calls = trace(join(runDir, role), testCase.id)
+          check(!hasSuccessfulExpectedOlderRead(testCase, calls), `Judge marked miss-older despite a successful expected older-page read: ${testCase.id}/${side}`)
+        }
       }
       const skillSide = index % 2 === 0 ? 'B' : 'A'
       totals[item.winner === 'tie' ? 'tie' : item.winner === skillSide ? 'win' : 'loss']++

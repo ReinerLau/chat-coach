@@ -13,4 +13,6 @@
 
 检查 case 的 `failure_conditions`，列出命中的 ID。没有真实调用的 case 不能声称已取得模拟历史；摘要不得提前使用未读取的模拟结果。同一含义的来源可以用消息 ID、聊天原句或用户说明准确标识，不强求固定措辞。
 
+分页相关 failure 必须逐条对照 `calls`。若记录显示使用用例指定的 `session_id` 和 `before` 成功读取上一页，且返回了用例配置的相关消息，不得标记 `miss-older`；摘要与回复的归属和事实另行评分。
+
 `critical: true` 的失败优先于总分；双方质量相当时判 tie。与固定回复盲评一起返回严格 JSON，材料部分位于顶层 `material_cases`；每项包含 `case_id`、A/B 各自的 `scores` 和 `failures`、`winner`。scores 使用 acquisition、attribution、sufficiency、handoff，winner 为 A、B 或 tie。

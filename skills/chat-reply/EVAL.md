@@ -123,7 +123,7 @@ node skills/chat-reply/evals/run-eval.mjs prepare <run-dir>
 node skills/chat-reply/evals/run-eval.mjs report <run-dir>
 ```
 
-脚本校验评分结构和 failure ID，解码身份，生成 report.json。运行目录内的 JSON 和模拟调用记录留在仓库外，作为内部校验材料。
+脚本校验评分结构和 failure ID，解码身份，生成 report.json。材料层分页失败还会与模拟器调用记录交叉校验：若已用用例指定的会话和游标成功读到配置的上一页内容，Judge 不得标记 `miss-older`；出现矛盾时脚本拒绝该报告，需由 Judge 根据盲评输入和调用记录修正判分。运行目录内的 JSON 和模拟调用记录留在仓库外，作为内部校验材料。
 
 ## 会话评测报告
 
@@ -137,7 +137,6 @@ node skills/chat-reply/evals/run-eval.mjs report <run-dir>
 报告只汇总已校验输出和 Judge 的评分，主 Agent 不新增判分或推测性解释。原始回复、材料摘要和工具记录不全文嵌入会话报告。
 
 评测失败时也输出上述报告；若评测中断或输出校验失败，报告说明中断环节、错误和缺失结果，明确标记“未完成”，只展示已确认的数据，不将缺失结果记作零或宣称通过。每轮重跑后分别报告该轮结果，不用后续结果覆盖此前失败或中断。
-
 ## 回归门槛与报告
 
 固定回复回归与材料层场景分别满足门槛，不用一组的胜场抵消另一组的失败。固定回复 Skill 必须同时满足：
