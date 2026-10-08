@@ -14,7 +14,7 @@
 - 需求有实质歧义时先用选项澄清，再实现。
 - MCP 改动前运行现有 MCP 测试；改动后运行：
   `npm test --prefix mcp-server` 和 `npm run test:package --prefix mcp-server`。
-- 修改 `skills/chat-reply/**` 时，按 `skills/chat-reply/EVAL.md` 使用 3 个相互隔离的 Agent 完成 Baseline、Skill、Judge 评测；未达门槛不得提交 PR。
+- 修改 `skills/chat-reply/**` 时，按 [EVAL.md](skills/chat-reply/EVAL.md) 使用 3 个相互隔离的 Agent 完成 Baseline、Skill、Judge 评测，并在当前会话中输出评测报告（包括失败或未完成的评测）；未达门槛不得提交 PR。
 - 只改文档或配置时，按影响范围做链接、引用和工作流检查。
 
 ## PR 与发布
