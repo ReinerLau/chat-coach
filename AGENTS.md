@@ -4,11 +4,13 @@
 
 本仓库只维护中文回复教练 Skill 和微信历史 MCP。
 
-- 回复规则：`skills/chat-reply/SKILL.md`；细节见同目录的 `references/`。
+- 中文回复教练 Skill 规则：`skills/chat-reply/SKILL.md`；细节见同目录的 `references/`。
 - 微信历史 MCP：`mcp-server/`。修改服务、管理页、打包或隧道运行逻辑前先读 `mcp-server/README.md`。
-- MCP 只读本机微信历史，不调用模型、不发送消息。
+- 微信历史 MCP 只读本机微信历史，不调用模型、不发送消息。
 
 ## 开发约定
+
+- 讨论或修改领域概念前读取 [CONTEXT.md](CONTEXT.md)，使用其中定义的术语。
 
 - 每个分支只做一个需求或 Bug；通过分支和 PR 集成，不直接提交到 `master`。
 - 需求有实质歧义时先用选项澄清，再实现。

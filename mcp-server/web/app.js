@@ -38,7 +38,7 @@ function render(state) {
   lastState = state
   $('status').textContent = names[state.state] || '无法确认'
   $('status').className = `badge ${state.state}`
-  $('summary').textContent = state.operation ? '操作进行中，请稍候。' : state.state === 'running' ? '已就绪，可以在 ChatGPT 中使用微信历史。' : state.state === 'stopped' ? '启动服务后，ChatGPT 即可访问历史。' : '请查看下方提示，处理后重试。'
+  $('summary').textContent = state.operation ? '操作进行中，请稍候。' : state.state === 'running' ? '微信历史 MCP 已就绪，可以在 ChatGPT 中读取微信历史。' : state.state === 'stopped' ? '启动服务后，ChatGPT 即可访问微信历史。' : '请查看下方提示，处理后重试。'
   $('mcp').textContent = names[state.mcp] || '无法确认'
   $('tunnel').textContent = names[state.tunnel] || '无法确认'
   $('sync').textContent = names[state.sync.phase] || '暂无记录'

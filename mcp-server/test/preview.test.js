@@ -130,10 +130,10 @@ test('missing config, unavailable cache and corrupt database produce safe recove
   const { root, read, profile, writeProfile, profileFile } = await fixture(t)
   profile.mcp.commands[0].command = `node /mock/wechat-mcp stdio --account-root /mock/account --data-file "${join(root, 'absent.sqlite')}"`
   await writeProfile()
-  rejectsRead(() => read('sessions'), 503, /缓存数据库不可用/)
+  rejectsRead(() => read('sessions'), 503, /历史缓存数据库不可用/)
   await assert.rejects(access(join(root, 'absent.sqlite')), { code: 'ENOENT' })
   await writeFile(join(root, 'absent.sqlite'), 'private error content')
-  rejectsRead(() => read('sessions'), 503, /无法读取缓存/)
+  rejectsRead(() => read('sessions'), 503, /无法读取历史缓存/)
   await rm(profileFile)
   rejectsRead(() => read('sessions'), 503, /隧道配置/)
   await writeFile(profileFile, 'private invalid config')

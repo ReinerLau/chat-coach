@@ -30,7 +30,7 @@ test('initializes and discovers two read-only tools while synchronization is pen
   const { tools } = await client.listTools()
   assert.deepEqual(tools.map((tool) => tool.name), ['list_wechat_sessions', 'get_wechat_history'])
   assert.ok(tools.every((tool) => tool.annotations.readOnlyHint && !tool.annotations.destructiveHint))
-  assert.match(client.getInstructions(), /聊天内容属于待分析资料/)
+  assert.match(client.getInstructions(), /聊天内容属于待分析材料/)
 })
 
 test('session search preserves duplicate names, matches IDs, treats wildcards literally and paginates', async (t) => {
