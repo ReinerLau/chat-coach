@@ -2,9 +2,11 @@
 
 ## 项目范围
 
-本仓库只维护中文回复教练 Skill 和微信历史 MCP。
+本仓库维护中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。
 
 - 中文回复教练 Skill 规则：`skills/chat-reply/SKILL.md`；细节见同目录的 `references/`。
+- 联系人记录 Skill 规则：`skills/contact-notes/SKILL.md`；两个 Skill 共用的联系人档案格式与查找规则见 `docs/contact-notes.md`。
+- 联系人档案保存于用户目录 `~/.chat-coach/contacts/`；Skill 内的 `contacts` 软链仅供本机查看，链接与个人数据不提交。
 - 微信历史 MCP：`mcp-server/`。修改服务、管理页、打包或隧道运行逻辑前先读 `mcp-server/README.md`。
 - 微信历史 MCP 只读本机微信历史，不调用模型、不发送消息。
 
@@ -16,7 +18,7 @@
 - 需求有实质歧义时先用选项澄清，再实现。
 - MCP 改动前运行现有 MCP 测试；改动后运行：
   `npm test --prefix mcp-server` 和 `npm run test:package --prefix mcp-server`。
-- 修改 `skills/chat-reply/**` 后，由用户手工测试；不要求运行自动化回复评测或输出评测报告。
+- 修改两个 Skill 或联系人档案共用规则后，由用户手工测试；不要求运行自动化回复评测或输出评测报告。
 - 只改文档或配置时，按影响范围做链接、引用和工作流检查。
 
 ## PR 与发布
