@@ -1,13 +1,13 @@
 import { z } from 'zod'
 
 export const sessionInput = z.object({
-  query: z.string().trim().max(200).default('').describe('会话名称或微信 ID 的部分文字；同名会话会返回多个候选'),
+  query: z.string().trim().max(200).default('').describe('会话名称或会话 ID 的部分文字；同名会话会返回多个候选会话'),
   limit: z.number().int().min(1).max(200).default(50).describe('每页会话数，最多 200'),
   offset: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER - 201).default(0).describe('上一页 nextOffset；更换查询时从 0 开始')
 }).strict()
 
 export const historyInput = z.object({
-  session_id: z.string().min(1).max(500).describe('list_wechat_sessions 返回的会话 ID，不是联系人名称'),
+  session_id: z.string().min(1).max(500).describe('list_wechat_sessions 返回的 sessions[].id，即会话 ID，不是联系人名称'),
   limit: z.number().int().min(1).max(200).default(50).describe('每页消息数，默认 50，最多 200'),
   before: z.string().min(1).max(2048).optional().describe('上一页的 next 游标；省略时读取最近消息')
 }).strict()
@@ -52,7 +52,7 @@ export class CachedHistory {
     const { session_id: sessionId, limit, before } = historyInput.parse(input)
     const cursor = decodeCursor(before, sessionId)
     const session = this.store.session(sessionId)
-    if (!session) throw new HistoryError('会话不存在，请先查找会话并使用返回的 ID', 404)
+    if (!session) throw new HistoryError('会话不存在，请先查找会话并使用返回的会话 ID', 404)
     const rows = this.store.messages(sessionId, limit + 1, cursor)
     const messages = rows.slice(-limit).map((row) => ({
       ...row,

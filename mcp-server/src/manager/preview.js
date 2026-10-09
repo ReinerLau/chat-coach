@@ -37,7 +37,7 @@ export class CachePreview {
       const input = inputFromQuery(kind, params)
       const config = loadTunnelConfig(this.paths, this.env)
       try { store = new MessageStore(config.dataFile, { readOnly: true }) }
-      catch { throw new PreviewError('缓存数据库不可用。请先启动服务完成同步，再刷新预览。') }
+      catch { throw new PreviewError('历史缓存数据库不可用。请先启动服务完成同步，再刷新预览。') }
       const history = new CachedHistory({ store })
       return kind === 'sessions' ? history.sessions(input) : history.messages(input)
     } catch (error) {
@@ -45,7 +45,7 @@ export class CachePreview {
       if (error instanceof ZodError) throw new PreviewError('查询参数无效，请检查会话或分页参数。', 400)
       if (error instanceof HistoryError) throw new PreviewError(error.message, error.status)
       if (error instanceof ManagerError) throw new PreviewError(error.message)
-      throw new PreviewError('无法读取缓存数据，请检查缓存数据库或稍后刷新重试。')
+      throw new PreviewError('无法读取历史缓存数据，请检查历史缓存数据库或稍后刷新重试。')
     } finally { store?.close() }
   }
 }

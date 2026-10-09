@@ -18,15 +18,15 @@ export async function runForeground({
   }, pollMs)
   const close = async () => {
     shutdownAttempted = true
-    log('正在关闭微信 MCP、隧道和管理后台，请稍候。')
+    log('正在关闭微信历史 MCP、隧道和管理后台，请稍候。')
     await stop(manager)
-    log('微信 MCP、隧道和管理后台已关闭。')
+    log('微信历史 MCP、隧道和管理后台已关闭。')
   }
   try {
     const result = await launch({ noOpen, onReady: (ready) => { manager = ready } })
     log(`${noOpen ? '管理后台地址' : '管理页已打开'}：${result.origin}`)
     if (result.error) report(result.error)
-    if (!reason) log('按 Ctrl+C 关闭微信 MCP、隧道和管理后台。')
+    if (!reason) log('按 Ctrl+C 关闭微信历史 MCP、隧道和管理后台。')
     const event = await interrupted
     if (event === 'closed') { log('管理后台已退出，终端命令结束。'); return 0 }
     await close()

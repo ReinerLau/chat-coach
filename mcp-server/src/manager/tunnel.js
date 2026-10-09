@@ -32,7 +32,7 @@ export async function safeLogs(file) {
       try {
         const row = JSON.parse(line)
         const known = new Map([
-          ['stdio MCP command started', '微信 MCP 进程已启动'],
+          ['stdio MCP command started', '微信历史 MCP 进程已启动'],
           ['tunnel metadata fetched', '已获取隧道信息'],
           ['🟢 tunnel-client started', '隧道客户端已启动'],
           ['dispatcher forwarded command to MCP server', '已将请求交给 MCP 服务'],
@@ -43,7 +43,7 @@ export async function safeLogs(file) {
         const time = typeof row.time === 'string' && Number.isFinite(Date.parse(row.time)) ? new Date(row.time).toISOString() : ''
         return [{ time, level: ['INFO', 'WARN', 'ERROR', 'DEBUG'].includes(row.level) ? row.level : 'INFO', message }]
       } catch {
-        if (line.startsWith('[wechat-mcp]') || line.startsWith('[wechat-history-mcp]')) return [{ time: '', level: 'ERROR', message: '微信 MCP 报告错误，请检查账号配置或重启服务。' }]
+        if (line.startsWith('[wechat-mcp]') || line.startsWith('[wechat-history-mcp]')) return [{ time: '', level: 'ERROR', message: '微信历史 MCP 报告错误，请检查账号配置或重启服务。' }]
         return []
       }
     }).slice(-100)
@@ -116,7 +116,7 @@ export class TunnelRuntime {
       const uiUrl = localUrl(raw.ui_url)
       const mcp = running ? (health === 'running' ? 'running' : health === 'stopped' ? 'error' : 'unknown') : 'stopped'
       const state = this.operation || (this.lastError || sync.error || (running && (!healthy || !ready || health !== 'running')) ? 'error' : running ? 'running' : 'stopped')
-      return { state, operation: this.operation, error: this.lastError || sync.error || (running && health !== 'running' ? '微信 MCP 未运行或无法确认，请检查数据库密钥和客户端诊断。' : running && !ready ? '服务已启动但尚未就绪，请检查诊断日志。' : null), mcp, tunnel: running ? (healthy && ready ? 'connected' : 'starting') : 'stopped', sync, diagnosticsUrl: uiUrl ? `${uiUrl}/ui` : null, logs: await safeLogs(config.logFile) }
+      return { state, operation: this.operation, error: this.lastError || sync.error || (running && health !== 'running' ? '微信历史 MCP 未运行或无法确认，请检查数据库密钥和客户端诊断。' : running && !ready ? '服务已启动但尚未就绪，请检查诊断日志。' : null), mcp, tunnel: running ? (healthy && ready ? 'connected' : 'starting') : 'stopped', sync, diagnosticsUrl: uiUrl ? `${uiUrl}/ui` : null, logs: await safeLogs(config.logFile) }
     } catch (error) {
       return { state: this.operation || 'error', operation: this.operation, error: error instanceof ManagerError ? error.message : '无法读取服务状态，请检查本机配置。', mcp: 'unknown', tunnel: 'unknown', sync: await this.syncState(false), diagnosticsUrl: null, logs: [] }
     }
@@ -177,6 +177,6 @@ export class TunnelRuntime {
       if (!status.process_running) break
       await this.sleep(500)
     }
-    throw new ManagerError('MCP 或隧道未就绪，请检查微信密钥、客户端版本和隧道权限后重试。')
+    throw new ManagerError('微信历史 MCP 或隧道未就绪，请检查微信密钥、客户端版本和隧道权限后重试。')
   }
 }

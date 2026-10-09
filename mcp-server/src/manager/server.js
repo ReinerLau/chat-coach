@@ -49,7 +49,7 @@ export async function createManagerServer(controller, { preview, onShutdown = ()
       if (!preview) return json(503, { error: '缓存预览暂不可用，请重新运行 wechat-mcp。' })
       try { return json(200, preview.read(previewKind, url.searchParams)) }
       catch (error) {
-        return json(error instanceof PreviewError ? error.status : 503, { error: error instanceof PreviewError ? error.message : '无法读取缓存数据，请稍后重试。' })
+        return json(error instanceof PreviewError ? error.status : 503, { error: error instanceof PreviewError ? error.message : '无法读取历史缓存数据，请稍后重试。' })
       }
     }
     if (request.method === 'GET' && path === '/api/status') {

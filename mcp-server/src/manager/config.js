@@ -41,7 +41,7 @@ export function loadTunnelConfig(paths, env = process.env) {
     const offset = args[2] === 'stdio' && /^wechat-mcp(?:\.js)?$/.test(basename(args[1])) ? 3 : 2
     config = parseConfig(args.slice(offset))
     if (config.help || !isAbsolute(config.accountRoot)) throw new Error()
-  } catch { throw new ManagerError('无法识别微信 MCP 启动参数。请使用 README 中的 node + wechat-mcp stdio 启动格式。') }
+  } catch { throw new ManagerError('无法识别微信历史 MCP 启动参数。请使用 README 中的 node + wechat-mcp stdio 启动格式。') }
   const apiKey = profile.control_plane.api_key
   if (typeof apiKey !== 'string' || !/^(?:env:|file:).+/.test(apiKey)) throw new ManagerError('隧道运行密钥必须使用 env: 或 file: 引用；请勿将密钥值写入配置。')
   const baseUrl = profile.control_plane.base_url || 'https://api.openai.com'
