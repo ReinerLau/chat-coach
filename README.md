@@ -4,9 +4,11 @@
 
 ## 回复 Skill
 
-`skills/chat-reply/SKILL.md` 保留“材料准备 → 回复生成”两层流程。[材料模块](skills/chat-reply/references/materials.md) 按需整理已有上下文或通过只读微信 MCP 补查，保留来源和时间，只处理当前任务，不维护长期人物档案。回复生成帮助模型生成像普通真人聊天的中文回复建议，尽量减少 AI 痕迹，不以礼貌、稳妥或聊天结果评判好坏。缺少必须由用户提供的事实或态度时先补问，能够直接回复时不额外收集信息。细节见 [自然表达参考](skills/chat-reply/references/naturalness.md)。修改 Skill 后由用户手工测试。
+`skills/chat-reply/SKILL.md` 按“禁止项 → 材料准备 → 回复生成 → AI 痕迹检查”执行，每轮只生成一个回复，检查通过后才展示给用户。检查不通过时从头重跑，直到通过；可复用已有聊天材料，重新核对并整理摘要，材料充分时无需重复查询微信历史。默认不附带分析或检查过程。
 
-想通过聊天例子理解这些规则，可以阅读 [规则举例说明](docs/chat-reply-examples.md)：通过长回复、情绪、追问、补问和多个候选等场景，对照自然表达与 AI 痕迹。
+[材料模块](skills/chat-reply/references/materials.md) 按需整理已有上下文或通过只读微信 MCP 补查，保留来源和时间，只处理当前任务，不维护长期人物档案。回复生成帮助模型生成像普通真人聊天的中文回复建议，尽量减少 AI 痕迹，不以礼貌、稳妥或聊天结果评判好坏。缺少必须由用户提供的事实或态度时先补问，能够直接回复时不额外收集信息。细节见 [自然表达参考](skills/chat-reply/references/naturalness.md) 和 [AI 痕迹检查](skills/chat-reply/references/ai-traces.md)。修改 Skill 后由用户手工测试。
+
+想通过聊天例子理解这些规则，可以阅读 [规则举例说明](docs/chat-reply-examples.md)：通过长回复、情绪、追问、补问和检查重跑等场景，对照自然表达与 AI 痕迹。
 
 ## 微信历史 MCP
 
@@ -23,6 +25,7 @@ chat-coach/
     └── chat-reply/
         ├── SKILL.md
         ├── references/
+        │   ├── ai-traces.md
         │   ├── materials.md
         │   ├── naturalness.md
         │   └── prohibitions.md
