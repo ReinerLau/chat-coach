@@ -4,9 +4,9 @@ chat-coach 由中文回复教练 Skill 和微信历史 MCP 两部分组成。中
 
 ## 中文回复教练 Skill
 
-[中文回复教练 Skill](skills/chat-reply/SKILL.md) 仅通过 `$chat-reply` 手动调用，调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。它保留任务目标与材料层：结合待回复消息、实际聊天上下文和用户说明生成回复，材料不足时按需读取微信历史或向用户补问。微信会话查找、历史读取和分页用法见 [微信历史读取说明](skills/chat-reply/references/materials.md)。
+[中文回复教练 Skill](skills/chat-reply/SKILL.md) 仅通过 `$chat-reply` 手动调用，调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。先确认用户意图，再结合待回复消息、实际聊天上下文和用户说明生成候选回复。用户尚未说明本轮想表达什么时，先简短补问并等待回答；已明确说明时不重复确认。候选回复中的行动、表态和承诺，以用户明确表达的当前意愿为依据。必要事实不足时，按需读取微信历史或向用户补问；微信历史不能替代意图确认。微信会话查找、历史读取和分页用法见 [微信历史读取说明](skills/chat-reply/references/materials.md)。
 
-修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 提供 24 个原创虚构场景和空白记录区，供用户观察模型表现。测试数据放在 Skill 外，运行时不引用；后续可将实际遇到的问题追加为回归案例，再据此优化。
+修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 提供 24 个原创虚构场景、1 个用户意图缺失的回归案例和空白记录区，供用户观察模型表现。测试数据放在 Skill 外，运行时不引用；后续可将实际遇到的问题追加为回归案例，再据此优化。
 
 ## 微信历史 MCP
 
