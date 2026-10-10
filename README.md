@@ -6,7 +6,7 @@ chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历�
 
 [中文回复教练 Skill](skills/chat-reply/SKILL.md) 按“确认意图 → 补齐事实 → 生成回复”处理聊天，联系人明确时读取已存档案；没有档案时继续使用已有材料。它只读取档案，表达要求见[回复规则](skills/chat-reply/references/reply-rules.md)。
 
-不知道怎么接、尚未明确用户意图时，按[接话方向引导](skills/chat-reply/references/intent-guidance.md)提供 3–4 个贴合聊天的具体方向和短示例；材料不足以支持多个方向时少给几个。用户可以选择、组合、修改或排除方向；都不满意时，通过具体问题和反馈继续探索。用户选定后进入回复生成，已有明确用户意图时直接沿用。
+不知道怎么接、尚未明确用户意图时，按[接话方向引导](skills/chat-reply/references/intent-guidance.md)提供 3–4 个贴合聊天的具体方向，每个方向只说明接哪一点、想表达什么；材料不足以支持多个方向时少给几个。用户可以选择、组合、修改或排除方向；都不满意时，通过具体问题和反馈继续探索。用户选定后进入回复生成，已有明确用户意图时直接沿用。
 
 仅通过 `$chat-reply` 手动调用，调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。
 
