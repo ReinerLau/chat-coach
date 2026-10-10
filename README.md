@@ -4,7 +4,7 @@ chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历�
 
 ## 中文回复教练 Skill
 
-[中文回复教练 Skill](skills/chat-reply/SKILL.md) 按“确认意图 → 补齐事实 → 生成回复”处理聊天，联系人明确时读取已存档案；没有档案时继续使用已有材料。它只读取档案，详细规则见 Skill 正文。
+[中文回复教练 Skill](skills/chat-reply/SKILL.md) 按“确认意图 → 补齐事实 → 生成回复”处理聊天，联系人明确时读取已存档案；没有档案时继续使用已有材料。它只读取档案，表达要求见[回复规则](skills/chat-reply/references/reply-rules.md)。
 
 仅通过 `$chat-reply` 手动调用，调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。
 
@@ -93,7 +93,10 @@ chat-coach/
     │   ├── SKILL.md
     │   ├── agents/openai.yaml
     │   ├── contacts -> ~/.chat-coach/contacts（仅本机，可选）
-    │   └── references/materials.md
+    │   └── references/
+    │       ├── materials.md
+    │       ├── reply-rules.md
+    │       └── review.md
     └── contact-notes/
         ├── SKILL.md
         ├── agents/openai.yaml
@@ -109,6 +112,8 @@ chat-coach/
 | [skills/chat-reply/SKILL.md](skills/chat-reply/SKILL.md) | 中文回复教练 Skill 入口，定义任务目标与上下文使用方式。 |
 | [skills/chat-reply/agents/openai.yaml](skills/chat-reply/agents/openai.yaml) | 仅允许手动调用的策略配置。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
+| [skills/chat-reply/references/reply-rules.md](skills/chat-reply/references/reply-rules.md) | 生成和复核候选回复时逐条应用的回复规则。 |
+| [skills/chat-reply/references/review.md](skills/chat-reply/references/review.md) | 候选回复的复核流程与完成条件。 |
 | [skills/contact-notes/SKILL.md](skills/contact-notes/SKILL.md) | 联系人档案的查看与维护流程。 |
 | [skills/contact-notes/agents/openai.yaml](skills/contact-notes/agents/openai.yaml) | 联系人记录 Skill 仅允许显式调用。 |
 | [skills/contact-notes/references/contact-notes.md](skills/contact-notes/references/contact-notes.md) | 联系人档案的存储、身份查找、文件格式与维护规则。 |
