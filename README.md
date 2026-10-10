@@ -6,9 +6,11 @@ chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历�
 
 [中文回复教练 Skill](skills/chat-reply/SKILL.md) 按“确认意图 → 补齐事实 → 生成回复”处理聊天，联系人明确时读取已存档案；没有档案时继续使用已有材料。它只读取档案，表达要求见[回复规则](skills/chat-reply/references/reply-rules.md)。
 
+不知道怎么接、尚未明确用户意图时，按[接话方向引导](skills/chat-reply/references/intent-guidance.md)提供 3–4 个贴合聊天的具体方向，每个方向只说明接哪一点、想表达什么；材料不足以支持多个方向时少给几个。用户可以选择、组合、修改或排除方向；都不满意时，通过具体问题和反馈继续探索。用户选定后进入回复生成，已有明确用户意图时直接沿用。
+
 仅通过 `$chat-reply` 手动调用，调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。
 
-修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 提供 24 个原创虚构场景，供用户观察模型表现。需要验证用户意图缺失时的追问，可自行删除测试输入中的“我的说明”。测试数据放在 Skill 外，运行时不引用；后续可将实际遇到的问题追加为回归案例，再据此优化。
+修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 提供原创虚构场景：01–24 用于观察回复表现，25–27 用于验证接话方向引导及多轮反馈。也可删除已有场景中的“我的说明”来探索方向。测试数据放在 Skill 外，运行时不引用；后续可将实际遇到的问题追加为回归案例，再据此优化。
 
 ## 联系人记录 Skill
 
@@ -94,6 +96,7 @@ chat-coach/
     │   ├── agents/openai.yaml
     │   ├── contacts -> ~/.chat-coach/contacts（仅本机，可选）
     │   └── references/
+    │       ├── intent-guidance.md
     │       ├── materials.md
     │       ├── reply-rules.md
     │       └── review.md
@@ -107,10 +110,11 @@ chat-coach/
 | 位置 | 干什么的 |
 | --- | --- |
 | [CONTEXT.md](CONTEXT.md) | 项目领域术语及同义称呼的取舍。 |
-| [docs/chat-reply-manual-tests.md](docs/chat-reply-manual-tests.md) | 可复制的聊天场景与用户意图说明。 |
+| [docs/chat-reply-manual-tests.md](docs/chat-reply-manual-tests.md) | 可复制的聊天场景、用户意图说明与多轮引导验收步骤。 |
 | [mcp-server/](mcp-server/README.md) | 微信历史 MCP 的实现、安装、配置与验证说明。 |
 | [skills/chat-reply/SKILL.md](skills/chat-reply/SKILL.md) | 中文回复教练 Skill 入口，定义任务目标与上下文使用方式。 |
 | [skills/chat-reply/agents/openai.yaml](skills/chat-reply/agents/openai.yaml) | 仅允许手动调用的策略配置。 |
+| [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 用户尚未明确用户意图时的方向探索与反馈流程。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
 | [skills/chat-reply/references/reply-rules.md](skills/chat-reply/references/reply-rules.md) | 生成和复核候选回复时逐条应用的回复规则。 |
 | [skills/chat-reply/references/review.md](skills/chat-reply/references/review.md) | 候选回复的复核流程与完成条件。 |
