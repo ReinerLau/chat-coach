@@ -104,7 +104,7 @@ chat-coach/
 | 位置 | 干什么的 |
 | --- | --- |
 | [CONTEXT.md](CONTEXT.md) | 项目领域术语及同义称呼的取舍。 |
-| [docs/chat-reply-manual-tests.md](docs/chat-reply-manual-tests.md) | 可复制的聊天场景与手工验收说明。 |
+| [docs/chat-reply-manual-tests.md](docs/chat-reply-manual-tests.md) | 可复制的聊天场景与用户意图说明。 |
 | [mcp-server/](mcp-server/README.md) | 微信历史 MCP 的实现、安装、配置与验证说明。 |
 | [skills/chat-reply/SKILL.md](skills/chat-reply/SKILL.md) | 中文回复教练 Skill 入口，定义任务目标与上下文使用方式。 |
 | [skills/chat-reply/agents/openai.yaml](skills/chat-reply/agents/openai.yaml) | 仅允许手动调用的策略配置。 |
