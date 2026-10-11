@@ -1,9 +1,11 @@
 ---
 name: chat-reply
-description: 根据实际聊天上下文生成自然、有活人感的中文回复。
+description: 根据实际聊天上下文生成自然、有活人感的中文回复，并联动联系人记录 Skill 保存相关背景和互动。
 ---
 
 # 中文回复教练 Skill
+
+仅通过 `$chat-reply` 显式调用。本轮及连续回复交互中，每次取得用户提供或按需查询的新材料后，先按[自动记录说明](references/auto-notes.md)完成联系人记录 Skill 的联动，再继续意图引导、事实补齐或回复生成；无需用户另行调用 `$contact-notes`。
 
 ## 回复流程
 

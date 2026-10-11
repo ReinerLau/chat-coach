@@ -11,7 +11,7 @@
 _Avoid_: 回复 Skill、Chat Reply Skill、Chat Reply（作为组件名称时）
 
 **联系人记录 Skill**:
-根据用户明确请求查看或维护本机联系人档案的组件。
+根据用户明确请求查看或维护本机联系人档案，或在中文回复教练 Skill 的回复流程中自动记录背景和互动的组件。
 _Avoid_: 角色卡 Skill、记忆 Skill（作为组件名称时）
 
 **微信历史 MCP**:
