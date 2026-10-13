@@ -10,7 +10,7 @@ chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历�
 
 每次新的拟写请求都按[接话方向引导](skills/chat-reply/references/intent-guidance.md)先判断用户意图与对话是否相配，再确认方向，包括“继续”、改写和追加候选回复。方向相配时简短复述并等待确认；有具体依据表明明显错位时，说明原因并推荐调整，对方明确拒绝或要求停止时只提供尊重边界的方向。单条简短回复不足以断定对方不想聊。用户坚持明显错位的方向时，不生成该方向的候选回复；未明确意图时，按材料提供贴合场景的方向，等待选择、组合、修改或排除。确认适合场景的方向后补齐事实并生成回复，同次拟写中的事实补齐和内部复核不重复确认。仅询问回复效果时直接分析，另拟回复前重新判断和确认。
 
-接话判断参考书中“态度—情绪—想法”三个交流层次：态度交流用热情、友好、礼貌、敷衍、冷漠、恶毒六级可见表现判断接话力度；情绪交流接住具体感受，想法交流回应观点、选择或计划。层次描述当前表达，不给联系人定性，也不为了深入而逐级推进。
+当接话取舍需要区分对方的交流意愿、感受或看法时，[接话方向引导](skills/chat-reply/references/intent-guidance.md)按需读取独立的[交流层次判断方法](skills/chat-reply/references/methods/conversation-levels.md)。该方法借鉴书中的“态度—情绪—想法”三层，以及态度交流的六级表现；方向显然与场景相配时不额外套用。
 
 方向引导会考虑用户这边可聊的内容：有分享空间而材料不足时，主动询问相关近况、过去经历、感受或看法，再请用户选择表达方向。已有信息足够、用户只想回应对方或不愿提供时，使用已有材料继续；提供事实不等于决定分享。方向选定后，具体细节由“补齐事实”处理，复核时核对分享内容的依据与时间。
 
@@ -109,6 +109,7 @@ chat-coach/
     │       ├── auto-notes.md
     │       ├── intent-guidance.md
     │       ├── materials.md
+    │       ├── methods/conversation-levels.md
     │       ├── reply-rules.md
     │       └── review.md
     └── contact-notes/
@@ -128,6 +129,7 @@ chat-coach/
 | [skills/chat-reply/references/auto-notes.md](skills/chat-reply/references/auto-notes.md) | 回复流程内自动联动记录的时机、交接与异常处理。 |
 | [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 每次拟写前的意图确认、相关用户信息询问及方向探索与反馈流程。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
+| [skills/chat-reply/references/methods/conversation-levels.md](skills/chat-reply/references/methods/conversation-levels.md) | 按需读取的态度、情绪、想法交流层次判断方法。 |
 | [skills/chat-reply/references/reply-rules.md](skills/chat-reply/references/reply-rules.md) | 生成和复核候选回复时逐条应用的回复规则。 |
 | [skills/chat-reply/references/review.md](skills/chat-reply/references/review.md) | 候选回复的复核流程与完成条件。 |
 | [skills/contact-notes/SKILL.md](skills/contact-notes/SKILL.md) | 联系人档案的查看与维护流程。 |
