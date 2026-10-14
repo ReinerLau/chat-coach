@@ -5,7 +5,8 @@ import { join } from 'node:path'
 import { tmpdir } from 'node:os'
 import { MessageStore } from '../src/store.js'
 import { WechatSync } from '../src/sync.js'
-import { normalizeMessage } from '../src/normalize.js'
+import { normalizeMessage, parseQuotedReply } from '../src/normalize.js'
+import { CachedHistory } from '../src/history.js'
 import { keychainHelperPath } from '../src/keychain.js'
 
 test('keychain helper lives in writable user data, outside the installed package', () => {
@@ -15,6 +16,71 @@ test('keychain helper lives in writable user data, outside the installed package
 test('normalizes WCDB message direction and ids', () => {
   const message = normalizeMessage({ mesLocalID: 17, msgContent: '你好', mesDes: 0, msgCreateTime: '123', messageType: '1' }, 'friend')
   assert.deepEqual(message, { sessionId: 'friend', localId: '17', serverId: '', createdAt: 123, type: 1, isSelf: true, content: '你好', senderId: '' })
+})
+
+test('parses quoted replies, preserving the reply text and referenced sender/content', () => {
+  const xml = '<msg><appmsg><title>收到</title><type>57</type><refermsg><type>1</type><displayname>黄敏</displayname><content>喝腻了已经 &amp; 不想喝</content></refermsg></appmsg></msg>'
+  assert.deepEqual(parseQuotedReply(xml), {
+    content: '收到\n引用（黄敏）：喝腻了已经 & 不想喝',
+    replyContent: '收到',
+    quotedContent: '喝腻了已经 & 不想喝',
+    quotedSender: '黄敏',
+    quotedType: '1'
+  })
+  assert.deepEqual(parseQuotedReply('<msg><appmsg><title>收到</title><refermsg><type>3</type><displayname>黄敏</displayname><content>image payload</content></refermsg></appmsg></msg>'), {
+    content: '收到\n引用（黄敏）：[图片]',
+    replyContent: '收到',
+    quotedContent: '[图片]',
+    quotedSender: '黄敏',
+    quotedType: '3'
+  })
+  assert.equal(parseQuotedReply('<msg><appmsg><title>普通分享</title></appmsg></msg>'), null)
+})
+
+test('history returns quoted reply context in readable and structured fields', async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'coach-'))
+  const store = new MessageStore(join(dir, 'messages.sqlite'))
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }) })
+  store.saveSession({ id: 'friend', name: '朋友' })
+  store.saveMessages([normalizeMessage({
+    mesLocalID: 1,
+    msgContent: '<msg><appmsg><title>我还真喝腻了</title><type>57</type><refermsg><type>1</type><displayname>黄敏</displayname><content>喝腻了已经</content></refermsg></appmsg></msg>',
+    messageType: 49,
+    mesDes: 0,
+    msgCreateTime: 1
+  }, 'friend')])
+
+  const result = new CachedHistory({ store }).messages({ session_id: 'friend' })
+  assert.deepEqual(result.messages[0], {
+    sessionId: 'friend', localId: '1', serverId: '', createdAt: 1, type: 49,
+    isSelf: true,
+    content: '我还真喝腻了\n引用（黄敏）：喝腻了已经',
+    senderId: '', replyContent: '我还真喝腻了', quotedContent: '喝腻了已经',
+    quotedSender: '黄敏', quotedType: '1'
+  })
+})
+
+test('sync backfills previously blank quoted-message payloads once', async (t) => {
+  const dir = mkdtempSync(join(tmpdir(), 'coach-'))
+  const store = new MessageStore(join(dir, 'messages.sqlite'))
+  t.after(() => { store.close(); rmSync(dir, { recursive: true, force: true }) })
+  store.saveSession({ id: 'friend', name: '朋友' }, 1)
+  store.saveMessages([normalizeMessage({
+    mesLocalID: '0:1', msgContent: '', messageType: 244813135921, mesDes: 0, msgCreateTime: 1
+  }, 'friend')])
+  store.markHistoryComplete('friend')
+  const xml = '<msg><appmsg><title>收到</title><refermsg><type>1</type><displayname>黄敏</displayname><content>喝腻了已经</content></refermsg></appmsg></msg>'
+  const source = {
+    sessions: () => [{ username: 'friend', nickname: '朋友' }],
+    *messagePages() {
+      yield [{ mesLocalID: '0:1', msgContent: xml, messageType: 244813135921, mesDes: 0, msgCreateTime: 1 }]
+    }
+  }
+
+  await new WechatSync({ source, store, accountRoot: dir }).sync()
+  assert.equal(store.isQuoteContentBackfillComplete('friend'), true)
+  assert.equal(store.messages('friend', 10)[0].content, xml)
+  assert.equal(new CachedHistory({ store }).messages({ session_id: 'friend' }).messages[0].quotedContent, '喝腻了已经')
 })
 
 test('sync imports all pages, persists messages, then deduplicates updates', async () => {

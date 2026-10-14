@@ -13,7 +13,7 @@ export class MessageStore {
     this.db.exec(`PRAGMA journal_mode=WAL;
       CREATE TABLE IF NOT EXISTS sessions (
         id TEXT PRIMARY KEY, name TEXT NOT NULL, updated_at INTEGER NOT NULL DEFAULT 0,
-        history_complete INTEGER NOT NULL DEFAULT 0
+        history_complete INTEGER NOT NULL DEFAULT 0, quote_content_backfilled INTEGER NOT NULL DEFAULT 0
       );
       CREATE TABLE IF NOT EXISTS messages (
         session_id TEXT NOT NULL, local_id TEXT NOT NULL, server_id TEXT NOT NULL,
@@ -25,8 +25,13 @@ export class MessageStore {
     if (!this.db.prepare('PRAGMA table_info(sessions)').all().some((column) => column.name === 'history_complete')) {
       this.db.exec('ALTER TABLE sessions ADD COLUMN history_complete INTEGER NOT NULL DEFAULT 0')
     }
+    if (!this.db.prepare('PRAGMA table_info(sessions)').all().some((column) => column.name === 'quote_content_backfilled')) {
+      this.db.exec('ALTER TABLE sessions ADD COLUMN quote_content_backfilled INTEGER NOT NULL DEFAULT 0')
+    }
     this.upsertSession = this.db.prepare('INSERT INTO sessions(id,name,updated_at) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name, updated_at=MAX(updated_at,excluded.updated_at)')
-    this.upsertMessage = this.db.prepare('INSERT OR IGNORE INTO messages(session_id,local_id,server_id,created_at,type,is_self,content,sender_id) VALUES(?,?,?,?,?,?,?,?)')
+    this.upsertMessage = this.db.prepare(`INSERT INTO messages(session_id,local_id,server_id,created_at,type,is_self,content,sender_id) VALUES(?,?,?,?,?,?,?,?)
+      ON CONFLICT(session_id,local_id) DO UPDATE SET content=excluded.content
+      WHERE messages.content='' AND excluded.content<>''`)
   }
 
   saveSession(session, updatedAt = 0) {
@@ -70,6 +75,19 @@ export class MessageStore {
 
   markHistoryComplete(sessionId) {
     this.db.prepare('UPDATE sessions SET history_complete=1 WHERE id=?').run(sessionId)
+  }
+
+  isQuoteContentBackfillComplete(sessionId) {
+    return Boolean(this.db.prepare('SELECT quote_content_backfilled FROM sessions WHERE id=?').get(sessionId)?.quote_content_backfilled)
+  }
+
+  hasQuoteContentBackfillCandidates(sessionId) {
+    return Boolean(this.db.prepare(`SELECT 1 FROM messages WHERE session_id=? AND content=''
+      AND (type & 4294967295)=49 LIMIT 1`).get(sessionId))
+  }
+
+  markQuoteContentBackfillComplete(sessionId) {
+    this.db.prepare('UPDATE sessions SET quote_content_backfilled=1 WHERE id=?').run(sessionId)
   }
 
   sessions({ query = '', limit = 50, offset = 0 } = {}) {

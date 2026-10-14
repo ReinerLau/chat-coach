@@ -1,9 +1,33 @@
 import { createHash } from 'node:crypto'
 import { readdirSync } from 'node:fs'
 import { basename, join } from 'node:path'
+import { decompress } from 'fzstd'
 import { SqliteWcdb } from './sqlite-wcdb.js'
 
 function tableName(username) { return `Msg_${createHash('md5').update(username).digest('hex')}` }
+
+function decodeMessageContent(value) {
+  if (typeof value === 'string') return value
+  if (!Buffer.isBuffer(value) && !(value instanceof Uint8Array)) return ''
+  let data = Buffer.from(value)
+  if (!data.length) return ''
+  if (data.length >= 4 && data.readUInt32LE(0) === 0xfd2fb528) {
+    try { data = Buffer.from(decompress(data)) }
+    catch { return '' }
+  }
+  const decoded = data.toString('utf8')
+  const replacementCount = (decoded.match(/\uFFFD/g) || []).length
+  if (replacementCount >= decoded.length * 0.2) return ''
+  const readableCount = Array.from(decoded).filter((char) => {
+    const code = char.codePointAt(0)
+    return code === 0x09 || code === 0x0a || code === 0x0d || code >= 0x20
+  }).length
+  return decoded && readableCount / Array.from(decoded).length > 0.85
+    ? decoded.replace(/\uFFFD/g, '')
+    : ''
+}
+
+function quoteIdentifier(value) { return `"${String(value).replaceAll('"', '""')}"` }
 
 export class WcdbSource {
   constructor({ libraryPath, accountRoot, key }) {
@@ -14,6 +38,7 @@ export class WcdbSource {
     this.ownUsername = basename(accountRoot).replace(/_[a-f0-9]{4}$/i, '')
     this.tableBySession = new Map()
     this.senderByDb = new Map()
+    this.messageContentColumns = new Map()
   }
 
   refresh() {
@@ -65,7 +90,11 @@ export class WcdbSource {
       for (const path of paths) {
         const shard = Number(basename(path).match(/\d+/)?.[0] ?? 0)
         const senders = this.senderByDb.get(path)
-        const iterator = this.db.iterate(path, `SELECT local_id,server_id,local_type,real_sender_id,create_time,message_content FROM "${table}" ORDER BY create_time DESC, local_id DESC`)
+        const columns = this.getMessageContentColumns(path, table)
+        const compressedContent = columns.compressed
+          ? `, ${quoteIdentifier(columns.compressed)} AS compress_content`
+          : ''
+        const iterator = this.db.iterate(path, `SELECT local_id,server_id,local_type,real_sender_id,create_time,message_content${compressedContent} FROM "${table}" ORDER BY create_time DESC, local_id DESC`)
         const cursor = { iterator, head: null, shard, senders }
         cursors.push(cursor)
         cursor.head = iterator.next()
@@ -78,10 +107,11 @@ export class WcdbSource {
         const chosen = active[0]
         const row = chosen.head.value
         const sender = chosen.senders.get(Number(row.real_sender_id)) ?? ''
+        const msgContent = decodeMessageContent(row.compress_content) || decodeMessageContent(row.message_content)
         page.push({
           mesLocalID: `${chosen.shard}:${row.local_id}`, serverId: String(row.server_id ?? ''),
           messageType: row.local_type, msgCreateTime: row.create_time,
-          msgContent: typeof row.message_content === 'string' ? row.message_content : '',
+          msgContent,
           mesDes: sender === this.ownUsername ? 0 : 1, sender
         })
         chosen.head = chosen.iterator.next()
@@ -89,6 +119,21 @@ export class WcdbSource {
       }
       if (page.length) yield page
     } finally { for (const cursor of cursors) cursor.iterator.return?.() }
+  }
+
+  getMessageContentColumns(path, table) {
+    this.messageContentColumns ||= new Map()
+    const key = `${path}:${table}`
+    const cached = this.messageContentColumns.get(key)
+    if (cached) return cached
+    const names = new Map(this.db.query(path, `PRAGMA table_info(${quoteIdentifier(table)})`)
+      .map((column) => [String(column.name).toLowerCase(), String(column.name)]))
+    const compressed = ['compress_content', 'compresscontent', 'compressed_content', 'msg_compress_content', 'msgcompresscontent', 'wcdb_ct_compress_content', 'wcdb_ct_compresscontent']
+      .map((name) => names.get(name))
+      .find(Boolean)
+    const columns = { compressed }
+    this.messageContentColumns.set(key, columns)
+    return columns
   }
 
   close() { this.db.close() }
