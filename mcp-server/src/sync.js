@@ -41,6 +41,9 @@ export class WechatSync {
           const session = normalizeSession(raw)
           if (!session) continue
           const historyComplete = this.store.isHistoryComplete?.(session.id) ?? true
+          const backfillDone = this.store.isQuoteContentBackfillComplete?.(session.id) ?? true
+          const quoteContentBackfill = historyComplete && !backfillDone &&
+            Boolean(this.store.hasQuoteContentBackfillCandidates?.(session.id))
           let latest = this.store.latestTime?.(session.id) ?? 0
           const cutoff = Math.max(0, latest - 30)
           const pages = this.source.messagePages ? this.source.messagePages(session.id, this.pageSize) : this.legacyPages(session.id)
@@ -52,7 +55,8 @@ export class WechatSync {
               const message = normalizeMessage(row, session.id)
               if (!message) continue
               if (this.store.hasMessage(session.id, message.localId)) {
-                if (historyComplete && message.createdAt < cutoff) { reachedKnown = true; break }
+                if (quoteContentBackfill && message.content) this.store.saveMessages([message])
+                if (historyComplete && message.createdAt < cutoff && !quoteContentBackfill) { reachedKnown = true; break }
                 continue
               }
               pending.push(message)
@@ -66,6 +70,7 @@ export class WechatSync {
           }
           this.store.saveSession(session, latest)
           this.store.markHistoryComplete?.(session.id)
+          this.store.markQuoteContentBackfillComplete?.(session.id)
           await setImmediate()
         }
     } while (this.dirty && !this.stopped)

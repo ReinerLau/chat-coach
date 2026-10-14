@@ -1,4 +1,5 @@
 import { z } from 'zod'
+import { parseQuotedReply } from './normalize.js'
 
 export const sessionInput = z.object({
   query: z.string().trim().max(200).default('').describe('会话名称或会话 ID 的部分文字；同名会话会返回多个候选会话'),
@@ -54,10 +55,14 @@ export class CachedHistory {
     const session = this.store.session(sessionId)
     if (!session) throw new HistoryError('会话不存在，请先查找会话并使用返回的会话 ID', 404)
     const rows = this.store.messages(sessionId, limit + 1, cursor)
-    const messages = rows.slice(-limit).map((row) => ({
-      ...row,
-      content: row.type === 1 ? row.content : `[非文本消息：类型 ${row.type}]`
-    }))
+    const messages = rows.slice(-limit).map((row) => {
+      const quote = parseQuotedReply(row.content)
+      if (quote) return { ...row, ...quote }
+      return {
+        ...row,
+        content: row.type === 1 ? row.content : `[非文本消息：类型 ${row.type}]`
+      }
+    })
     const oldest = messages[0]
     const next = rows.length > limit ? Buffer.from(JSON.stringify({
       sessionId, createdAt: oldest.createdAt, localId: oldest.localId

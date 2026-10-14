@@ -132,7 +132,7 @@ wechat-mcp
 | `list_wechat_sessions` | `query` 按会话名称或会话 ID 的部分文字查找；`limit` 默认 50、最多 200；`offset` 默认 0。 | 返回 `sessions` 和 `nextOffset`；每个会话的 `id` 是会话 ID。沿 `nextOffset` 加载更多候选会话，更换查询时从 0 开始；为 null 表示没有更多会话。 |
 | `get_wechat_history` | 将 `sessions[].id` 传入 `session_id`；`limit` 默认 50、最多 200；可选 `before` 只接受同一会话上一页返回的 `next`。 | 返回 `session`、`messages` 和 `next`。省略 `before` 时读取最近消息，消息按时间正序排列；将 `next` 传入 `before` 读取更早消息，为 null 表示没有更早消息。 |
 
-联系人名称和群名用于查找会话，不能当作会话 ID 传入 `session_id`。同名候选会话先由用户确认。消息中的 `isSelf` 标识当前用户发送的消息，`senderId` 区分其他发送者；非文本消息只返回类型占位，不包含附件正文。
+联系人名称和群名用于查找会话，不能当作会话 ID 传入 `session_id`。同名候选会话先由用户确认。消息中的 `isSelf` 标识当前用户发送的消息，`senderId` 区分其他发送者。微信引用回复会在 `content` 中同时展示回复正文与引用内容，并提供 `replyContent`、`quotedSender`、`quotedContent`、`quotedType` 字段；图片、语音、视频等引用只标注类型，不包含附件正文。其他非文本消息只返回类型占位。
 
 ## 验证
 

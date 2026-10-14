@@ -39,7 +39,7 @@ test('merged shards preserve sender identity, direction and unique local IDs', (
   Object.assign(source, {
     ownUsername: 'me', tableBySession: new Map([['group', paths]]),
     senderByDb: new Map(paths.map((path) => [path, new Map([[1, 'me'], [2, 'friend']])])),
-    db: { *iterate(path) {
+    db: { query: () => [{ name: 'message_content' }], *iterate(path) {
       yield { local_id: 1, server_id: 2, local_type: 1, real_sender_id: path === paths[0] ? 1 : 2, create_time: 100, message_content: 'hello' }
     } }
   })
@@ -49,13 +49,35 @@ test('merged shards preserve sender identity, direction and unique local IDs', (
   assert.deepEqual(rows.map((row) => row.senderId), ['friend', 'me'])
 })
 
+test('reads UTF-8 binary content and prefers the optional compressed-content column', () => {
+  const path = '/message_0.db'
+  const content = '<msg><appmsg><title>回复</title><refermsg><type>1</type><content>喝腻了已经</content></refermsg></appmsg></msg>'
+  const source = Object.create(WcdbSource.prototype)
+  Object.assign(source, {
+    ownUsername: 'me', tableBySession: new Map([['friend', [path]]]),
+    senderByDb: new Map([[path, new Map()]]),
+    db: {
+      query: () => [{ name: 'message_content' }, { name: 'compress_content' }],
+      *iterate(_path, sql) {
+        assert.match(sql, /"compress_content" AS compress_content/)
+        yield { local_id: 2, server_id: 3, local_type: 244813135921, real_sender_id: 8, create_time: 100, message_content: null, compress_content: Buffer.from(content) }
+        yield { local_id: 1, server_id: 2, local_type: 244813135921, real_sender_id: 8, create_time: 99, message_content: Buffer.from(content), compress_content: null }
+      }
+    }
+  })
+  const rows = [...source.messagePages('friend', 10)].flat()
+  assert.equal(rows[0].msgContent, content)
+  assert.equal(normalizeMessage(rows[0], 'friend').content, content)
+  assert.equal(rows[1].msgContent, content)
+})
+
 test('partial cursor initialization failure finalizes all opened shard iterators', () => {
   const source = Object.create(WcdbSource.prototype)
   let finalized = 0
   const paths = ['/message_0.db', '/message_1.db']
   Object.assign(source, {
     tableBySession: new Map([['friend', paths]]), senderByDb: new Map(),
-    db: { iterate(path) {
+    db: { query: () => [{ name: 'message_content' }], iterate(path) {
       return {
         next: () => { if (path === paths[1]) throw new Error('read failed'); return { done: false, value: {} } },
         return: () => { finalized++; return { done: true } }
