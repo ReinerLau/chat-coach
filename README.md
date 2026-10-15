@@ -8,9 +8,9 @@ chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历�
 
 自动记录覆盖用户说明、贴出的聊天和本轮按需查到的微信历史，核对已有档案后保存增量。成功时默认静默；身份不明或信息冲突无法解释时先澄清，缺少联系人记录 Skill 或保存失败时简短说明并继续接话。示例回复和模型推测不入档，用户的打算不记成已发生的互动；明确要求不记录时按指定范围跳过保存。
 
-每次新的接话建议请求都按[接话方向引导](skills/chat-reply/references/intent-guidance.md)展示固定三行“态度、情绪、想法”，只写有依据的交流线索；没有依据的层次写“暂无依据”。按[原则索引](skills/chat-reply/references/principles/index.md)读取交流层次、共情、赞美、邀约及平衡表达等规则，并按[技巧索引](skills/chat-reply/references/techniques/index.md)选用行为聊法、扩大冲突或魔趣法则。接梗属于接话方向，只有实际使用扩大冲突时才标为技巧。行为聊法不限寒暄：对方内容能自然连接到用户做过、正在做或有机会想做的事时，可用具体行为回应，而不只作笼统评价。之后先盘点不同接话点和交流作用，筛掉重复或不合适的方向，直接给出所有适合且有实质差异的方向，不预设数量；每个方向逐条标注方向、技巧和原则；可发送方向附示例回复，不先确认或等待用户选择。用户提出的接法作为场景材料，Skill 仍根据真实对话判断；可能冒犯、答非所问或越过边界时说明依据并给合适替代。关系推进以时机为准，可以轻接、收住或暂不回复。仅询问回复效果时直接分析。
+每次新的接话建议请求都按[接话方向引导](skills/chat-reply/references/intent-guidance.md)依次展示“态度、情绪、想法、分析”四个固定字段。态度只写六级标签之一或“无法定级”，情绪、想法没有依据时写“暂无依据”；判断依据、接话幅度和各方向的理由集中写在“分析”。按[原则索引](skills/chat-reply/references/principles/index.md)读取交流层次、共情、赞美、邀约及平衡表达等规则，并按[技巧索引](skills/chat-reply/references/techniques/index.md)选用行为聊法、扩大冲突或魔趣法则。接梗属于接话方向，只有实际使用扩大冲突时才标为技巧。行为聊法不限寒暄：对方内容能自然连接到用户做过、正在做或有机会想做的事时，可用具体行为回应，而不只作笼统评价。之后先盘点不同接话点和交流作用，筛掉重复或不合适的方向，直接给出所有适合且有实质差异的方向，不预设数量；每个方向逐条标注方向、技巧和原则；可发送方向附示例回复，暂不回复只写方向、技巧、原则，不先确认或等待用户选择。接话建议正文不加标题、开场、结尾或字段外说明。用户提出的接法作为场景材料，Skill 仍根据真实对话判断；可能冒犯、答非所问或越过边界时在“分析”中说明依据并给合适替代。关系推进以时机为准，可以轻接、收住或暂不回复。缺少关键材料时直接询问；仅询问回复效果时直接分析，这两类回复不套接话建议模板。
 
-三行判断依据来自[交流层次判断原则](skills/chat-reply/references/principles/conversation-levels.md)。态度一行看当下交流空间，情绪一行看对方明确表达的感受，想法一行看问题、观点或选择。书中态度六级只作参考，不强求定级，也不把当前消息表现当成固定关系或对方心理。
+前三项判断依据来自[交流层次判断原则](skills/chat-reply/references/principles/conversation-levels.md)。态度看当下交流空间，情绪看对方明确表达的感受，想法看观点、理由、做法或选择；事实性问题仍须直接回应，但不因此归入想法。分析说明可见依据与本轮建议。书中态度六级只作参考，不强求定级，也不把当前消息表现当成固定关系或对方心理。
 
 示例可使用用户明确提供且时间准确的经历、感受或立场；行为聊法还可在不与已知偏好冲突时表达「有机会也想试试」这类非承诺性兴趣，不把它写成已发生的行为或确定计划。没有足够材料时，优先给不依赖其个人事实的方向。只有缺少待回复内容等关键材料、无法据实提供方向时才先询问。用户补充新聊天或要求换方向时，按最新材料直接调整，不循环确认。
 
@@ -126,7 +126,7 @@ chat-coach/
 | [skills/chat-reply/SKILL.md](skills/chat-reply/SKILL.md) | 中文回复教练 Skill 入口，定义任务目标与上下文使用方式。 |
 | [skills/chat-reply/agents/openai.yaml](skills/chat-reply/agents/openai.yaml) | 仅允许手动调用的策略配置。 |
 | [skills/chat-reply/references/auto-notes.md](skills/chat-reply/references/auto-notes.md) | 回复流程内自动联动记录的时机、交接与异常处理。 |
-| [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 交流三层次模板、接话方向与示例回复、连续反馈处理。 |
+| [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 四字段输出模板、交流层次判断、接话方向与示例回复、连续反馈处理。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
 | [skills/chat-reply/references/principles/index.md](skills/chat-reply/references/principles/index.md) | 交流层次、共情、赞美、邀约、平衡表达等原则的按需读取条件。 |
 | [skills/chat-reply/references/techniques/index.md](skills/chat-reply/references/techniques/index.md) | 行为聊法、扩大冲突、魔趣法则等技巧的按需读取条件。 |
