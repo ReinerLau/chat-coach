@@ -16,7 +16,7 @@ chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历�
 
 仅通过 `$chat-reply` 手动调用，调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。
 
-修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 保留原创虚构场景：01–24 观察不同聊天中的三层判断与方向示例，25–27 验证材料不足及行动未定时的处理，28–32 验证自动记录联动，33–35 验证连续调整与事实依据，36–45 验证交流时机、边界、情绪及直接问题，46–47 验证未指定接法和缺少待回复消息。测试时可能自动创建或更新档案，请使用可辨认的虚构联系人，按测试说明清理。测试数据放在 Skill 外，运行时不引用。
+修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 使用原创虚构场景：01–24 观察三层判断与方向示例，25–69 覆盖材料、自动记录、连续反馈、交流边界、邀约与共情等情况，70–75 检查已知暧昧或恋爱语境中的接梗及其边界。测试时可能自动创建或更新档案，请使用可辨认的虚构联系人，按测试说明清理。测试数据放在 Skill 外，运行时不引用。
 
 ## 联系人记录 Skill
 
@@ -109,7 +109,7 @@ chat-coach/
     │       ├── auto-notes.md
     │       ├── intent-guidance.md
     │       ├── materials.md
-    │       └── methods/conversation-levels.md
+    │       └── methods/（按场景读取的接话方法）
     └── contact-notes/
         ├── SKILL.md
         ├── agents/openai.yaml
@@ -128,6 +128,7 @@ chat-coach/
 | [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 交流三层次模板、接话方向与示例回复、连续反馈处理。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
 | [skills/chat-reply/references/methods/conversation-levels.md](skills/chat-reply/references/methods/conversation-levels.md) | 态度、情绪、想法三层交流线索的判断方法。 |
+| [skills/chat-reply/references/methods/expand-conflict.md](skills/chat-reply/references/methods/expand-conflict.md) | 已知暧昧或恋爱语境中，顺着对方先发起的轻度调侃接梗。 |
 | [skills/contact-notes/SKILL.md](skills/contact-notes/SKILL.md) | 联系人档案的查看与维护流程。 |
 | [skills/contact-notes/agents/openai.yaml](skills/contact-notes/agents/openai.yaml) | 允许自动调用，触发范围由入口描述和流程限定。 |
 | [skills/contact-notes/references/contact-notes.md](skills/contact-notes/references/contact-notes.md) | 联系人档案的存储、身份查找、文件格式与维护规则。 |
