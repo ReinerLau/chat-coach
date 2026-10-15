@@ -1,14 +1,14 @@
 # chat-coach
 
-chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。中文回复教练 Skill 根据真实聊天、关系和时机提供接话方向及示例回复，并联动联系人记录 Skill 保存有参考价值的背景与互动。用户自行选择、修改并发送实际回复。项目术语见 [CONTEXT.md](CONTEXT.md)。
+chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。中文回复教练 Skill 默认帮助用户与女性建立及维系恋爱关系，根据真实聊天、关系和时机提供接话方向及示例回复，并联动联系人记录 Skill 保存有参考价值的背景与互动。用户自行选择、修改并发送实际回复。项目术语见 [CONTEXT.md](CONTEXT.md)。
 
 ## 中文回复教练 Skill
 
-[中文回复教练 Skill](skills/chat-reply/SKILL.md) 按“理解场景 → 判断交流三层次 → 给出方向及示例”处理聊天，联系人明确时读取已存档案。两个 Skill 都已安装时，每次取得新材料后自动联动联系人记录 Skill，保存有后续参考价值的信息；身份明确且有可保存信息时可自动建档。联动细节见[自动记录说明](skills/chat-reply/references/auto-notes.md)。
+[中文回复教练 Skill](skills/chat-reply/SKILL.md) 按“理解场景 → 判断交流三层次 → 按需读取场景方法 → 给出方向及示例”处理聊天，覆盖初识、约会和确定关系后。性别未说明时按默认用途理解，但不把性别、好感或关系状态当成已确认事实；明确的非恋爱目的、其他对象和用户当前意愿优先，单称“朋友”不排除关系发展。联系人明确时读取已存档案。两个 Skill 都已安装时，每次取得新材料后自动联动联系人记录 Skill，保存有后续参考价值的信息；身份明确且有可保存信息时可自动建档。联动细节见[自动记录说明](skills/chat-reply/references/auto-notes.md)。
 
 自动记录覆盖用户说明、贴出的聊天和本轮按需查到的微信历史，核对已有档案后保存增量。成功时默认静默；身份不明或信息冲突无法解释时先澄清，缺少联系人记录 Skill 或保存失败时简短说明并继续接话。示例回复和模型推测不入档，用户的打算不记成已发生的互动；明确要求不记录时按指定范围跳过保存。
 
-每次新的接话建议请求都按[接话方向引导](skills/chat-reply/references/intent-guidance.md)展示固定三行“态度、情绪、想法”，只写有依据的交流线索；没有依据的层次写“暂无依据”。之后直接给少量有实质差异的方向，每个可发送方向附示例回复，不先确认或等待用户选择。用户提出的接法作为场景材料，Skill 仍根据真实对话判断；可能冒犯、答非所问或越过边界时说明依据并给合适替代。关系推进以时机为准，可以轻接、收住或暂不回复。仅询问回复效果时直接分析。
+每次新的接话建议请求都按[接话方向引导](skills/chat-reply/references/intent-guidance.md)展示固定三行“态度、情绪、想法”，只写有依据的交流线索；没有依据的层次写“暂无依据”。[场景方法索引](skills/chat-reply/references/methods/index.md)按当前内容指向共情、赞美、扩大冲突、邀约及魔趣法则等方法。之后直接给少量有实质差异的方向，每个可发送方向附示例回复，不先确认或等待用户选择。用户提出的接法作为场景材料，Skill 仍根据真实对话判断；可能冒犯、答非所问或越过边界时说明依据并给合适替代。关系推进以时机为准，可以轻接、收住或暂不回复。仅询问回复效果时直接分析。
 
 三行判断依据来自[交流层次判断方法](skills/chat-reply/references/methods/conversation-levels.md)。态度一行看当下交流空间，情绪一行看对方明确表达的感受，想法一行看问题、观点或选择。书中态度六级只作参考，不强求定级，也不把当前消息表现当成固定关系或对方心理。
 
@@ -16,7 +16,7 @@ chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历�
 
 仅通过 `$chat-reply` 手动调用，调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。
 
-修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 使用原创虚构场景：01–24 观察三层判断与方向示例，25–69 覆盖材料、自动记录、连续反馈、交流边界、邀约与共情等情况，70–75 检查已知暧昧或恋爱语境中的接梗及其边界。测试时可能自动创建或更新档案，请使用可辨认的虚构联系人，按测试说明清理。测试数据放在 Skill 外，运行时不引用。
+修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 使用女性一对一恋爱发展场景：01–24 观察三层判断与方向示例，25–69 覆盖材料、自动记录、连续反馈、交流边界、邀约与共情等情况，70–75 检查接梗及其边界，76–81 检查魔趣法则。测试时可能自动创建或更新档案，请使用可辨认的虚构联系人，按测试说明清理。测试数据放在 Skill 外，运行时不引用。
 
 ## 联系人记录 Skill
 
@@ -109,7 +109,7 @@ chat-coach/
     │       ├── auto-notes.md
     │       ├── intent-guidance.md
     │       ├── materials.md
-    │       └── methods/（按场景读取的接话方法）
+    │       └── methods/（场景方法索引与按需读取的方法）
     └── contact-notes/
         ├── SKILL.md
         ├── agents/openai.yaml
@@ -127,8 +127,10 @@ chat-coach/
 | [skills/chat-reply/references/auto-notes.md](skills/chat-reply/references/auto-notes.md) | 回复流程内自动联动记录的时机、交接与异常处理。 |
 | [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 交流三层次模板、接话方向与示例回复、连续反馈处理。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
+| [skills/chat-reply/references/methods/index.md](skills/chat-reply/references/methods/index.md) | 共情、赞美、扩大冲突、邀约和魔趣法则的按需读取条件。 |
 | [skills/chat-reply/references/methods/conversation-levels.md](skills/chat-reply/references/methods/conversation-levels.md) | 态度、情绪、想法三层交流线索的判断方法。 |
-| [skills/chat-reply/references/methods/expand-conflict.md](skills/chat-reply/references/methods/expand-conflict.md) | 已知暧昧或恋爱语境中，顺着对方先发起的轻度调侃接梗。 |
+| [skills/chat-reply/references/methods/expand-conflict.md](skills/chat-reply/references/methods/expand-conflict.md) | 顺着对方先发起且双方接得住的轻度调侃接梗。 |
+| [skills/chat-reply/references/methods/moqu.md](skills/chat-reply/references/methods/moqu.md) | 已选方向中有联系感的夸张表达方式。 |
 | [skills/contact-notes/SKILL.md](skills/contact-notes/SKILL.md) | 联系人档案的查看与维护流程。 |
 | [skills/contact-notes/agents/openai.yaml](skills/contact-notes/agents/openai.yaml) | 允许自动调用，触发范围由入口描述和流程限定。 |
 | [skills/contact-notes/references/contact-notes.md](skills/contact-notes/references/contact-notes.md) | 联系人档案的存储、身份查找、文件格式与维护规则。 |
