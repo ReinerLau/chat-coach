@@ -26,6 +26,7 @@
 ## PR 与发布
 
 - PR 目标为 `master`；GitHub Actions 运行 MCP 测试和独立包验证。
+- 用户明确要求“合并”即视为授权合并当前 PR，不再二次确认。合并前检查本轮对话中已有的手工测试确认和 PR 检查结果；沿用已完成的测试，不重复要求用户确认或重测。遇到确实无法由 agent 处理的必要验证、CI 失败或冲突时，说明具体阻塞。
 - PR 合并后，Auto Tag 工作流按 `major`、`minor`、`patch` label 更新 MCP 包版本并创建对应 Git tag；默认按 patch 递增。
 - npm 包仍由维护者手动运行 **Publish WeChat MCP** 工作流发布。
 - PR 创建后，用户按 `mcp-server/README.md` 验证本机微信同步、管理页和 MCP 查询路径；通过后再合并。
