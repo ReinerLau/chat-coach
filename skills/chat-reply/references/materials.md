@@ -16,7 +16,7 @@
 通过微信历史 MCP 取得聊天上下文：
 
 1. 用 `list_wechat_sessions` 按联系人名称、群名或会话 ID 查找会话；多个候选会话时请用户确认。查找下一页时，将返回的 `nextOffset` 用作 `offset`。
-2. 用返回的 `id` 作为 `get_wechat_history` 的 `session_id`，默认读取最近 50 条消息。消息按时间正序排列；`isSelf` 表示是否由用户发送，`senderId` 区分发送者。
+2. 用返回的 `id` 作为 `get_wechat_history` 的 `session_id`，默认读取最近 50 条消息。消息按时间正序排列；`isSelf` 表示是否由用户发送，`senderId` 区分发送者。判断接话时机时，用消息的 `createdAt`（Unix 秒）和用户所在地的当前时间核对间隔，不只看会话的 `updatedAt`。
 3. 需要更早的上下文时，将同一会话返回的 `next` 用作 `before`。`next` 为 null 表示没有更早的一页；取得所需上下文后即可回复。
 
 非文本占位只包含消息类型，没有图片、语音、视频或附件正文；需要其中的内容时，向用户询问。
