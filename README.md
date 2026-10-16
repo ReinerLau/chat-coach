@@ -4,7 +4,7 @@ chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历�
 
 ## 中文回复教练 Skill
 
-[中文回复教练 Skill](skills/chat-reply/SKILL.md) 仅通过 `$chat-reply` 手动调用，覆盖初识、约会和确定关系后。新回复请求未点名意图时先请用户从[意图索引](skills/chat-reply/references/intents/index.md)选择；不根据聊天内容自动推断。“共情原则”“魔趣法则”等旧称可用。用户点名后，只读取相应意图文档，结合聊天与[通用接话约束](skills/chat-reply/references/intent-guidance.md)通常给 2–3 条可发送的示例，不输出方向列表或技巧、原则标签。多个意图只组合用户点名的项；与可见场景明显冲突时说明具体依据并请用户决定是否改选，不自行换意图。同一消息改写沿用选择，对方发来新消息后重新选择；仅分析现有回复效果时无需选择。各意图沿用原有适用范围，其中“邀约”限于回应线下见面邀约后的顾虑。
+[中文回复教练 Skill](skills/chat-reply/SKILL.md) 仅通过 `$chat-reply` 手动调用，覆盖初识、约会和确定关系后。新回复请求未点名意图时先请用户从[意图索引](skills/chat-reply/references/intents/index.md)选择正式名称；不根据聊天内容自动推断，也不识别旧称。用户点名后，只读取相应意图文档，结合聊天与[通用接话约束](skills/chat-reply/references/intent-guidance.md)通常给 2–3 条可发送的示例，不输出方向列表或技巧、原则标签。多个意图只组合用户点名的项；与可见场景明显冲突时说明具体依据并请用户决定是否改选，不自行换意图。同一消息改写沿用选择，对方发来新消息后重新选择；仅分析现有回复效果时无需选择。各意图沿用原有适用范围，其中“邀约”限于回应线下见面邀约后的顾虑。
 
 性别未说明时按默认用途理解，但不把性别、好感或关系状态当成已确认事实；明确的非恋爱目的、其他对象和用户当前意愿优先，单称“朋友”不排除关系发展。核对消息时间、事实、直接问题和明确边界。联系人明确时按[材料读取说明](skills/chat-reply/references/materials.md)读取相关档案或微信历史，拟写前按[聊天审查规则](skills/chat-reply/references/review.md)检查表达。
 
@@ -122,7 +122,7 @@ chat-coach/
 | [skills/chat-reply/references/auto-notes.md](skills/chat-reply/references/auto-notes.md) | 回复流程内自动联动记录的时机、交接与异常处理。 |
 | [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 所有意图共用的时间、事实、交流幅度与边界约束。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
-| [skills/chat-reply/references/intents/index.md](skills/chat-reply/references/intents/index.md) | 九个可点名意图、旧称与对应文档。 |
+| [skills/chat-reply/references/intents/index.md](skills/chat-reply/references/intents/index.md) | 九个可点名意图及对应文档。 |
 | [skills/chat-reply/references/intents/](skills/chat-reply/references/intents/index.md) | 各意图的表达方式、适用条件和分寸。 |
 | [skills/chat-reply/references/review.md](skills/chat-reply/references/review.md) | 示例回复的输出前审查。 |
 | [skills/contact-notes/SKILL.md](skills/contact-notes/SKILL.md) | 联系人档案的查看与维护流程。 |
