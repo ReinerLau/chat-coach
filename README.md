@@ -1,22 +1,16 @@
 # chat-coach
 
-chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。中文回复教练 Skill 默认帮助用户与女性建立及维系恋爱关系，根据真实聊天、关系和时机提供接话方向及示例回复，并联动联系人记录 Skill 保存有参考价值的背景与互动。用户自行选择、修改并发送实际回复。项目术语见 [CONTEXT.md](CONTEXT.md)。
+chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。中文回复教练 Skill 按用户本轮指定的意图，根据真实聊天提供示例回复，并联动联系人记录 Skill 保存有参考价值的背景与互动。用户自行选择、修改并发送实际回复。项目术语见 [CONTEXT.md](CONTEXT.md)。
 
 ## 中文回复教练 Skill
 
-[中文回复教练 Skill](skills/chat-reply/SKILL.md) 按“理解场景 → 判断交流三层次 → 按需读取原则与技巧 → 给出方向及示例”处理聊天，覆盖初识、约会和确定关系后。性别未说明时按默认用途理解，但不把性别、好感或关系状态当成已确认事实；明确的非恋爱目的、其他对象和用户当前意愿优先，单称“朋友”不排除关系发展。联系人明确时读取已存档案。两个 Skill 都已安装时，每次取得新材料后自动联动联系人记录 Skill，保存有后续参考价值的信息；身份明确且有可保存信息时可自动建档。联动细节见[自动记录说明](skills/chat-reply/references/auto-notes.md)。
+[中文回复教练 Skill](skills/chat-reply/SKILL.md) 仅通过 `$chat-reply` 手动调用，覆盖初识、约会和确定关系后。新回复请求未点名意图时先请用户从[意图索引](skills/chat-reply/references/intents/index.md)选择；不根据聊天内容自动推断。“共情原则”“魔趣法则”等旧称可用。用户点名后，只读取相应意图文档，结合聊天与[通用接话约束](skills/chat-reply/references/intent-guidance.md)通常给 2–3 条可发送的示例，不输出方向列表或技巧、原则标签。多个意图只组合用户点名的项；与可见场景明显冲突时说明具体依据并请用户决定是否改选，不自行换意图。同一消息改写沿用选择，对方发来新消息后重新选择；仅分析现有回复效果时无需选择。各意图沿用原有适用范围，其中“邀约”限于回应线下见面邀约后的顾虑。
 
-自动记录覆盖用户说明、贴出的聊天和本轮按需查到的微信历史，核对已有档案后保存增量。成功时默认静默；身份不明或信息冲突无法解释时先澄清，缺少联系人记录 Skill 或保存失败时简短说明并继续接话。示例回复和模型推测不入档，用户的打算不记成已发生的互动；明确要求不记录时按指定范围跳过保存。
+性别未说明时按默认用途理解，但不把性别、好感或关系状态当成已确认事实；明确的非恋爱目的、其他对象和用户当前意愿优先，单称“朋友”不排除关系发展。核对消息时间、事实、直接问题和明确边界。联系人明确时按[材料读取说明](skills/chat-reply/references/materials.md)读取相关档案或微信历史，拟写前按[聊天审查规则](skills/chat-reply/references/review.md)检查表达。
 
-每次新的接话建议请求都按[接话方向引导](skills/chat-reply/references/intent-guidance.md)依次展示“态度、情绪、想法、分析”四个固定字段。态度只写六级标签之一或“无法定级”，情绪、想法没有依据时写“暂无依据”；判断依据、接话幅度和各方向的理由集中写在“分析”。按[原则索引](skills/chat-reply/references/principles/index.md)读取交流层次、共情、赞美、邀约及平衡表达等规则，并按[技巧索引](skills/chat-reply/references/techniques/index.md)选用行为聊法、扩大冲突或魔趣法则。接梗属于接话方向，只有实际使用扩大冲突时才标为技巧。行为聊法不限寒暄：对方内容能自然连接到用户做过、正在做或有机会想做的事时，可用具体行为回应，而不只作笼统评价。之后先盘点不同接话点和交流作用，筛掉重复或不合适的方向，直接给出所有适合且有实质差异的方向，不预设数量；每个方向逐条标注方向、技巧和原则；可发送方向通常连续给出 2–3 行“示例回复”供选择，表达空间有限时可只给 1 条，同一方向的示例保持相同接话意图及适用标签；暂不回复只写方向、技巧、原则，不先确认或等待用户选择。接话建议正文不加标题、开场、结尾或字段外说明。用户提出的接法作为场景材料，Skill 仍根据真实对话判断；可能冒犯、答非所问或越过边界时在“分析”中说明依据并给合适替代。关系推进以时机为准，可以轻接、收住或暂不回复。缺少关键材料时直接询问；仅询问回复效果时直接分析，这两类回复不套接话建议模板。
+两个 Skill 都已安装时，每次取得新材料后，按[自动记录说明](skills/chat-reply/references/auto-notes.md)联动联系人记录 Skill，保存有后续参考价值的信息；身份明确且有可保存信息时可自动建档。自动记录覆盖用户说明、贴出的聊天和本轮按需查到的微信历史，核对已有档案后保存增量。成功时默认静默；身份不明或信息冲突无法解释时先澄清，缺少联系人记录 Skill 或保存失败时简短说明并继续接话。示例回复、所选意图和模型推测不入档，用户的打算不记成已发生的互动；明确要求不记录时按指定范围跳过保存。
 
-前三项判断依据来自[交流层次判断原则](skills/chat-reply/references/principles/conversation-levels.md)。态度看当下交流空间，情绪看对方明确表达的感受，想法看观点、理由、做法或选择；事实性问题仍须直接回应，但不因此归入想法。分析说明可见依据与本轮建议。书中态度六级只作参考，不强求定级，也不把当前消息表现当成固定关系或对方心理。
-
-示例可使用用户明确提供且时间准确的经历、感受或立场；行为聊法还可在不与已知偏好冲突时表达「有机会也想试试」这类非承诺性兴趣，不把它写成已发生的行为或确定计划。没有足够材料时，优先给不依赖其个人事实的方向。只有缺少待回复内容等关键材料、无法据实提供方向时才先询问。用户补充新聊天或要求换方向时，按最新材料直接调整，不循环确认；只要求同一方向多几种说法时，补充示例，不重复场景判断或增加方向。
-
-仅通过 `$chat-reply` 手动调用，调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。
-
-修改中文回复教练 Skill 后由用户手工测试。[手工测试集](docs/chat-reply-manual-tests.md) 使用女性一对一恋爱发展场景：01–24 观察三层判断与方向示例，25–69 覆盖材料、自动记录、连续反馈、交流边界、邀约与共情等情况，70–75 检查接梗及其边界，76–81 检查魔趣法则，82–87 检查平衡表达，88–95 检查行为聊法及其边界，96–99 检查方向覆盖、边界、普通回应及同一方向的多种表达。测试时可能自动创建或更新档案，请使用可辨认的虚构联系人，按测试说明清理。测试数据放在 Skill 外，运行时不引用。
+调用策略见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。已有的[手工测试输入](docs/chat-reply-manual-tests.md)可按需复制使用；Skill 运行时不引用该文件。
 
 ## 联系人记录 Skill
 
@@ -30,10 +24,10 @@ $contact-notes 删除小林档案中关于城市的信息。
 $contact-notes 查看小林的档案。
 ```
 
-日常接话建议只需调用 `$chat-reply`，以下材料中的考试结束会自动保存，方向中的邀约示例不会被记成已发送消息：
+日常接话建议只需调用 `$chat-reply`，以下材料中的考试结束会自动保存，示例回复不会被记成已发送消息：
 
 ```text
-$chat-reply 小林今天刚发来“终于考完了”，我想祝贺她，顺便问问周末要不要吃饭，帮我回复。
+$chat-reply 小林今天刚发来“终于考完了，累死我了”，用共情接话。
 ```
 
 仍可同轮显式调用两个 Skill，先执行指定的记录、修正或删除操作，再回复；自动联动只补充未保存且未被排除的信息，避免重复记录。删除的信息不从同轮材料补回，删除整个档案后本轮不自动重建。
@@ -109,8 +103,8 @@ chat-coach/
     │       ├── auto-notes.md
     │       ├── intent-guidance.md
     │       ├── materials.md
-    │       ├── principles/（原则索引与按需读取的原则）
-    │       └── techniques/（技巧索引与按需读取的技巧）
+    │       ├── review.md
+    │       └── intents/（意图索引与九份意图文档）
     └── contact-notes/
         ├── SKILL.md
         ├── agents/openai.yaml
@@ -121,20 +115,16 @@ chat-coach/
 | 位置 | 干什么的 |
 | --- | --- |
 | [CONTEXT.md](CONTEXT.md) | 项目领域术语及同义称呼的取舍。 |
-| [docs/chat-reply-manual-tests.md](docs/chat-reply-manual-tests.md) | 可复制的聊天场景、交流三层次判断、方向示例与自动记录验收步骤。 |
+| [docs/chat-reply-manual-tests.md](docs/chat-reply-manual-tests.md) | 可直接复制的手工测试输入。 |
 | [mcp-server/](mcp-server/README.md) | 微信历史 MCP 的实现、安装、配置与验证说明。 |
 | [skills/chat-reply/SKILL.md](skills/chat-reply/SKILL.md) | 中文回复教练 Skill 入口，定义任务目标与上下文使用方式。 |
 | [skills/chat-reply/agents/openai.yaml](skills/chat-reply/agents/openai.yaml) | 仅允许手动调用的策略配置。 |
 | [skills/chat-reply/references/auto-notes.md](skills/chat-reply/references/auto-notes.md) | 回复流程内自动联动记录的时机、交接与异常处理。 |
-| [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 四字段输出模板、交流层次判断、接话方向与示例回复、连续反馈处理。 |
+| [skills/chat-reply/references/intent-guidance.md](skills/chat-reply/references/intent-guidance.md) | 所有意图共用的时间、事实、交流幅度与边界约束。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
-| [skills/chat-reply/references/principles/index.md](skills/chat-reply/references/principles/index.md) | 交流层次、共情、赞美、邀约、平衡表达等原则的按需读取条件。 |
-| [skills/chat-reply/references/techniques/index.md](skills/chat-reply/references/techniques/index.md) | 行为聊法、扩大冲突、魔趣法则等技巧的按需读取条件。 |
-| [skills/chat-reply/references/principles/conversation-levels.md](skills/chat-reply/references/principles/conversation-levels.md) | 态度、情绪、想法三层交流线索的判断原则。 |
-| [skills/chat-reply/references/principles/balance.md](skills/chat-reply/references/principles/balance.md) | 平衡原则：在已确定的正向表达中，按实际情况用真实限制或轻微自嘲调节语气。 |
-| [skills/chat-reply/references/techniques/behavior-chat.md](skills/chat-reply/references/techniques/behavior-chat.md) | 将对方所说的具体内容连接到用户的行为或条件式兴趣，不限于寒暄。 |
-| [skills/chat-reply/references/techniques/expand-conflict.md](skills/chat-reply/references/techniques/expand-conflict.md) | 在接梗方向中使用夸张反驳或角色互换；轻接玩笑不算该技巧。 |
-| [skills/chat-reply/references/techniques/moqu.md](skills/chat-reply/references/techniques/moqu.md) | 已选方向中有联系感的夸张表达方式。 |
+| [skills/chat-reply/references/intents/index.md](skills/chat-reply/references/intents/index.md) | 九个可点名意图、旧称与对应文档。 |
+| [skills/chat-reply/references/intents/](skills/chat-reply/references/intents/index.md) | 各意图的表达方式、适用条件和分寸。 |
+| [skills/chat-reply/references/review.md](skills/chat-reply/references/review.md) | 示例回复的输出前审查。 |
 | [skills/contact-notes/SKILL.md](skills/contact-notes/SKILL.md) | 联系人档案的查看与维护流程。 |
 | [skills/contact-notes/agents/openai.yaml](skills/contact-notes/agents/openai.yaml) | 允许自动调用，触发范围由入口描述和流程限定。 |
 | [skills/contact-notes/references/contact-notes.md](skills/contact-notes/references/contact-notes.md) | 联系人档案的存储、身份查找、文件格式与维护规则。 |
@@ -162,12 +152,12 @@ npm run test:package --prefix mcp-server
 | 修正背景，再说明对方考试已经结束。 | 修正指定内容、更新当前情况，保留此前事件及仍待落实的约定。 |
 | 删除城市信息、查看档案，再明确删除整个档案。 | 分别只删除指定信息、只读查看、删除整个文件。 |
 | 只输入 `$contact-notes`，或提供无法确定身份的同名联系人。 | 询问操作或身份，澄清前不写入；已有唯一身份不重复询问。 |
-| 在新聊天中只用 `$chat-reply` 回复已记录的联系人，并提供新背景。 | 自动保存增量后提供方向及示例；成功时静默，已有信息不重复追加。 |
-| 只用 `$chat-reply` 回复身份明确、没有档案的联系人。 | 有可保存信息时自动建档，使用当前材料继续回复。 |
-| 未指定接法，或连续交互中补充背景和实际互动。 | 在提供方向前及时保存新信息，无需重复调用两个 Skill。 |
+| 在新聊天中只用 `$chat-reply` 回复已记录的联系人，并提供新背景。 | 自动保存增量后按所选意图提供示例；成功时静默，已有信息不重复追加。 |
+| 只用 `$chat-reply` 回复身份明确、没有档案的联系人。 | 有可保存信息时自动建档；未指定意图时先请用户选择。 |
+| 未指定意图，或连续交互中补充背景和实际互动。 | 取得新材料时及时保存新信息；未指定意图才询问选择，无需重复调用两个 Skill。 |
 | 本轮查到微信历史，再重复查询同一段历史。 | 保存有用摘要及来源和日期，不重复追加，不为记录额外查询；旧状态不覆盖较新的当前情况。 |
-| 提供打算、讨论方向、调整示例回复，之后说明消息已经发送。 | 打算与实际互动区分，方向及示例回复不入档；确认已发送后才记录实际互动。 |
-| 有档案但未说明想怎么接，或档案包含历史意愿和个人观察。 | 仍按当前对话提供方向；历史意愿不自动成为本轮承诺，个人观察不当作确定事实。 |
+| 提供打算、选择意图、调整示例回复，之后说明消息已经发送。 | 打算与实际互动区分，所选意图及示例回复不入档；确认已发送后才记录实际互动。 |
+| 有档案但未指定意图，或档案包含历史意愿和个人观察。 | 先请用户选择意图；历史意愿不自动成为本轮承诺，个人观察不当作确定事实。 |
 | 同轮显式调用两个 Skill，要求记录、修正或删除并生成回复。 | 先执行明确操作，再核对自动增量；不重复记录，不补回同轮删除的信息或重建已删除档案。 |
 | 要求本轮或指定信息不记录；身份有歧义或信息冲突无法解释。 | 遵从记录限制；歧义先澄清，澄清前不猜测写入。 |
 | 联系人记录 Skill 写入失败或保存结果无法核对。 | 简短说明失败并继续回复，不声称已保存。 |
