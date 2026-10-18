@@ -144,10 +144,12 @@ def load_catalog():
             selected = preset.get(kind)
             _unique_names(selected, f"预设{name}的{kind}")
             _check_allowed(intent, kind, selected, intents, items)
+        if not preset["principles"] and not preset["techniques"]:
+            raise SelectionError(f"预设{name}至少包含一项原则或技巧")
         presets[name] = preset
     for intent in intents:
-        if intent not in presets or presets[intent]["intent"] != intent:
-            raise SelectionError(f"意图{intent}缺少同名预设")
+        if intent in presets and presets[intent]["intent"] != intent:
+            raise SelectionError(f"意图{intent}的同名预设引用了其他意图")
     for name in presets:
         if any(name in items[kind] for kind in KINDS):
             raise SelectionError(f"预设与原则或技巧重名：{name}")
@@ -215,7 +217,7 @@ def resolve_selection(catalog, preset=None, intent=None, principles=None, techni
     elif intent is not None:
         if intent not in catalog["intents"]:
             raise SelectionError(f"未知意图“{intent}”")
-        if not principles and not techniques:
+        if not principles and not techniques and intent in presets:
             selected = presets[intent]
             preset = intent
             selection_type = "preset"

@@ -20,15 +20,14 @@ class SelectionTests(unittest.TestCase):
     def setUpClass(cls):
         cls.catalog = selection.load_catalog()
 
-    def test_default_and_six_presets(self):
+    def test_default_and_five_presets(self):
         default = selection.resolve_selection(self.catalog)
         self.assertEqual(default["preset"], "接话")
         self.assertEqual(default["selection_type"], "preset")
         self.assertNotIn("strategy", default)
-        self.assertEqual(set(self.catalog["presets"]), {"接话", "起头", "共情", "轻松共情", "赞美", "邀约"})
+        self.assertEqual(set(self.catalog["presets"]), {"接话", "共情", "轻松共情", "赞美", "邀约"})
         expected = {
             "接话": ("接话", ["先接内容", "事实有据", "尊重边界", "把握分寸", "不评价对方"], []),
-            "起头": ("起头", [], []),
             "共情": ("共情", ["非评价式共情", "避免比较转移"], ["行为一致"]),
             "轻松共情": ("共情", ["非评价式共情", "避免比较转移"], ["行为一致", "夸张引申"]),
             "赞美": ("赞美", ["具体赞美"], []),
