@@ -15,16 +15,86 @@ $chat-reply 小林
 $chat-reply 小林 --strategy 共情 --context "我已经回了她一句辛苦啦，想顺着加班的话题再接一句"
 ```
 
-`--strategy` 选择整套策略，不能与 `--intent`、`--principle` 或 `--technique` 混用。
-自定义组合时，每轮最多选一个意图；原则和技巧可以分别选多个。
+### 参数
+
+| 参数 | 填什么 | 作用 |
+| --- | --- | --- |
+| `<联系人名>` | 必填，紧跟 `$chat-reply` | 指定本轮交流对象。 |
+| `--strategy` | 下表中的一套策略 | 最多一次；选定整套意图、原则和技巧，不能与下列三项混用。 |
+| `--intent` | 下表中的一个意图 | 指定本轮要做什么；最多一次。 |
+| `--principle` | 所选意图允许的原则 | 可重复填写不同原则。 |
+| `--technique` | 所选意图允许的技巧 | 可重复填写不同技巧。 |
+| `--context` | 非空的本轮说明 | 最多一次；补充近况、想法或限制，有空格时加引号。 |
+
+所有命名参数都放在联系人名之后，顺序不限。同一原则或技巧不要重复选。
+
+### 意图与策略
+
+意图说明本轮要完成的交流行为。一轮只选一个；未指定时用“接话”。
+
+| 意图 | 什么时候选 |
+| --- | --- |
+| 接话 | 根据对方待回复的内容继续交流；话题结束时不硬续。 |
+| 共情 | 回应对方具体处境与感受。 |
+| 赞美 | 肯定对方明确做过的事，以及你由此产生的感受。 |
+| 邀约 | 回应对方对线下见面邀约提出的顾虑。 |
+| 起头 | 根据真实近况或近期互动主动开场。 |
+
+`--strategy` 可选以下六套策略。每套包含预定的意图、原则和技巧；[策略清单](skills/chat-reply/references/strategies/index.md)列出完整组成。
+
+| 策略 | 意图 | 什么时候选 |
+| --- | --- | --- |
+| 接话 | 接话 | 默认选择，先回应对方当前内容。 |
+| 起头 | 起头 | 有真实切入点，想主动开场。 |
+| 共情 | 共情 | 想认真回应对方的处境与感受。 |
+| 轻松共情 | 共情 | 对方情绪较轻，双方也能接玩笑。 |
+| 赞美 | 赞美 | 有具体、可核对的行为可肯定。 |
+| 邀约 | 邀约 | 对方已对线下见面邀约提出顾虑。 |
+
+只写 `--intent` 时，使用同名策略；“轻松共情”须用 `--strategy` 明确选择。
+`--intent` 与原则或技巧同写时，只使用点名的组合。
+只写原则或技巧时，以“接话”策略为基础。
+
+### 原则
+
+原则是判断示例回复如何完成意图的标准。以下名称可填在 `--principle` 后面。
+
+| 原则 | 可用于 | 作用 |
+| --- | --- | --- |
+| [先接内容](skills/chat-reply/references/intents/reply/principles/respond-to-content.md) | 接话 | 先处理对方实际说的内容、问题或约定。 |
+| [非评价式共情](skills/chat-reply/references/intents/empathy/principles/non-evaluative-empathy.md) | 共情 | 贴近具体处境回应，不只复述或评价情绪。 |
+| [避免比较转移](skills/chat-reply/references/intents/empathy/principles/avoid-comparison.md) | 共情 | 不比惨，也不把话题转成自己的故事。 |
+| [具体赞美](skills/chat-reply/references/intents/praise/principles/specific-praise.md) | 赞美 | 根据对方明确做过的事表达感谢或感受。 |
+| [先理解顾虑](skills/chat-reply/references/intents/invitation/principles/understand-concern.md) | 邀约 | 先理解对方对见面的具体担心，不催促。 |
+| [事实有据](skills/chat-reply/references/shared/principles/grounded-facts.md) | 全部意图 | 不把旧打算或推测写成确定事实。 |
+| [尊重边界](skills/chat-reply/references/shared/principles/respect-boundaries.md) | 全部意图 | 对方拒绝或要求停止时收住。 |
+| [把握分寸](skills/chat-reply/references/shared/principles/calibrate-intensity.md) | 全部意图 | 按关系和回应幅度调整长度与亲近感。 |
+| [不评价对方](skills/chat-reply/references/shared/principles/avoid-labeling.md) | 全部意图 | 不把推测写成对方的情绪或性格标签。 |
+
+### 技巧
+
+技巧是具体的表达方法。以下名称可填在 `--technique` 后面；选用时还须符合当下场景。
+
+| 技巧 | 可用于 | 怎么用 |
+| --- | --- | --- |
+| [行为聊法](skills/chat-reply/references/intents/reply/techniques/behavior-chat.md) | 接话 | 先接对方内容，再说由此引出的具体行动兴趣。 |
+| [扩大冲突](skills/chat-reply/references/intents/reply/techniques/expand-conflict.md) | 接话 | 对方先轻度调侃时，顺着原话做一小步玩笑式反驳。 |
+| [行为一致](skills/chat-reply/references/intents/empathy/techniques/behavioral-alignment.md) | 共情 | 有共同处境时，用共同动作表达站在同一边。 |
+| [夸张引申](skills/chat-reply/references/intents/empathy/techniques/absurd-extension.md) | 共情 | 轻松且能开玩笑时，把同一情境夸张到明显不可能。 |
+| [平衡](skills/chat-reply/references/shared/techniques/balance.md) | 接话、赞美、起头 | 真实肯定后，接一个与当前事情相关的轻微转折。 |
+| [状态感受切换法](skills/chat-reply/references/shared/techniques/state-feeling-switch.md) | 接话、起头 | 从有依据的近况或状态，转到轻量的主观感受。 |
+| [魔趣法则](skills/chat-reply/references/shared/techniques/moqu.md) | 接话、起头 | 借双方已有联系点，加入明显是假想的夸张动作。 |
+
+例如，想自选共情的原则和技巧，可写：
 
 ```text
-$chat-reply 小林 --intent 起头 --context "今天刚参加完比赛，结束后觉得挺有意思，想主动和她聊聊"
-$chat-reply 小林 --intent 共情 --principle 非评价式共情 --technique 行为一致
-$chat-reply 小林今天刚发来“终于考完了，累死我了”，用共情接话。
+$chat-reply 小林 --intent 共情 --principle 非评价式共情 --technique 行为一致 --context "她说早上太冷不想起床，我们都在等公交"
 ```
 
-含义明确的自然语言调用也可以使用。可用名称与适用条件见[输入规则](skills/chat-reply/SKILL.md)和[策略清单](skills/chat-reply/references/strategies/index.md)。
+“夸张引申”只用于共情；单独填写时不会把默认的“接话”改成共情。
+`--mode`、`--strategy 普通回应` 和把技巧名填在 `--strategy` 后面都无效。
+
+含义明确的自然语言调用也可以使用。完整输入规则见[中文回复教练 Skill](skills/chat-reply/SKILL.md)。
 
 中文回复教练 Skill 只接受手动调用。普通聊天不会自动调用它。
 

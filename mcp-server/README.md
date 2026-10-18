@@ -120,21 +120,31 @@ node mcp-server/bin/import-tracememo-key.js "/Users/you/Library/Containers/com.t
 
 尚未生成缓存时，页面会提示先启动同步。同步正在进行或失败时，预览可能只包含此前保存的消息。
 
-### MCP 工具
+### `list_wechat_sessions`
 
-**`list_wechat_sessions`** 查找会话：
+按名称或会话 ID 查找会话。
 
-- `query`：会话名称或会话 ID 的部分文字。
-- `limit`：默认 50，最多 200。`offset`：默认 0。
-- 返回 `sessions` 和 `nextOffset`。`sessions[].id` 是会话 ID。
-- 沿 `nextOffset` 加载更多候选；更换查询时从 0 开始。`nextOffset` 为 null 时没有更多会话。
+| 参数 | 取值 |
+| --- | --- |
+| `query` | 可省略；默认列出会话。填写最多 200 字的名称或会话 ID 片段可筛选。 |
+| `limit` | 每页 1–200 条，默认 50。 |
+| `offset` | 非负整数，默认 0；加载下一页时使用上页的 `nextOffset`。 |
 
-**`get_wechat_history`** 读取消息：
+返回 `sessions` 和 `nextOffset`。`sessions[].id` 是会话 ID。
+沿 `nextOffset` 加载更多候选；更换查询时从 0 开始。`nextOffset` 为 null 时没有更多会话。
 
-- `session_id`：传入上一步得到的 `sessions[].id`。
-- `limit`：默认 50，最多 200。`before`：只接受同一会话上一页返回的 `next`。
-- 返回 `session`、`messages` 和 `next`。省略 `before` 时读取最近消息，按时间正序排列。
-- 将 `next` 传入 `before` 读取更早消息；`next` 为 null 时没有更早消息。
+### `get_wechat_history`
+
+按会话 ID 读取消息。
+
+| 参数 | 取值 |
+| --- | --- |
+| `session_id` | 必填；使用上一步返回的 `sessions[].id`。 |
+| `limit` | 每页 1–200 条，默认 50。 |
+| `before` | 可省略；填写同一会话上一页返回的 `next` 可读取更早消息。 |
+
+返回 `session`、`messages` 和 `next`。消息按时间正序排列。
+将 `next` 传入 `before` 读取更早消息；`next` 为 null 时没有更早消息。
 
 联系人名称和群名只用于查找会话，不能作为 `session_id`。同名候选先由用户确认。
 
