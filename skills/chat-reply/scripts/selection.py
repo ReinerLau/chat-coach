@@ -127,34 +127,34 @@ def load_catalog():
             if not any(item in data["config"]["allowed_" + kind] for data in intents.values()):
                 raise SelectionError(f"公共项目没有允许使用的意图：{item}")
 
-    raw_strategies = _read_json(REFERENCES / "strategies" / "catalog.json")
-    if not isinstance(raw_strategies, list):
-        raise SelectionError("策略清单必须是列表")
-    strategies = {}
-    for strategy in raw_strategies:
-        if not isinstance(strategy, dict):
-            raise SelectionError("策略清单中的每项必须是对象")
-        name = strategy.get("name")
-        intent = strategy.get("intent")
-        if not isinstance(name, str) or not name or name in strategies:
-            raise SelectionError(f"策略名称无效或重复：{name}")
+    raw_presets = _read_json(REFERENCES / "presets" / "catalog.json")
+    if not isinstance(raw_presets, list):
+        raise SelectionError("预设清单必须是列表")
+    presets = {}
+    for preset in raw_presets:
+        if not isinstance(preset, dict):
+            raise SelectionError("预设清单中的每项必须是对象")
+        name = preset.get("name")
+        intent = preset.get("intent")
+        if not isinstance(name, str) or not name or name in presets:
+            raise SelectionError(f"预设名称无效或重复：{name}")
         if intent not in intents:
-            raise SelectionError(f"策略{name}引用了无效意图：{intent}")
+            raise SelectionError(f"预设{name}引用了无效意图：{intent}")
         for kind in KINDS:
-            selected = strategy.get(kind)
-            _unique_names(selected, f"策略{name}的{kind}")
+            selected = preset.get(kind)
+            _unique_names(selected, f"预设{name}的{kind}")
             _check_allowed(intent, kind, selected, intents, items)
-        strategies[name] = strategy
+        presets[name] = preset
     for intent in intents:
-        if intent not in strategies or strategies[intent]["intent"] != intent:
-            raise SelectionError(f"意图{intent}缺少同名策略")
-    for name in strategies:
+        if intent not in presets or presets[intent]["intent"] != intent:
+            raise SelectionError(f"意图{intent}缺少同名预设")
+    for name in presets:
         if any(name in items[kind] for kind in KINDS):
-            raise SelectionError(f"策略与原则或技巧重名：{name}")
+            raise SelectionError(f"预设与原则或技巧重名：{name}")
 
-    _check_strategy_table(strategies)
+    _check_preset_table(presets)
     _check_local_links()
-    return {"intents": intents, "items": items, "strategies": strategies}
+    return {"intents": intents, "items": items, "presets": presets}
 
 
 def _check_allowed(intent, kind, selected, intents, items):
@@ -167,26 +167,26 @@ def _check_allowed(intent, kind, selected, intents, items):
             valid = [name for name, data in intents.items() if item in data["config"]["allowed_" + kind]]
             raise SelectionError(
                 f"{label}“{item}”不适用于“{intent}”；可用于：{'、'.join(valid)}。"
-                "请显式选择对应意图或策略。"
+                "请显式选择对应意图或预设。"
             )
 
 
-def _check_strategy_table(strategies):
-    index = (REFERENCES / "strategies" / "index.md").read_text(encoding="utf-8")
+def _check_preset_table(presets):
+    index = (REFERENCES / "presets" / "index.md").read_text(encoding="utf-8")
     rows = re.findall(r"^\| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$", index, re.M)
     actual = {}
     for name, intent, principles, techniques in rows:
-        if name in ("策略", "---"):
+        if name in ("预设", "---"):
             continue
         if name in actual:
-            raise SelectionError(f"策略说明表含重复名称：{name}")
+            raise SelectionError(f"预设说明表含重复名称：{name}")
         actual[name] = (intent, principles, techniques)
     expected = {
         name: (data["intent"], "、".join(data["principles"]) or "无", "、".join(data["techniques"]) or "无")
-        for name, data in strategies.items()
+        for name, data in presets.items()
     }
     if actual != expected:
-        raise SelectionError("策略说明表与策略清单不一致")
+        raise SelectionError("预设说明表与预设清单不一致")
 
 
 def _check_local_links():
@@ -199,38 +199,38 @@ def _check_local_links():
                 raise SelectionError(f"无效的 Skill 内部链接：{source.relative_to(ROOT)} -> {target}")
 
 
-def resolve_selection(catalog, strategy=None, intent=None, principles=None, techniques=None):
+def resolve_selection(catalog, preset=None, intent=None, principles=None, techniques=None):
     principles = [] if principles is None else principles
     techniques = [] if techniques is None else techniques
     _unique_names(principles, "原则参数")
     _unique_names(techniques, "技巧参数")
-    strategies = catalog["strategies"]
-    if strategy is not None:
+    presets = catalog["presets"]
+    if preset is not None:
         if intent is not None or principles or techniques:
-            raise SelectionError("--strategy 不能与 --intent、--principle 或 --technique 混用")
-        if strategy not in strategies:
-            raise SelectionError(f"未知策略“{strategy}”")
-        selected = strategies[strategy]
-        mode = "strategy"
+            raise SelectionError("--preset 不能与 --intent、--principle 或 --technique 混用")
+        if preset not in presets:
+            raise SelectionError(f"未知预设“{preset}”")
+        selected = presets[preset]
+        selection_type = "preset"
     elif intent is not None:
         if intent not in catalog["intents"]:
             raise SelectionError(f"未知意图“{intent}”")
         if not principles and not techniques:
-            selected = strategies[intent]
-            strategy = intent
-            mode = "strategy"
+            selected = presets[intent]
+            preset = intent
+            selection_type = "preset"
         else:
             selected = {"intent": intent, "principles": principles, "techniques": techniques}
-            mode = "custom"
+            selection_type = "custom"
     else:
-        base = strategies["接话"]
+        base = presets["接话"]
         selected = {
             "intent": "接话",
             "principles": list(dict.fromkeys(base["principles"] + principles)),
             "techniques": list(dict.fromkeys(base["techniques"] + techniques)),
         }
-        strategy = "接话" if not principles and not techniques else None
-        mode = "strategy" if strategy else "custom"
+        preset = "接话" if not principles and not techniques else None
+        selection_type = "preset" if preset else "custom"
     for kind in KINDS:
         _check_allowed(selected["intent"], kind, selected[kind], catalog["intents"], catalog["items"])
     paths = [
@@ -239,8 +239,8 @@ def resolve_selection(catalog, strategy=None, intent=None, principles=None, tech
         for item in selected[kind]
     ]
     return {
-        "selection_type": mode,
-        "strategy": strategy if mode == "strategy" else None,
+        "selection_type": selection_type,
+        "preset": preset if selection_type == "preset" else None,
         "intent": selected["intent"],
         "intent_path": catalog["intents"][selected["intent"]]["path"],
         "principles": selected["principles"],
@@ -252,19 +252,19 @@ def resolve_selection(catalog, strategy=None, intent=None, principles=None, tech
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check-catalog", action="store_true")
-    parser.add_argument("--strategy", action=Once)
+    parser.add_argument("--preset", action=Once)
     parser.add_argument("--intent", action=Once)
     parser.add_argument("--principle", action="append", default=[])
     parser.add_argument("--technique", action="append", default=[])
     args = parser.parse_args()
     try:
-        if args.check_catalog and (args.strategy is not None or args.intent is not None or args.principle or args.technique):
+        if args.check_catalog and (args.preset is not None or args.intent is not None or args.principle or args.technique):
             raise SelectionError("--check-catalog 不能与选择参数混用")
         catalog = load_catalog()
         if args.check_catalog:
-            print(json.dumps({"ok": True, "intents": len(catalog["intents"]), "strategies": len(catalog["strategies"])}, ensure_ascii=False))
+            print(json.dumps({"ok": True, "intents": len(catalog["intents"]), "presets": len(catalog["presets"])}, ensure_ascii=False))
         else:
-            result = resolve_selection(catalog, args.strategy, args.intent, args.principle, args.technique)
+            result = resolve_selection(catalog, args.preset, args.intent, args.principle, args.technique)
             print(json.dumps({"ok": True, **result}, ensure_ascii=False))
     except SelectionError as exc:
         print(json.dumps({"ok": False, "error": str(exc)}, ensure_ascii=False))
