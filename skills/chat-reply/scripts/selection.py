@@ -127,26 +127,26 @@ def load_catalog():
             if not any(item in data["config"]["allowed_" + kind] for data in intents.values()):
                 raise SelectionError(f"公共项目没有允许使用的意图：{item}")
 
-    raw_presets = _read_json(REFERENCES / "presets" / "catalog.json")
-    if not isinstance(raw_presets, list):
-        raise SelectionError("预设清单必须是列表")
     presets = {}
-    for preset in raw_presets:
-        if not isinstance(preset, dict):
-            raise SelectionError("预设清单中的每项必须是对象")
-        name = preset.get("name")
-        intent = preset.get("intent")
-        if not isinstance(name, str) or not name or name in presets:
-            raise SelectionError(f"预设名称无效或重复：{name}")
-        if intent not in intents:
-            raise SelectionError(f"预设{name}引用了无效意图：{intent}")
-        for kind in KINDS:
-            selected = preset.get(kind)
-            _unique_names(selected, f"预设{name}的{kind}")
-            _check_allowed(intent, kind, selected, intents, items)
-        if not preset["principles"] and not preset["techniques"]:
-            raise SelectionError(f"预设{name}至少包含一项原则或技巧")
-        presets[name] = preset
+    for intent, data in intents.items():
+        raw_presets = data["config"].get("presets")
+        if not isinstance(raw_presets, list):
+            raise SelectionError(f"{intent}的预设必须是列表")
+        for preset in raw_presets:
+            if not isinstance(preset, dict):
+                raise SelectionError(f"{intent}的每项预设必须是对象")
+            name = preset.get("name")
+            if not isinstance(name, str) or not name or name in presets:
+                raise SelectionError(f"预设名称无效或重复：{name}")
+            selected_preset = {"name": name, "intent": intent}
+            for kind in KINDS:
+                selected = preset.get(kind)
+                _unique_names(selected, f"预设{name}的{kind}")
+                _check_allowed(intent, kind, selected, intents, items)
+                selected_preset[kind] = selected
+            if not selected_preset["principles"] and not selected_preset["techniques"]:
+                raise SelectionError(f"预设{name}至少包含一项原则或技巧")
+            presets[name] = selected_preset
     for intent in intents:
         if intent in presets and presets[intent]["intent"] != intent:
             raise SelectionError(f"意图{intent}的同名预设引用了其他意图")
@@ -154,7 +154,7 @@ def load_catalog():
         if any(name in items[kind] for kind in KINDS):
             raise SelectionError(f"预设与原则或技巧重名：{name}")
 
-    _check_preset_table(presets)
+    _check_preset_docs(intents, presets)
     _check_local_links()
     return {"intents": intents, "items": items, "presets": presets}
 
@@ -173,22 +173,41 @@ def _check_allowed(intent, kind, selected, intents, items):
             )
 
 
-def _check_preset_table(presets):
-    index = (REFERENCES / "presets" / "index.md").read_text(encoding="utf-8")
-    rows = re.findall(r"^\| ([^|]+) \| ([^|]+) \| ([^|]+) \| ([^|]+) \|$", index, re.M)
-    actual = {}
-    for name, intent, principles, techniques in rows:
-        if name in ("预设", "---"):
-            continue
-        if name in actual:
-            raise SelectionError(f"预设说明表含重复名称：{name}")
-        actual[name] = (intent, principles, techniques)
+def _check_preset_docs(intents, presets):
+    docs = {}
+    for intent, data in intents.items():
+        directory = (ROOT / data["path"]).parent / "presets"
+        paths = sorted(directory.glob("*.md")) if directory.exists() else []
+        for path in paths:
+            lines = path.read_text(encoding="utf-8").splitlines()
+            if not lines or not lines[0].startswith("# "):
+                raise SelectionError(f"预设说明缺少正式名称：{path.relative_to(ROOT)}")
+            name = lines[0][2:].strip()
+            if not name or name in docs:
+                raise SelectionError(f"预设说明名称无效或重复：{name}")
+            fields = {}
+            for kind, label in (("principles", "原则"), ("techniques", "技巧")):
+                match = next((line for line in lines if line.startswith(f"- {label}：")), None)
+                if match is None:
+                    raise SelectionError(f"预设{name}缺少{label}说明")
+                value = match.removeprefix(f"- {label}：").strip()
+                fields[kind] = re.findall(r"\[([^\]]+)\]\([^)]+\)", value) if value != "无" else []
+            owner = next((line.removeprefix("- 意图：").strip() for line in lines if line.startswith("- 意图：")), None)
+            if owner != intent:
+                raise SelectionError(f"预设{name}的说明与所在意图目录不一致")
+            docs[name] = {"intent": owner, **fields}
+        expected_links = {f"presets/{path.name}" for path in paths}
+        index = (ROOT / data["path"]).read_text(encoding="utf-8")
+        actual_links = set(re.findall(r"\]\((presets/[^)]+)\)", index))
+        if actual_links != expected_links:
+            raise SelectionError(f"{intent}的预设链接与目录不一致")
+
     expected = {
-        name: (data["intent"], "、".join(data["principles"]) or "无", "、".join(data["techniques"]) or "无")
+        name: {"intent": data["intent"], "principles": data["principles"], "techniques": data["techniques"]}
         for name, data in presets.items()
     }
-    if actual != expected:
-        raise SelectionError("预设说明表与预设清单不一致")
+    if docs != expected:
+        raise SelectionError("各意图目录中的预设说明与 intent.json 不一致")
 
 
 def _check_local_links():

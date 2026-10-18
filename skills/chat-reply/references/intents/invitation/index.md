@@ -14,3 +14,7 @@
 ## 专属技巧
 
 无。
+
+## 预设
+
+- [邀约](presets/invitation.md)

@@ -11,5 +11,26 @@
   "allowed_techniques": [
     "行为一致",
     "夸张引申"
+  ],
+  "presets": [
+    {
+      "name": "共情",
+      "principles": [
+        "非评价式共情",
+        "避免比较转移"
+      ],
+      "techniques": ["行为一致"]
+    },
+    {
+      "name": "轻松共情",
+      "principles": [
+        "非评价式共情",
+        "避免比较转移"
+      ],
+      "techniques": [
+        "行为一致",
+        "夸张引申"
+      ]
+    }
   ]
 }

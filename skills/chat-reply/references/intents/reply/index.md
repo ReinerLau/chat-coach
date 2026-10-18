@@ -15,3 +15,7 @@
 
 - [行为聊法](techniques/behavior-chat.md)
 - [扩大冲突](techniques/expand-conflict.md)
+
+## 预设
+
+- [接话](presets/reply.md)

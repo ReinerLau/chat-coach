@@ -16,3 +16,8 @@
 
 - [行为一致](techniques/behavioral-alignment.md)
 - [夸张引申](techniques/absurd-extension.md)
+
+## 预设
+
+- [共情](presets/empathy.md)
+- [轻松共情](presets/light-empathy.md)
