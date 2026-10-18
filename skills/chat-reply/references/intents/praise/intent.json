@@ -9,5 +9,14 @@
   ],
   "allowed_techniques": [
     "平衡"
+  ],
+  "presets": [
+    {
+      "name": "赞美",
+      "principles": [
+        "具体赞美"
+      ],
+      "techniques": []
+    }
   ]
 }

@@ -7,5 +7,14 @@
     "把握分寸",
     "不评价对方"
   ],
-  "allowed_techniques": []
+  "allowed_techniques": [],
+  "presets": [
+    {
+      "name": "邀约",
+      "principles": [
+        "先理解顾虑"
+      ],
+      "techniques": []
+    }
+  ]
 }

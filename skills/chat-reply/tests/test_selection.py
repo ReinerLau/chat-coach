@@ -97,7 +97,7 @@ class SelectionTests(unittest.TestCase):
         self.assertEqual(rejected.returncode, 2)
         self.assertIn("--strategy", rejected.stderr)
 
-    def test_catalog_rejects_cross_intent_reference(self):
+    def test_intent_config_rejects_cross_intent_reference(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)
             refs = root / "references"
@@ -108,6 +108,43 @@ class SelectionTests(unittest.TestCase):
             path.write_text(json.dumps(config, ensure_ascii=False))
             with patch.object(selection, "ROOT", root), patch.object(selection, "REFERENCES", refs):
                 with self.assertRaisesRegex(selection.SelectionError, "跨意图"):
+                    selection.load_catalog()
+
+    def test_preset_config_must_match_local_document(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            refs = root / "references"
+            shutil.copytree(selection.REFERENCES, refs)
+            path = refs / "intents" / "reply" / "intent.json"
+            config = json.loads(path.read_text())
+            config["presets"][0]["techniques"] = ["状态感受切换法"]
+            path.write_text(json.dumps(config, ensure_ascii=False))
+            with patch.object(selection, "ROOT", root), patch.object(selection, "REFERENCES", refs):
+                with self.assertRaisesRegex(selection.SelectionError, "预设说明与 intent.json 不一致"):
+                    selection.load_catalog()
+
+    def test_preset_document_must_stay_with_owning_intent(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            refs = root / "references"
+            shutil.copytree(selection.REFERENCES, refs)
+            source = refs / "intents" / "reply" / "presets" / "reply.md"
+            destination = refs / "intents" / "empathy" / "presets" / "reply.md"
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            source.rename(destination)
+            with patch.object(selection, "ROOT", root), patch.object(selection, "REFERENCES", refs):
+                with self.assertRaisesRegex(selection.SelectionError, "所在意图目录不一致"):
+                    selection.load_catalog()
+
+    def test_intent_index_must_link_its_presets(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp)
+            refs = root / "references"
+            shutil.copytree(selection.REFERENCES, refs)
+            path = refs / "intents" / "reply" / "index.md"
+            path.write_text(path.read_text().replace("- [接话](presets/reply.md)\n", ""))
+            with patch.object(selection, "ROOT", root), patch.object(selection, "REFERENCES", refs):
+                with self.assertRaisesRegex(selection.SelectionError, "预设链接与目录不一致"):
                     selection.load_catalog()
 
     def test_cli_rejects_duplicate_intent(self):
