@@ -1,10 +1,14 @@
 # chat-coach
 
-chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。中文回复教练 Skill 根据真实聊天提供示例回复，用户自行决定是否发送。联系人记录 Skill 保存有后续参考价值的背景和互动；微信历史 MCP 只读查询本机微信历史。
+chat-coach 帮你整理聊天回复，也能保存联系人资料和查询本机微信历史。
+
+- **中文回复教练 Skill** 根据真实聊天提供示例回复。是否发送由你决定。
+- **联系人记录 Skill** 保存有后续参考价值的背景和互动。
+- **微信历史 MCP** 只读查询本机微信历史。
 
 ## 快速使用
 
-把联系人名写在 `$chat-reply` 后面。没有指定回复方式时，默认使用“接话”策略。
+把联系人名写在 `$chat-reply` 后面。未指定回复方式时，默认用“接话”策略。
 
 ```text
 $chat-reply 小林
@@ -12,31 +16,60 @@ $chat-reply 小林 --strategy 共情 --context "我已经回了她一句辛苦�
 $contact-notes 查看小林的档案。
 ```
 
-`--strategy` 选择整套策略，不能与 `--intent`、`--principle` 或 `--technique` 混用。需要自定义组合时，每轮最多选一个意图，原则和技巧可以分别选多个。完整的[输入规则](skills/chat-reply/SKILL.md)和[策略清单](skills/chat-reply/references/strategies/index.md)列明可用名称、适用条件与无效输入。
+- `--strategy` 选择整套策略，不能与 `--intent`、`--principle` 或 `--technique` 混用。
+- 自定义组合时，每轮最多选一个意图。原则和技巧可以分别选多个。
+- 可用名称、适用条件和无效输入见[输入规则](skills/chat-reply/SKILL.md)与[策略清单](skills/chat-reply/references/strategies/index.md)。
 
-中文回复教练 Skill 只接受手动调用。联系人记录 Skill 可用 `$contact-notes` 显式调用，也会在中文回复教练 Skill 的回复流程中自动联动。两个 Skill 都已安装时，新材料中的有用增量会写入联系人档案，详见[自动记录说明](skills/chat-reply/references/auto-notes.md)。示例回复、所选策略和模型推测不入档；明确要求不记录时按指定范围跳过。普通聊天不触发自动记录。
+中文回复教练 Skill 只接受手动调用。联系人记录 Skill 可用 `$contact-notes` 调用，也会在回复流程中自动联动。
 
-[更多调用示例](#更多调用示例)和[手工测试输入](docs/chat-reply-manual-tests.md)供按需使用。Skill 运行时不读取手工测试文件。
+两个 Skill 都已安装时，会把新材料中的有用增量写入联系人档案。以下内容不会写入：
+
+- 示例回复、所选策略和模型推测。
+- 你明确要求本轮或指定范围不记录的信息。
+
+普通聊天不触发自动记录。细节见[自动记录说明](skills/chat-reply/references/auto-notes.md)。
+
+需要更多输入方式，可看[调用示例](#更多调用示例)和[手工测试输入](docs/chat-reply-manual-tests.md)。
+
+Skill 运行时不读取手工测试文件。
 
 ## 安装 Skill
 
-两个 Skill 可以独立安装。按照 [Codex 官方 Skill 说明](https://learn.chatgpt.com/docs/build-skills)，用户级 Skill 放在 `~/.agents/skills/`。
+两个 Skill 可以独立安装。用户级 Skill 放在 `~/.agents/skills/`，参见 [Codex 官方 Skill 说明](https://learn.chatgpt.com/docs/build-skills)。
 
-1. 从仓库的 `skills/` 中选择 `chat-reply`、`contact-notes` 或两者。将所选目录的全部受版本控制文件复制到 `~/.agents/skills/` 下的同名目录。
-2. 保留每个 Skill 的 `SKILL.md`、`references/` 和 `agents/openai.yaml`。安装 `chat-reply` 时还要保留 `scripts/selection.py`。无需复制仓库 `docs/`、另一个 Skill 或本机 `contacts` 软链。
-3. 用 `$chat-reply` 开始回复流程，或用 `$contact-notes` 独立维护档案。新安装的 Skill 未显示时，重启 Codex。
+1. 从仓库 `skills/` 中选择 `chat-reply`、`contact-notes` 或两者。
+2. 将所选目录的全部受版本控制文件复制到 `~/.agents/skills/` 下的同名目录。
+   - 保留 `SKILL.md`、`references/` 和 `agents/openai.yaml`。
+   - 安装 `chat-reply` 时，还要保留 `scripts/selection.py`。
+   - 无需复制仓库 `docs/`、另一个 Skill 或本机 `contacts` 软链。
+3. 用 `$chat-reply` 开始回复流程，或用 `$contact-notes` 维护档案。
 
-只安装中文回复教练 Skill 时，它可以读取已有档案，但不会自行写入。首次需要保存时会提示安装联系人记录 Skill。只安装联系人记录 Skill 时，仍可独立维护档案。查询微信历史需要另行配置[微信历史 MCP](mcp-server/README.md)。
+新安装的 Skill 未显示时，重启 Codex。
+
+- 只安装中文回复教练 Skill：可读取已有档案，但不自行写入。首次需要保存时，会提示安装联系人记录 Skill。
+- 只安装联系人记录 Skill：可独立维护档案。
+- 需要查询微信历史：[另行配置微信历史 MCP](mcp-server/README.md)。
 
 ## 联系人数据
 
-每个联系人对应用户目录 `~/.chat-coach/contacts/` 中的一个 Markdown 文件。档案分开保存背景、当前情况、互动记录和个人观察。微信历史按需查询，不复制全文到档案。当前版本只面向本机 Codex；ChatGPT 无法直接读取这些本机文件。
+每个联系人对应 `~/.chat-coach/contacts/` 中的一个 Markdown 文件。档案分开保存：
 
-查看[材料读取规则](skills/chat-reply/references/materials.md)、[档案维护规则](skills/contact-notes/references/contact-notes.md)和[两 Skill 的一致性约定](docs/contact-notes.md)。需要在仓库侧边栏查看档案时，使用文末的[本机软链命令](#本机侧边栏链接)。
+- 背景和当前情况。
+- 互动记录和个人观察。
+
+微信历史按需查询，不复制全文到档案。
+
+当前版本只面向本机 Codex。ChatGPT 无法直接读取这些本机文件。
+
+详细规则：[材料读取](skills/chat-reply/references/materials.md)、[档案维护](skills/contact-notes/references/contact-notes.md)、[两 Skill 的一致性约定](docs/contact-notes.md)。
+
+需要在仓库侧边栏查看档案时，使用文末的[本机软链命令](#本机侧边栏链接)。
 
 ## 微信历史 MCP
 
-[微信历史 MCP](mcp-server/README.md) 同步本机微信消息，供 MCP 客户端查找会话、分页读取历史。它不调用模型，也不发送微信消息。安装、运行、隧道接入和验证步骤见 [MCP README](mcp-server/README.md)。
+[微信历史 MCP](mcp-server/README.md) 同步本机微信消息。MCP 客户端可查找会话、分页读取历史。
+
+它不调用模型，也不发送微信消息。安装、运行、隧道接入和验证步骤见 [MCP README](mcp-server/README.md)。
 
 ## 开发与验证
 
@@ -46,7 +79,16 @@ npm test --prefix mcp-server
 npm run test:package --prefix mcp-server
 ```
 
-修改 Skill 或联系人档案规则后，用户可按需手工测试。选择结构可运行 `python3 skills/chat-reply/scripts/selection.py --check-catalog` 和 `python3 -m unittest discover -s skills/chat-reply/tests`。仅修改文档或配置时，按影响范围检查链接、调用配置、软链和 Git 忽略规则。
+修改 Skill 或联系人档案规则后，用户可按需手工测试。
+
+检查选择结构可运行：
+
+```sh
+python3 skills/chat-reply/scripts/selection.py --check-catalog
+python3 -m unittest discover -s skills/chat-reply/tests
+```
+
+仅修改文档或配置时，按影响范围检查链接、调用配置、软链和 Git 忽略规则。
 
 更多维护要求见[规则索引](docs/contact-notes.md)、[调用配置](skills/chat-reply/agents/openai.yaml)和文末的参考资料。
 
@@ -55,9 +97,16 @@ npm run test:package --prefix mcp-server
 <details>
 <summary>开发检查细则</summary>
 
-修改两个 Skill 或联系人档案规则后，用户可按需手工测试。不要求运行自动回复评测或生成评测报告。仅改 Skill、文档或配置时，检查 frontmatter、调用配置、引用链接、软链和 Git 忽略规则。
+修改两个 Skill 或联系人档案规则后，用户可按需手工测试。
+不要求运行自动回复评测或生成评测报告。
 
-将两个 Skill 的受版本控制文件分别复制到隔离临时目录，确认运行规则链接均位于各自目录内且有效。涉及联系人档案格式或查找规则时，按[规则索引](docs/contact-notes.md)核对两边兼容性。现有 CI 会运行 MCP 测试和独立包验证。
+仅改 Skill、文档或配置时，检查 frontmatter、调用配置、引用链接、软链和 Git 忽略规则。
+
+将两个 Skill 的受版本控制文件分别复制到隔离临时目录。
+确认运行规则链接均位于各自目录内且有效。
+
+涉及联系人档案格式或查找规则时，按[规则索引](docs/contact-notes.md)核对两边兼容性。
+现有 CI 会运行 MCP 测试和独立包验证。
 
 </details>
 
@@ -66,7 +115,9 @@ npm run test:package --prefix mcp-server
 <details>
 <summary>展开示例</summary>
 
-可用 `--intent 起头` 主动开场，也可组合意图、原则和技巧。含义明确的自然语言调用仍可使用。同轮显式调用两个 Skill 时，先完成指定的记录、修正或删除，再提供示例回复。
+- `--intent 起头` 可用于主动开场。也可组合意图、原则和技巧。
+- 含义明确的自然语言调用仍可使用。
+- 同轮显式调用两个 Skill 时，先完成指定的记录、修正或删除，再提供示例回复。
 
 ```text
 $chat-reply 小林 --intent 起头 --context "今天刚参加完比赛，结束后觉得挺有意思，想主动和她聊聊"
@@ -90,7 +141,12 @@ $chat-reply 小林今天刚发来“终于考完了，累死我了”，用共�
 <details>
 <summary>规则出处</summary>
 
-下表用于回查书中相关章节。书籍提供表达思路。原则和技巧文档中的事实依据、用户当前意愿及边界条件由项目制定，不作为书中原文。只有被选中的原则及技巧自身的适用条件在本轮生效。Skill 运行时只读取自身目录内的规则，不依赖本表或 EPUB。
+下表用于回查书中相关章节。书籍提供表达思路。
+
+原则和技巧文档中的事实依据、用户当前意愿及边界条件由项目制定，不作为书中原文。
+本轮只启用被选中的原则及技巧自身的适用条件。
+
+Skill 运行时只读取自身目录内的规则，不依赖本表或 EPUB。
 
 | 意图或技巧 | 书籍 | 相关章节或小节 |
 | --- | --- | --- |
@@ -112,9 +168,16 @@ $chat-reply 小林今天刚发来“终于考完了，累死我了”，用共�
 <details>
 <summary>查看链接命令</summary>
 
-项目的 `.agents/skills/chat-reply` 和 `.agents/skills/contact-notes` 是指向源码的相对软链，随仓库提交。两个 Skill 内可选的 `contacts` 软链指向同一个用户数据目录，供在文件侧边栏查看和编辑。运行时直接访问用户数据目录，不依赖这些软链。联系人目录链接及个人数据由 `.gitignore` 排除。
+项目的 `.agents/skills/chat-reply` 和 `.agents/skills/contact-notes` 是指向源码的相对软链，随仓库提交。
 
-在仓库根目录运行以下命令。独立安装 Skill 时无需运行。路径冲突会使命令退出，不覆盖已有链接或文件。
+两个 Skill 内可选的 `contacts` 软链指向同一个用户数据目录，供在文件侧边栏查看和编辑。
+运行时直接访问用户数据目录，不依赖这些软链。
+
+联系人目录链接及个人数据由 `.gitignore` 排除。
+
+在仓库根目录运行以下命令。独立安装 Skill 时无需运行。
+
+路径冲突会使命令退出，不覆盖已有链接或文件。
 
 ```sh
 python3 - <<'PY'
@@ -199,7 +262,8 @@ chat-coach/
 <details>
 <summary>联系人功能手工验收</summary>
 
-使用虚构联系人，在新聊天中观察以下行为；用完后通过 `$contact-notes` 明确删除测试档案。
+在新聊天中，用虚构联系人检查以下行为。
+完成后，通过 `$contact-notes` 明确删除测试档案。
 
 | 场景 | 预期 |
 | --- | --- |
