@@ -94,8 +94,7 @@ python3 -m unittest discover -s skills/chat-reply/tests
 
 ## 参考资料
 
-<details>
-<summary>开发检查细则</summary>
+### 开发检查细则
 
 修改两个 Skill 或联系人档案规则后，用户可按需手工测试。
 不要求运行自动回复评测或生成评测报告。
@@ -108,12 +107,7 @@ python3 -m unittest discover -s skills/chat-reply/tests
 涉及联系人档案格式或查找规则时，按[规则索引](docs/contact-notes.md)核对两边兼容性。
 现有 CI 会运行 MCP 测试和独立包验证。
 
-</details>
-
 ### 更多调用示例
-
-<details>
-<summary>展开示例</summary>
 
 - `--intent 起头` 可用于主动开场。也可组合意图、原则和技巧。
 - 含义明确的自然语言调用仍可使用。
@@ -136,10 +130,7 @@ $contact-notes 查看小林的档案。
 $chat-reply 小林今天刚发来“终于考完了，累死我了”，用共情接话。
 ```
 
-</details>
-
-<details>
-<summary>规则出处</summary>
+### 规则出处
 
 下表用于回查书中相关章节。书籍提供表达思路。
 
@@ -161,12 +152,7 @@ Skill 运行时只读取自身目录内的规则，不依赖本表或 EPUB。
 | 行为一致、夸张引申（技巧名称） | [《魔鬼聊天术》](docs/魔鬼聊天术.epub) | 你一直在错误地“共情”；名称由项目确定 |
 | 接话、起头、轻松共情（策略） | 项目自定义 | 无书籍出处 |
 
-</details>
-
 ### 本机侧边栏链接
-
-<details>
-<summary>查看链接命令</summary>
 
 项目的 `.agents/skills/chat-reply` 和 `.agents/skills/contact-notes` 是指向源码的相对软链，随仓库提交。
 
@@ -201,10 +187,7 @@ for link in links:
 PY
 ```
 
-</details>
-
-<details>
-<summary>仓库结构与文件索引</summary>
+### 仓库结构与文件索引
 
 ```text
 chat-coach/
@@ -257,10 +240,7 @@ chat-coach/
 | [skills/contact-notes/references/contact-notes.md](skills/contact-notes/references/contact-notes.md) | 联系人档案的存储、身份查找、文件格式与维护规则。 |
 | [docs/contact-notes.md](docs/contact-notes.md) | 开发者规则索引与两个 Skill 的一致性约定，运行时不引用。 |
 
-</details>
-
-<details>
-<summary>联系人功能手工验收</summary>
+### 联系人功能手工验收
 
 在新聊天中，用虚构联系人检查以下行为。
 完成后，通过 `$contact-notes` 明确删除测试档案。
@@ -285,5 +265,3 @@ chat-coach/
 | 新聊天中未调用任何 Skill，仅描述联系人背景或互动；或回复流程结束后转为其他任务。 | 不触发自动记录。 |
 
 提交前确认暂存区只包含 Skill、文档、配置和相对发现软链，不包含联系人档案或绝对路径软链。
-
-</details>

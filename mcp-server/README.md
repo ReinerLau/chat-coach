@@ -177,9 +177,6 @@ wechat-mcp stop
 node mcp-server/bin/import-tracememo-key.js "/Users/you/Library/Containers/com.tencent.xinWeChat/Data/Documents/xwechat_files/<账号目录>"
 ```
 
-<details>
-<summary>展开运行细节</summary>
-
 ### stdio 与历史缓存
 
 MCP 客户端或隧道应启动并保持以下进程：
@@ -331,8 +328,6 @@ MCP 服务名不会自动修改应用显示名。
 
 权限不足时，不自动改为公网服务。
 
-</details>
-
 ## 验证
 
 ```sh
@@ -340,8 +335,7 @@ npm test --prefix mcp-server
 npm run test:package --prefix mcp-server
 ```
 
-<details>
-<summary>查看自动测试范围与实机验证步骤</summary>
+### 自动测试范围
 
 自动测试使用模拟数据，覆盖：
 
@@ -378,5 +372,3 @@ CI 不读取真实微信或 macOS 钥匙串。
    - 收到新微信消息后再次读取，确认能看到增量同步的消息。
 
 确认符合预期后，反馈“验证通过”或描述问题。
-
-</details>
