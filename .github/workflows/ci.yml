@@ -7,6 +7,17 @@ on:
     branches: [master]
 
 jobs:
+  skill-selection:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate chat-reply selection
+        run: |
+          python3 skills/chat-reply/scripts/selection.py --check-catalog
+          python3 -m unittest discover -s skills/chat-reply/tests
+
   mcp-test:
     runs-on: ubuntu-latest
 

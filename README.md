@@ -1,16 +1,16 @@
 # chat-coach
 
-chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。中文回复教练 Skill 按用户本轮选定或默认的意图、原则、技巧和策略预设，根据真实聊天提供示例回复，并联动联系人记录 Skill 保存有参考价值的背景与互动。用户自行选择、修改并发送实际回复。项目术语见 [CONTEXT.md](CONTEXT.md)。
+chat-coach 包含中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。中文回复教练 Skill 按用户本轮选定或默认的意图、原则、技巧和策略，根据真实聊天提供示例回复，并联动联系人记录 Skill 保存有参考价值的背景与互动。用户自行选择、修改并发送实际回复。项目术语见 [CONTEXT.md](CONTEXT.md)。
 
 ## 中文回复教练 Skill
 
-[中文回复教练 Skill](skills/chat-reply/SKILL.md) 仅通过 `$chat-reply` 手动调用，覆盖初识、约会和确定关系后。联系人名紧跟调用名；可用 `--strategy <预设名>` 一次选择整套预设，或用 `--intent <意图名>`、重复的 `--principle <原则名>` 和 `--technique <技巧名>` 自定义组合，`--context "用户说明"` 提供本轮材料。正式[意图](skills/chat-reply/references/intents/index.md)为接话、共情、赞美、邀约、起头；[策略预设](skills/chat-reply/references/presets/index.md)为接话、起头、共情、轻松共情、赞美、邀约。[原则](skills/chat-reply/references/principles/index.md)和[技巧](skills/chat-reply/references/techniques/index.md)各有索引及独立文档。
+[中文回复教练 Skill](skills/chat-reply/SKILL.md) 仅通过 `$chat-reply` 手动调用，覆盖初识、约会和确定关系后。联系人名紧跟调用名；可用 `--strategy <策略名>` 一次选择整套策略，或用 `--intent <意图名>`、重复的 `--principle <原则名>` 和 `--technique <技巧名>` 自定义组合，`--context "用户说明"` 提供本轮材料。正式[意图](skills/chat-reply/references/intents/index.md)为接话、共情、赞美、邀约、起头；[策略](skills/chat-reply/references/strategies/index.md)为接话、起头、共情、轻松共情、赞美、邀约。专属原则和技巧放在对应意图目录；[公共原则和技巧](skills/chat-reply/references/shared/index.md)按各意图的清单开放。
 
-`--strategy` 不能与意图、原则或技巧参数混用；`--intent` 一轮最多一个，原则与技巧可各自重复点名不同项。只写意图时使用对应预设；意图与单项同写时仅用显式组合；只写单项时以默认的“接话”预设为基础。未选择时默认“接话”。旧 `--mode`、`--strategy 普通回应` 和把技巧名写入 `--strategy` 均无效。所有选定技巧须在每条示例中体现；不适用时说明具体原因，请用户改选，不擅自省略。原则只在预设包含或用户点名时生效。含义明确的自然语言调用仍可使用，同一目标改写沿用本轮选择；对方发来新消息后重新使用默认接话。仅分析现有回复效果时无需选择。各意图和技巧保留原有适用范围，其中“邀约”限于回应线下见面邀约后的顾虑。
+`--strategy` 不能与意图、原则或技巧参数混用；`--intent` 一轮最多一个，原则与技巧可各自重复点名不同项。只写意图时使用对应策略；意图与单项同写时仅用显式组合；只写单项时以默认的“接话”策略为基础。未选择时默认“接话”。选择由随 Skill 安装的[校验脚本](skills/chat-reply/scripts/selection.py)解析；跨意图项目会被拒绝。例如只写 `--technique 夸张引申` 会落到默认接话而无效，须明确选择共情意图或策略。旧 `--mode`、`--strategy 普通回应` 和把技巧名写入 `--strategy` 均无效。所有选定技巧须在每条示例中体现；场景不适用时说明具体原因，请用户改选，不擅自省略。原则只在策略包含或用户点名时生效。含义明确的自然语言调用仍可使用，同一目标改写沿用本轮选择；对方发来新消息后重新使用默认接话。仅分析现有回复效果时无需选择。“邀约”仍限于回应线下见面邀约后的顾虑。
 
 性别未说明时按默认用途理解，但不把性别、好感或关系状态当成已确认事实；明确的非恋爱目的、其他对象和用户当前意愿优先，单称“朋友”不排除关系发展。接话但未提供待回复消息时，按[材料读取说明](skills/chat-reply/references/materials.md)查找对方最新消息，并结合其后用户已发的内容续写；末条由自己发送不自动触发澄清。起头以用户说明或近期真实互动切入；材料不足时询问具体缺口。拟写前按[示例检查](skills/chat-reply/references/review.md)核对本轮选定项。
 
-两个 Skill 都已安装时，每次取得新材料后，按[自动记录说明](skills/chat-reply/references/auto-notes.md)联动联系人记录 Skill，保存有后续参考价值的信息；身份明确且有可保存信息时可自动建档。自动记录覆盖用户说明、贴出的聊天和本轮按需查到的微信历史，核对已有档案后保存增量。成功时默认静默；身份不明或信息冲突无法解释时先澄清，缺少联系人记录 Skill 或保存失败时简短说明并继续回复。示例回复、所选意图、原则、技巧、策略预设和模型推测不入档，用户的打算不记成已发生的互动；明确要求不记录时按指定范围跳过保存。
+两个 Skill 都已安装时，每次取得新材料后，按[自动记录说明](skills/chat-reply/references/auto-notes.md)联动联系人记录 Skill，保存有后续参考价值的信息；身份明确且有可保存信息时可自动建档。自动记录覆盖用户说明、贴出的聊天和本轮按需查到的微信历史，核对已有档案后保存增量。成功时默认静默；身份不明或信息冲突无法解释时先澄清，缺少联系人记录 Skill 或保存失败时简短说明并继续回复。示例回复、所选意图、原则、技巧、策略和模型推测不入档，用户的打算不记成已发生的互动；明确要求不记录时按指定范围跳过保存。
 
 Skill 的调用配置见 [agents/openai.yaml](skills/chat-reply/agents/openai.yaml)。已有的[手工测试输入](docs/chat-reply-manual-tests.md)可按需复制使用；Skill 运行时不引用该文件。
 
@@ -29,7 +29,7 @@ Skill 的调用配置见 [agents/openai.yaml](skills/chat-reply/agents/openai.ya
 | 扩大冲突（技巧） | [《魔鬼聊天术》](docs/魔鬼聊天术.epub) | 你的女神能追上／调情技巧——扩大冲突 |
 | 魔趣法则（技巧） | [《魔鬼聊天术》](docs/魔鬼聊天术.epub) | 你的女神能追上／在对话中调动情绪——魔趣法则 |
 | 行为一致、夸张引申（技巧名称） | [《魔鬼聊天术》](docs/魔鬼聊天术.epub) | 你一直在错误地“共情”；名称由项目确定 |
-| 接话、起头、轻松共情（预设） | 项目自定义 | 无书籍出处 |
+| 接话、起头、轻松共情（策略） | 项目自定义 | 无书籍出处 |
 
 ## 联系人记录 Skill
 
@@ -56,7 +56,7 @@ $chat-reply 小林今天刚发来“终于考完了，累死我了”，用共�
 两个 Skill 均可独立安装，运行所需规则随各自目录提供。按照 [Codex 官方 Skill 说明](https://learn.chatgpt.com/docs/build-skills)，用户级 Skill 放在 `~/.agents/skills/`：
 
 1. 从仓库的 `skills/` 中选择 `chat-reply`、`contact-notes` 或两者，将所选目录内的全部受版本控制文件复制到 `~/.agents/skills/` 下的同名目录。
-2. 保留 `SKILL.md`、`references/` 和 `agents/openai.yaml`，不能只复制入口文件。安装目录中无需放置仓库的 `docs/`、另一个 Skill 或本机 `contacts` 软链。
+2. 保留 `SKILL.md`、`references/`、`scripts/selection.py` 和 `agents/openai.yaml`，不能只复制入口文件。安装目录中无需放置仓库的 `docs/`、另一个 Skill 或本机 `contacts` 软链。
 3. 在 Codex 中通过 `$chat-reply` 开始回复流程，联系人记录 Skill 在流程内自动联动；独立维护档案时通过 `$contact-notes` 显式调用。未显示新安装的 Skill 时，重启 Codex。
 
 只安装中文回复教练 Skill 也可读取已有联系人档案；没有档案时继续使用当前聊天材料，首次需要保存时提示安装联系人记录 Skill，中文回复教练 Skill 不自行写入档案。希望自动记录时安装两个 Skill；只安装联系人记录 Skill 仍可独立维护档案。微信历史查询另需配置[微信历史 MCP](mcp-server/README.md)，读取和保存联系人档案本身不要求连接它。
@@ -119,15 +119,15 @@ chat-coach/
     ├── chat-reply/
     │   ├── SKILL.md
     │   ├── agents/openai.yaml
+    │   ├── scripts/selection.py
     │   ├── contacts -> ~/.chat-coach/contacts（仅本机，可选）
     │   └── references/
     │       ├── auto-notes.md
     │       ├── materials.md
     │       ├── review.md
-    │       ├── intents/（正式意图）
-    │       ├── principles/（原则索引与独立文档）
-    │       ├── techniques/（技巧索引与独立文档）
-    │       └── presets/（策略预设）
+    │       ├── intents/（意图及其专属原则、技巧）
+    │       ├── shared/（公共原则、技巧）
+    │       └── strategies/（策略）
     └── contact-notes/
         ├── SKILL.md
         ├── agents/openai.yaml
@@ -145,9 +145,9 @@ chat-coach/
 | [skills/chat-reply/references/auto-notes.md](skills/chat-reply/references/auto-notes.md) | 回复流程内自动联动记录的时机、交接与异常处理。 |
 | [skills/chat-reply/references/materials.md](skills/chat-reply/references/materials.md) | 联系人档案的读取与使用边界，以及微信历史 MCP 的查询用法。 |
 | [skills/chat-reply/references/intents/index.md](skills/chat-reply/references/intents/index.md) | 五项正式意图及适用范围。 |
-| [skills/chat-reply/references/principles/index.md](skills/chat-reply/references/principles/index.md) | 可单独点名的原则及对应文档。 |
-| [skills/chat-reply/references/techniques/index.md](skills/chat-reply/references/techniques/index.md) | 可单独点名的技巧及对应文档。 |
-| [skills/chat-reply/references/presets/index.md](skills/chat-reply/references/presets/index.md) | 六套策略预设的组成。 |
+| [skills/chat-reply/references/shared/index.md](skills/chat-reply/references/shared/index.md) | 公共原则与技巧；是否可用由意图清单决定。 |
+| [skills/chat-reply/references/strategies/index.md](skills/chat-reply/references/strategies/index.md) | 六套策略的组成。 |
+| [skills/chat-reply/scripts/selection.py](skills/chat-reply/scripts/selection.py) | 校验规则归属与本轮选择，返回应读取的规则文档。 |
 | [skills/chat-reply/references/review.md](skills/chat-reply/references/review.md) | 示例回复的输出前审查。 |
 | [skills/contact-notes/SKILL.md](skills/contact-notes/SKILL.md) | 联系人档案的查看与维护流程。 |
 | [skills/contact-notes/agents/openai.yaml](skills/contact-notes/agents/openai.yaml) | 允许自动调用，触发范围由入口描述和流程限定。 |
@@ -162,7 +162,7 @@ npm test --prefix mcp-server
 npm run test:package --prefix mcp-server
 ```
 
-修改两个 Skill 或联系人档案规则后，由用户手工测试，不运行自动回复评测或生成评测报告。仅改 Skill、文档或配置时，检查 frontmatter、调用配置、引用链接、软链和 Git 忽略规则；将两个 Skill 的受版本控制文件分别复制到隔离临时目录，确认运行规则链接均位于各自目录内且有效。涉及联系人档案格式或查找规则时，按[规则索引](docs/contact-notes.md)核对两边兼容性。MCP 测试与独立包验证由现有 CI 运行。
+修改两个 Skill 或联系人档案规则后，由用户按需手工测试，不运行自动回复评测或生成评测报告。选择结构可运行 `python3 skills/chat-reply/scripts/selection.py --check-catalog` 与 `python3 -m unittest discover -s skills/chat-reply/tests` 检查。仅改 Skill、文档或配置时，检查 frontmatter、调用配置、引用链接、软链和 Git 忽略规则；将两个 Skill 的受版本控制文件分别复制到隔离临时目录，确认运行规则链接均位于各自目录内且有效。涉及联系人档案格式或查找规则时，按[规则索引](docs/contact-notes.md)核对两边兼容性。MCP 测试与独立包验证由现有 CI 运行。
 
 ### 联系人功能手工验收
 
@@ -176,12 +176,12 @@ npm run test:package --prefix mcp-server
 | 修正背景，再说明对方考试已经结束。 | 修正指定内容、更新当前情况，保留此前事件及仍待落实的约定。 |
 | 删除城市信息、查看档案，再明确删除整个档案。 | 分别只删除指定信息、只读查看、删除整个文件。 |
 | 只输入 `$contact-notes`，或提供无法确定身份的同名联系人。 | 询问操作或身份，澄清前不写入；已有唯一身份不重复询问。 |
-| 在新聊天中只用 `$chat-reply` 回复已记录的联系人，并提供新背景。 | 自动保存增量后按本轮选择或默认的“接话”预设提供示例；成功时静默，已有信息不重复追加。 |
-| 只用 `$chat-reply` 回复身份明确、没有档案的联系人。 | 有可保存信息时自动建档；未选择时默认“接话”预设。 |
-| 未选择预设或单项，或连续交互中补充背景和实际互动。 | 取得新材料时及时保存新信息；未选择时默认“接话”预设，无需重复调用两个 Skill。 |
+| 在新聊天中只用 `$chat-reply` 回复已记录的联系人，并提供新背景。 | 自动保存增量后按本轮选择或默认的“接话”策略提供示例；成功时静默，已有信息不重复追加。 |
+| 只用 `$chat-reply` 回复身份明确、没有档案的联系人。 | 有可保存信息时自动建档；未选择时默认“接话”策略。 |
+| 未选择策略或单项，或连续交互中补充背景和实际互动。 | 取得新材料时及时保存新信息；未选择时默认“接话”策略，无需重复调用两个 Skill。 |
 | 本轮查到微信历史，再重复查询同一段历史。 | 保存有用摘要及来源和日期，不重复追加，不为记录额外查询；旧状态不覆盖较新的当前情况。 |
-| 提供打算、选择预设或单项、调整示例回复，之后说明消息已经发送。 | 打算与实际互动区分，所选意图、原则、技巧、预设及示例回复不入档；确认已发送后才记录实际互动。 |
-| 有档案但未指定回复方式，或档案包含历史意愿和个人观察。 | 默认“接话”预设；历史意愿不自动成为本轮承诺，个人观察不当作确定事实。 |
+| 提供打算、选择策略或单项、调整示例回复，之后说明消息已经发送。 | 打算与实际互动区分，所选意图、原则、技巧、策略及示例回复不入档；确认已发送后才记录实际互动。 |
+| 有档案但未指定回复方式，或档案包含历史意愿和个人观察。 | 默认“接话”策略；历史意愿不自动成为本轮承诺，个人观察不当作确定事实。 |
 | 同轮显式调用两个 Skill，要求记录、修正或删除并生成回复。 | 先执行明确操作，再核对自动增量；不重复记录，不补回同轮删除的信息或重建已删除档案。 |
 | 要求本轮或指定信息不记录；身份有歧义或信息冲突无法解释。 | 遵从记录限制；歧义先澄清，澄清前不猜测写入。 |
 | 联系人记录 Skill 写入失败或保存结果无法核对。 | 简短说明失败并继续回复，不声称已保存。 |

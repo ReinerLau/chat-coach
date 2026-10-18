@@ -1352,7 +1352,7 @@ $chat-reply 本轮不记录联系人档案，帮我回复正在了解的小敏�
 $chat-reply 小林
 ```
 
-## 100 共情预设
+## 100 共情策略
 
 ```text
 $chat-reply 小林 --strategy 共情
@@ -1369,7 +1369,7 @@ $chat-reply 小林
 我的微信里有两位叫小林的联系人：一位是大学同学，一位是同事。
 ```
 
-## 102 预设与自然语言要求冲突
+## 102 策略与自然语言要求冲突
 
 ```text
 $chat-reply 小林 --strategy 共情
@@ -1377,19 +1377,19 @@ $chat-reply 小林 --strategy 共情
 请用赞美回复。
 ```
 
-## 103 预设参数写在联系人前
+## 103 策略参数写在联系人前
 
 ```text
 $chat-reply --strategy 共情 小林
 ```
 
-## 104 无效预设名
+## 104 无效策略名
 
 ```text
 $chat-reply 小林 --strategy 轻松一点
 ```
 
-## 105 重复指定预设
+## 105 重复指定策略
 
 ```text
 $chat-reply 小林 --strategy 共情 --strategy 赞美
@@ -1405,7 +1405,7 @@ $chat-reply 小林
 19:42 我：辛苦啦，先回去歇会儿。
 ```
 
-## 107 共情预设并补充用户说明
+## 107 共情策略并补充用户说明
 
 ```text
 $chat-reply 小林 --strategy 共情 --context "我们都在准备明天出差，我刚发的‘辛苦啦’只是简单应了一句"
@@ -1421,7 +1421,7 @@ $chat-reply 小林 --strategy 共情 --context "我们都在准备明天出差�
 $chat-reply 小林 --intent 起头 --technique 状态感受切换法 --context "今天下午帮侄子拼四驱车参加比赛，结束后觉得挺有意思，想主动和她聊这件事"
 ```
 
-## 109 起头预设，近期互动作为切入点
+## 109 起头策略，近期互动作为切入点
 
 ```text
 $chat-reply 小林 --strategy 起头
@@ -1483,7 +1483,7 @@ $chat-reply 小林 --intent 接话
 $chat-reply --intent 起头 小林 --context "今天去看了展，想聊聊这件事"
 ```
 
-## 117 接话预设
+## 117 接话策略
 
 ```text
 $chat-reply 小林 --strategy 接话
@@ -1491,7 +1491,7 @@ $chat-reply 小林 --strategy 接话
 小林：我明天上午去办手续，下午才有空。
 ```
 
-## 118 轻松共情预设
+## 118 轻松共情策略
 
 ```text
 $chat-reply 小林 --strategy 轻松共情
@@ -1500,7 +1500,7 @@ $chat-reply 小林 --strategy 轻松共情
 小林：今天冷得真不想去上班。
 ```
 
-## 119 赞美预设
+## 119 赞美策略
 
 ```text
 $chat-reply 小林 --strategy 赞美 --context "她昨天帮我把演示文稿里的日期错误找了出来，我很感谢她"
@@ -1508,7 +1508,7 @@ $chat-reply 小林 --strategy 赞美 --context "她昨天帮我把演示文稿�
 小林：昨天那处日期改好了吗？
 ```
 
-## 120 邀约预设
+## 120 邀约策略
 
 ```text
 $chat-reply 小林 --strategy 邀约 --context "我之前问她周末要不要见面"
@@ -1547,13 +1547,13 @@ $chat-reply 小林 --technique 行为聊法
 $chat-reply 小林 --intent 起头 --technique 状态感受切换法 --technique 魔趣法则 --context "今天在公园看见两只狗追着落叶跑，我想把这件有趣的小事讲给她听"
 ```
 
-## 125 技巧名不能充当预设名
+## 125 技巧名不能充当策略名
 
 ```text
 $chat-reply 小林 --strategy 魔趣法则
 ```
 
-## 126 旧预设名无效
+## 126 旧策略名无效
 
 ```text
 $chat-reply 小林 --strategy 普通回应
@@ -1567,7 +1567,7 @@ $chat-reply 小林 --technique 扩大冲突
 小林：我今天把报告发出去了，终于能早点休息。
 ```
 
-## 128 严重打击与严格共情预设
+## 128 严重打击与严格共情策略
 
 ```text
 $chat-reply 小林 --strategy 共情
@@ -1575,13 +1575,13 @@ $chat-reply 小林 --strategy 共情
 小林：我爸爸刚去世，我现在真的不知道该怎么办。
 ```
 
-## 129 预设与意图不能混用
+## 129 策略与意图不能混用
 
 ```text
 $chat-reply 小林 --strategy 共情 --intent 共情
 ```
 
-## 130 预设与技巧不能混用
+## 130 策略与技巧不能混用
 
 ```text
 $chat-reply 小林 --strategy 共情 --technique 夸张引申
@@ -1605,7 +1605,7 @@ $chat-reply 小林 --technique 行为聊法 --technique 行为聊法
 $chat-reply 小林 --intent 起头 --principle 事实有据 --principle 把握分寸 --context "今天在书店看到她上次提到的那套漫画，想简短和她聊聊；我们最近每隔几天才聊一次"
 ```
 
-## 134 预设与原则不能混用
+## 134 策略与原则不能混用
 
 ```text
 $chat-reply 小林 --strategy 共情 --principle 避免比较转移
@@ -1617,4 +1617,45 @@ $chat-reply 小林 --strategy 共情 --principle 避免比较转移
 $chat-reply 小林 --intent 共情 --principle 非评价式共情 --principle 避免比较转移
 
 小林：我爸爸刚去世，我现在真的不知道该怎么办。
+```
+
+## 136 共情专属技巧单独调用
+
+```text
+$chat-reply 小林 --technique 夸张引申
+
+小林：今天冷得不想出门。
+```
+
+## 137 显式共情可选夸张引申
+
+```text
+$chat-reply 小林 --intent 共情 --technique 夸张引申
+
+我们都在等同一班早车，平时会互相开玩笑。
+小林：今天冷得不想去上班。
+```
+
+## 138 接话不能选共情原则
+
+```text
+$chat-reply 小林 --intent 接话 --principle 非评价式共情
+```
+
+## 139 共情不能选平衡
+
+```text
+$chat-reply 小林 --intent 共情 --technique 平衡
+```
+
+## 140 起头可组合公共技巧
+
+```text
+$chat-reply 小林 --intent 起头 --technique 状态感受切换法 --technique 魔趣法则 --context "今天在公园看见两只狗追着落叶跑，我想把这件有趣的小事讲给她听"
+```
+
+## 141 邀约不能选接话专属技巧
+
+```text
+$chat-reply 小林 --intent 邀约 --technique 扩大冲突
 ```

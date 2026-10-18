@@ -1,0 +1,59 @@
+[
+  {
+    "name": "接话",
+    "intent": "接话",
+    "principles": [
+      "先接内容",
+      "事实有据",
+      "尊重边界",
+      "把握分寸",
+      "不评价对方"
+    ],
+    "techniques": []
+  },
+  {
+    "name": "起头",
+    "intent": "起头",
+    "principles": [],
+    "techniques": []
+  },
+  {
+    "name": "共情",
+    "intent": "共情",
+    "principles": [
+      "非评价式共情",
+      "避免比较转移"
+    ],
+    "techniques": [
+      "行为一致"
+    ]
+  },
+  {
+    "name": "轻松共情",
+    "intent": "共情",
+    "principles": [
+      "非评价式共情",
+      "避免比较转移"
+    ],
+    "techniques": [
+      "行为一致",
+      "夸张引申"
+    ]
+  },
+  {
+    "name": "赞美",
+    "intent": "赞美",
+    "principles": [
+      "具体赞美"
+    ],
+    "techniques": []
+  },
+  {
+    "name": "邀约",
+    "intent": "邀约",
+    "principles": [
+      "先理解顾虑"
+    ],
+    "techniques": []
+  }
+]
