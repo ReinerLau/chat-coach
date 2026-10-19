@@ -17,6 +17,7 @@
 
 - 每个分支只做一个需求或 Bug；通过分支和 PR 集成，不直接提交到 `master`。
 - 两个 Skill 须可独立安装，运行规则与引用保留在各自目录内；调整联系人档案规则时，按 `docs/contact-notes.md` 核对两边兼容性。
+- 新增、重命名或删除技巧时，同步更新根目录 `README.md` 的“可用技巧”清单，直接列出技巧名称及对应文档链接，与 Skill 内技巧文档保持一致；不在 README 中另写技巧定义。
 - 需求有实质歧义时先用选项澄清，再实现。
 - MCP 改动前运行现有 MCP 测试；改动后运行：
   `npm test --prefix mcp-server` 和 `npm run test:package --prefix mcp-server`。
