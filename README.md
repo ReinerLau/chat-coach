@@ -31,6 +31,8 @@ $chat-reply 我想主动找小林聊聊。我们上周聊过旧书店，今天�
 - [魔趣法则](skills/chat-reply/references/techniques/魔趣法则.md)
 - [行为聊法](skills/chat-reply/references/techniques/行为聊法.md)
 - [状态感受切换法](skills/chat-reply/references/techniques/状态感受切换法.md)
+- [行为一致](skills/chat-reply/references/techniques/行为一致.md)
+- [夸张引申](skills/chat-reply/references/techniques/夸张引申.md)
 
 ### 原则、技巧与原文
 
