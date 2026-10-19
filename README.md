@@ -32,6 +32,7 @@ $chat-reply 我想主动找小林聊聊。我们上周聊过旧书店，今天�
 - [行为聊法](skills/chat-reply/references/techniques/行为聊法.md)
 - [状态感受切换法](skills/chat-reply/references/techniques/状态感受切换法.md)
 - [共情](skills/chat-reply/references/techniques/共情.md)
+- [赞美的法则](skills/chat-reply/references/techniques/赞美的法则.md)
 
 ### 原则、技巧与原文
 
