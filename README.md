@@ -29,6 +29,7 @@ $chat-reply 我想主动找小林聊聊。我们上周聊过旧书店，今天�
 - [平衡的艺术](skills/chat-reply/references/techniques/平衡的艺术.md)
 - [扩大冲突](skills/chat-reply/references/techniques/扩大冲突.md)
 - [魔趣法则](skills/chat-reply/references/techniques/魔趣法则.md)
+- [行为聊法](skills/chat-reply/references/techniques/行为聊法.md)
 
 ### 原则、技巧与原文
 
