@@ -34,11 +34,7 @@ $chat-reply 我想主动找小林聊聊。我们上周聊过旧书店，今天�
 
 需要使用某项已收录的原则或技巧时，直接在请求中点名。Skill 会按需读取对应文档、引用的原文和相关踩坑点，不自动为普通语气要求匹配方法。未收录或原文不足时会说明缺口，不凭名称编造方法。
 
-原则、技巧和原文分别放在 Skill 的参考目录中：
-
-- [原则索引](skills/chat-reply/references/principles/index.md)：每项独立成文，保存原文引用和踩坑点。
-- [技巧索引](skills/chat-reply/references/techniques/index.md)：每项独立成文，保存原文引用和踩坑点。
-- [原文索引](skills/chat-reply/references/sources/index.md)：保存指定章节的原文和出处，同一章节可以被多项引用。
+原则、技巧和原文分别保存在 Skill 的 `references/principles/`、`references/techniques/` 和 `references/sources/` 中。每项原则或技巧独立成文，保存原文引用和踩坑点；原文文档保存指定章节正文及出处，可以被多个条目直接引用。
 
 后续可继续指定要添加的原则或技巧，以及《魔鬼沟通学》《魔鬼约会学》《魔鬼聊天术》等来源中的具体章节；提取时保留原文上下文，不把模型总结写成方法规则。正常回复不扫描 EPUB，也不依赖仓库中的书籍文件。
 
