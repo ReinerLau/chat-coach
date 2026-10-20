@@ -178,6 +178,33 @@ $chat-reply 帮我分析小林这段话，这轮不用记录。
 
 安装、启动和 ChatGPT 接入步骤见 [MCP 使用说明](mcp-server/README.md)。
 
+## 开发与发布
+
+### 推送主分支与运行 CI
+
+`master` 允许直接提交和推送，也可以通过分支和 PR 集成。推送到 `master` 或向 `master` 提交 PR 时，[CI 工作流](.github/workflows/ci.yml)会运行 MCP 测试和独立包验证。
+
+### 手动更新版本与创建 tag
+
+维护者手动管理 MCP 包版本和 Git tag。在已同步的 `master` 工作区中执行以下步骤；按需要将 `patch` 换成 `minor` 或 `major`。
+
+```sh
+npm version patch --no-git-tag-version --prefix mcp-server
+git add mcp-server/package.json mcp-server/package-lock.json
+git commit -m "chore: bump MCP package version"
+MCP_RELEASE_VERSION=$(node -p "require('./mcp-server/package.json').version")
+git tag -a "v${MCP_RELEASE_VERSION}" -m "Release v${MCP_RELEASE_VERSION}"
+git push origin master "v${MCP_RELEASE_VERSION}"
+```
+
+版本号与锁文件一起提交，tag 指向该版本提交。推送 `master` 后，可在 GitHub Actions 查看对应提交的 CI 结果。
+
+### 手动发布 MCP 包
+
+在 GitHub Actions 中打开 [Publish WeChat MCP 工作流](.github/workflows/publish-mcp.yml)，选择 `master` 并点击 **Run workflow**。
+
+工作流从 `master` 检出当前版本，安装依赖、运行 MCP 测试和独立包验证，通过后发布到 GitHub Packages。发布仅由维护者手动触发，每次发包前需准备尚未发布过的版本号和对应 tag。
+
 ## 方法库迭代维护
 
 以下事项用于后续迭代方法库，运行时 Skill 会读取已收录的原文和踩坑点作为依据。
