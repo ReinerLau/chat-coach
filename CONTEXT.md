@@ -1,6 +1,6 @@
 # chat-coach
 
-本项目包含中文回复教练 Skill、联系人记录 Skill 和微信历史 MCP。以下术语用于描述回复建议、联系人背景、聊天材料与微信历史。
+本项目包含中文回复教练 Skill、联系人记录 Skill、微信接话 Skill 和微信历史 MCP。以下术语用于描述回复建议、联系人背景、聊天材料与微信历史。
 
 ## Language
 
@@ -13,6 +13,10 @@ _Avoid_: 回复 Skill、Chat Reply Skill、Chat Reply（作为组件名称时）
 **联系人记录 Skill**:
 根据用户明确请求查看或维护本机联系人档案，或在中文回复教练 Skill 的回复流程中自动记录背景和互动的组件。
 _Avoid_: 角色卡 Skill、记忆 Skill（作为组件名称时）
+
+**微信接话 Skill**:
+通过 `$humanize` 显式调用，根据用户贴出的微信聊天接话、默认给出一条可直接发送的回复；独立于中文回复教练 Skill 和联系人记录 Skill，不读取微信历史。
+_Avoid_: Humanize Skill（作为组件名称时）
 
 **微信历史 MCP**:
 提供本机微信历史只读查询的组件。

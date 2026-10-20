@@ -1,9 +1,10 @@
 # chat-coach
 
-chat-coach 包含三个可独立使用的组件：
+chat-coach 包含四个可独立使用的组件：
 
 - **中文回复教练 Skill** 根据真实互动辅助判断关系、选择行动、梳理心态和拟写回复。如何行动、是否发送由你决定。
 - **联系人记录 Skill** 保存联系人背景和互动。
+- **微信接话 Skill** 根据用户贴出的微信聊天接话。
 - **微信历史 MCP** 只读查询本机微信历史。
 
 ## 使用中文回复教练 Skill
@@ -109,6 +110,20 @@ $chat-reply 分析这段聊天，重点解释交流三层次对当前判断的�
 
 完整流程见[中文回复教练 Skill](skills/chat-reply/SKILL.md)。普通聊天不会自动调用中文回复教练 Skill。
 
+## 使用微信接话 Skill
+
+通过 `$humanize` 显式调用，贴出微信聊天。默认返回一条可直接发送的回复；有具体要求时可以一并说明。无法判断要回复哪条消息时，Skill 会询问你。
+
+```text
+$humanize
+聊天记录：
+小林：今天终于把那本书看完了
+我：怎么样？
+小林：结尾跟我想的不太一样
+```
+
+微信接话 Skill 只使用你提供的聊天内容，不查询微信历史，也不联动联系人记录。完整规则见[微信接话 Skill](skills/humanize/SKILL.md)。
+
 ## 使用联系人记录 Skill
 
 用 `$contact-notes` 查看或维护联系人档案。
@@ -135,7 +150,7 @@ $contact-notes 删除小林档案中关于城市的信息。
 
 ### 在回复流程中自动记录
 
-两个 Skill 都已安装时，使用 `$chat-reply` 分析或拟写的过程中，会自动保存新材料里有用的联系人背景和互动，无需另外调用 `$contact-notes`。普通聊天不触发自动记录。
+中文回复教练与联系人记录 Skill 都已安装时，使用 `$chat-reply` 分析或拟写的过程中，会自动保存新材料里有用的联系人背景和互动，无需另外调用 `$contact-notes`。普通聊天不触发自动记录。
 
 以下内容不会写入档案：
 
@@ -150,7 +165,7 @@ $chat-reply 帮我分析小林这段话，这轮不用记录。
 
 ### 同时维护档案与获取建议
 
-同轮显式调用两个 Skill 时，先完成指定的记录、修正或删除，再按需要分析或拟写。细节见[自动记录说明](skills/chat-reply/references/auto-notes.md)。
+同轮显式调用 `$contact-notes` 和 `$chat-reply` 时，先完成指定的记录、修正或删除，再按需要分析或拟写。细节见[自动记录说明](skills/chat-reply/references/auto-notes.md)。
 
 ### 档案存放位置
 
@@ -160,15 +175,15 @@ $chat-reply 帮我分析小林这段话，这轮不用记录。
 
 ## 安装 Skill
 
-两个 Skill 可以独立安装。用户级 Skill 放在 `~/.agents/skills/`，参见 [Codex 官方 Skill 说明](https://learn.chatgpt.com/docs/build-skills)。
+三个 Skill 可以独立安装。用户级 Skill 放在 `~/.agents/skills/`，参见 [Codex 官方 Skill 说明](https://learn.chatgpt.com/docs/build-skills)。
 
 ### 首次安装
 
-1. 从仓库 `skills/` 中选择 `chat-reply`、`contact-notes` 或两者。
+1. 从仓库 `skills/` 中选择需要安装的 Skill：`chat-reply`、`contact-notes`、`humanize`。
 2. 将所选目录的全部受版本控制文件复制到 `~/.agents/skills/` 下的同名目录。
-   - 保留 `SKILL.md`、`references/` 和 `agents/openai.yaml`。
-   - 无需复制仓库 `docs/`、另一个 Skill 或本机 `contacts` 软链。
-3. 用 `$chat-reply` 或 `$contact-notes` 开始使用。新安装的 Skill 未显示时，重启 Codex。
+   - 保留 `SKILL.md`、`agents/openai.yaml` 和该目录下的 `references/`（如有）。
+   - 无需复制仓库 `docs/`、其他 Skill 或本机 `contacts` 软链。
+3. 用 `$chat-reply`、`$contact-notes` 或 `$humanize` 开始使用。新安装的 Skill 未显示时，重启 Codex。
 
 ### 更新已安装的 Skill
 
@@ -178,6 +193,7 @@ $chat-reply 帮我分析小林这段话，这轮不用记录。
 
 - 只安装中文回复教练 Skill：可读取已有联系人档案，但不自行写入联系人档案。首次需要保存联系人信息时，会提示安装联系人记录 Skill；已收录的原则、技巧、原文和踩坑点仍可独立使用。
 - 只安装联系人记录 Skill：可独立维护档案。
+- 只安装微信接话 Skill：可根据你贴出的聊天接话，无需安装其他 Skill 或微信历史 MCP。
 
 ## 查询微信历史
 
