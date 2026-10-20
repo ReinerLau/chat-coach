@@ -91,6 +91,11 @@ $chat-reply 分析这段聊天，重点解释交流三层次对当前判断的�
 - [镜像原则](skills/chat-reply/references/principles/镜像原则.md)
 - [交流三层次](skills/chat-reply/references/principles/交流三层次.md)
 - [关系分层升级](skills/chat-reply/references/principles/关系分层升级.md)
+- [不能证明是好的，也不要预设它是坏的](skills/chat-reply/references/principles/不能证明是好的，也不要预设它是坏的.md)
+- [少问多说，多说自己](skills/chat-reply/references/principles/少问多说，多说自己.md)
+- [客观陈述事实](skills/chat-reply/references/principles/客观陈述事实.md)
+- [适当表达感受](skills/chat-reply/references/principles/适当表达感受.md)
+- [谨慎评价对方](skills/chat-reply/references/principles/谨慎评价对方.md)
 
 ### 可用技巧
 
