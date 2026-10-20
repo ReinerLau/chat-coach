@@ -87,3 +87,32 @@ test('partial cursor initialization failure finalizes all opened shard iterators
   assert.throws(() => [...source.messagePages('friend', 200)], /read failed/)
   assert.equal(finalized, 2)
 })
+
+test('direct pages merge shards by the existing lexical IDs and apply the old cursor in SQL', () => {
+  const paths = ['/message_0.db', '/message_1.db']
+  const rows = new Map([
+    [paths[0], [9, 2, 10, 1].map((local_id) => ({ local_id, create_time: 100, message_content: String(local_id) }))],
+    [paths[1], [{ local_id: 4, create_time: 100, message_content: '4' }]]
+  ])
+  let before = null
+  const source = Object.create(WcdbSource.prototype)
+  Object.assign(source, {
+    ownUsername: 'me', tableBySession: new Map([['friend', paths]]),
+    senderByDb: new Map(paths.map((path) => [path, new Map()])),
+    db: {
+      query: () => [{ name: 'message_content' }],
+      *iterate(path, sql) {
+        assert.match(sql, /CAST\(local_id AS TEXT\) DESC LIMIT 3/)
+        if (before) assert.match(sql, /WHERE create_time < 100 OR .*'0:2'/)
+        const shard = path === paths[0] ? 0 : 1
+        for (const row of rows.get(path)) {
+          if (before && `${shard}:${row.local_id}` >= before.localId) continue
+          yield row
+        }
+      }
+    }
+  })
+  assert.deepEqual(source.messagePage('friend', 3).map((row) => row.mesLocalID), ['1:4', '0:9', '0:2'])
+  before = { createdAt: 100, localId: '0:2' }
+  assert.deepEqual(source.messagePage('friend', 3, before).map((row) => row.mesLocalID), ['0:10', '0:1'])
+})

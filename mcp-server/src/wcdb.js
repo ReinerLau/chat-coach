@@ -45,7 +45,9 @@ export class WcdbSource {
     this.tableBySession.clear()
     this.senderByDb.clear()
     this.messageDbs = readdirSync(join(this.root, 'message')).filter((name) => /^message_\d+\.db$/.test(name)).map((name) => join(this.root, 'message', name))
-    const candidates = new Set(this.db.query(this.sessionDb, 'SELECT username FROM SessionTable').map((row) => row.username))
+    const sessionRows = this.db.query(this.sessionDb, 'SELECT username,last_timestamp FROM SessionTable')
+    this.sessionTimes = new Map(sessionRows.map((row) => [row.username, Number(row.last_timestamp) || 0]))
+    const candidates = new Set(sessionRows.map((row) => row.username))
     for (const path of this.messageDbs) {
       const names = this.db.query(path, 'SELECT user_name FROM Name2Id').map((row) => row.user_name)
       for (const name of names) candidates.add(name)
@@ -66,23 +68,21 @@ export class WcdbSource {
     const contacts = new Map(this.db.query(this.contactDb, 'SELECT username,alias,remark,nick_name FROM contact').map((row) => [row.username, row]))
     return [...this.tableBySession.keys()].map((username) => {
       const contact = contacts.get(username)
-      return { username, nickname: contact?.remark || contact?.nick_name || contact?.alias || username }
+      return { username, nickname: contact?.remark || contact?.nick_name || contact?.alias || username,
+        updatedAt: this.sessionTimes.get(username) ?? 0 }
     })
   }
 
-  messages(sessionId, limit, offset) {
-    const rows = []
-    for (const page of this.messagePages(sessionId, 200)) {
-      for (const row of page) {
-        if (offset > 0) { offset--; continue }
-        rows.push(row)
-        if (rows.length >= limit) return rows
-      }
-    }
-    return rows
+  messagePage(sessionId, limit, before = null) {
+    const pages = this.messagePages(sessionId, limit, before, limit)
+    try { return pages.next().value ?? [] }
+    finally { pages.return() }
   }
 
-  *messagePages(sessionId, pageSize) {
+  *messagePages(sessionId, pageSize, before = null, maxRows = Infinity) {
+    if (before && (!Number.isSafeInteger(before.createdAt) || before.createdAt < 0 || !/^\d+:-?\d+$/.test(before.localId))) {
+      throw new Error('分页游标无效')
+    }
     const paths = this.tableBySession.get(sessionId) ?? []
     const table = tableName(sessionId)
     const cursors = []
@@ -94,16 +94,26 @@ export class WcdbSource {
         const compressedContent = columns.compressed
           ? `, ${quoteIdentifier(columns.compressed)} AS compress_content`
           : ''
-        const iterator = this.db.iterate(path, `SELECT local_id,server_id,local_type,real_sender_id,create_time,message_content${compressedContent} FROM "${table}" ORDER BY create_time DESC, local_id DESC`)
+        // The cursor and shard contain only validated decimal characters before entering SQL.
+        const where = before ? `WHERE create_time < ${before.createdAt} OR (create_time = ${before.createdAt} AND ('${shard}:' || CAST(local_id AS TEXT)) < '${before.localId}')` : ''
+        const bound = Number.isFinite(maxRows) ? `LIMIT ${maxRows}` : ''
+        const iterator = this.db.iterate(path, `SELECT local_id,server_id,local_type,real_sender_id,create_time,message_content${compressedContent} FROM "${table}" ${where} ORDER BY create_time DESC, CAST(local_id AS TEXT) DESC ${bound}`)
         const cursor = { iterator, head: null, shard, senders }
         cursors.push(cursor)
         cursor.head = iterator.next()
       }
       let page = []
+      let seen = 0
       while (true) {
         const active = cursors.filter((cursor) => !cursor.head.done)
         if (!active.length) break
-        active.sort((a, b) => Number(b.head.value.create_time) - Number(a.head.value.create_time) || Number(b.head.value.local_id) - Number(a.head.value.local_id) || b.shard - a.shard)
+        active.sort((a, b) => {
+          const time = Number(b.head.value.create_time) - Number(a.head.value.create_time)
+          if (time) return time
+          const aId = `${a.shard}:${a.head.value.local_id}`
+          const bId = `${b.shard}:${b.head.value.local_id}`
+          return aId < bId ? 1 : aId > bId ? -1 : 0
+        })
         const chosen = active[0]
         const row = chosen.head.value
         const sender = chosen.senders.get(Number(row.real_sender_id)) ?? ''
@@ -116,6 +126,7 @@ export class WcdbSource {
         })
         chosen.head = chosen.iterator.next()
         if (page.length >= pageSize) { yield page; page = [] }
+        if (++seen >= maxRows) break
       }
       if (page.length) yield page
     } finally { for (const cursor of cursors) cursor.iterator.return?.() }

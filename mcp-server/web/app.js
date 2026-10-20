@@ -4,7 +4,7 @@ if (location.hash) {
   sessionStorage.setItem('wechat-manager-token', token)
   history.replaceState(null, '', location.pathname)
 }
-const names = { running: '运行正常', connected: '已连接', stopped: '已停止', starting: '正在启动', stopping: '正在停止', restarting: '正在重启', error: '需要处理', idle: '同步完成', syncing: '正在同步', unavailable: '暂不可用', unknown: '无法确认' }
+const names = { running: '运行正常', connected: '已连接', stopped: '已停止', starting: '正在启动', stopping: '正在停止', restarting: '正在重启', error: '需要处理', unknown: '无法确认' }
 let pending = false
 let refreshing = false
 let lastState
@@ -41,11 +41,6 @@ function render(state) {
   $('summary').textContent = state.operation ? '操作进行中，请稍候。' : state.state === 'running' ? '微信历史 MCP 已就绪，可以在 ChatGPT 中读取微信历史。' : state.state === 'stopped' ? '启动服务后，ChatGPT 即可访问微信历史。' : '请查看下方提示，处理后重试。'
   $('mcp').textContent = names[state.mcp] || '无法确认'
   $('tunnel').textContent = names[state.tunnel] || '无法确认'
-  $('sync').textContent = names[state.sync.phase] || '暂无记录'
-  $('sessions').textContent = state.sync.sessions?.toLocaleString('zh-CN') ?? '—'
-  $('messages').textContent = state.sync.messages?.toLocaleString('zh-CN') ?? '—'
-  $('last-sync').textContent = state.sync.lastSuccessAt ? `上次成功 ${new Date(state.sync.lastSuccessAt).toLocaleString('zh-CN')}` : '尚无同步成功记录'
-  $('sync-note').textContent = state.sync.stale ? '历史统计；实时状态将在启动或重启后更新' : '监听本机微信数据库变化'
   $('diagnostics').hidden = !state.diagnosticsUrl
   $('diagnostics-empty').hidden = Boolean(state.diagnosticsUrl)
   if (state.diagnosticsUrl) $('diagnostics').href = state.diagnosticsUrl

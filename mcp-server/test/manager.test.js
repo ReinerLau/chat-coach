@@ -8,9 +8,6 @@ import { parse as parseShell } from 'shell-quote'
 import { managerPaths, loadTunnelConfig, mcpCommand, validateRuntimeKey } from '../src/manager/config.js'
 import { TunnelRuntime, safeLogs, localUrl } from '../src/manager/tunnel.js'
 import { createManagerServer } from '../src/manager/server.js'
-import { createStatusReporter } from '../src/status.js'
-import { MessageStore } from '../src/store.js'
-import { WechatSync } from '../src/sync.js'
 
 async function fixture(t) {
   const home = await mkdtemp(join(tmpdir(), 'wechat-ui-'))
@@ -38,12 +35,11 @@ async function fixture(t) {
   return { home, paths, profile, save, runtime, calls }
 }
 
-test('loads existing JSON/YAML profile and creates a quoted installed MCP command with status reporting', async (t) => {
+test('loads existing JSON/YAML profile and creates a quoted installed MCP command', async (t) => {
   const { paths, profile } = await fixture(t)
   const config = loadTunnelConfig(paths)
   assert.equal(config.accountRoot, '/account with spaces')
-  assert.equal(config.statusFile, paths.statusFile)
-  assert.match(mcpCommand(config), /--status-file/)
+  assert.doesNotMatch(mcpCommand(config), /--status-file|--data-file/)
   assert.match(mcpCommand(config), /bin\/wechat-mcp\.js/)
   assert.equal(parseShell(mcpCommand(config))[2], 'stdio')
   assert.match(mcpCommand(config), /account with spaces/)
@@ -122,7 +118,7 @@ test('idempotent start, sequential restart and concurrent operations never overl
   assert.equal((await runtime.snapshot()).state, 'running')
   const connect = calls.find((args) => args[1] === 'connect')
   assert.ok(connect.includes('--profile-dir'))
-  assert.match(connect.at(-1), /--status-file/)
+  assert.doesNotMatch(connect.at(-1), /--status-file|--data-file/)
 })
 
 test('restart refuses to connect until the old instance is stopped', async (t) => {
@@ -173,19 +169,6 @@ test('HTTP health must confirm the MCP child, and diagnostic URLs never accept e
   // Unknown health endpoints cannot be mistaken for a running MCP child.
   assert.equal(await TunnelRuntime.prototype.mcpHealth.call(runtime, { process_running: true, health_url: healthServer.origin }), 'unknown')
   assert.equal(await TunnelRuntime.prototype.mcpHealth.call(runtime, { process_running: false }), 'stopped')
-})
-
-test('sync snapshots mark dead and previous-run reports stale and preserve counts only', async (t) => {
-  const { paths, runtime } = await fixture(t)
-  await writeFile(paths.statusFile, JSON.stringify({ pid: process.pid, startedAt: '2026-01-01T00:00:00Z', phase: 'idle', sessions: 4, messages: 12, lastSuccessAt: '2026-01-01T00:00:01Z', secret: 'sk-secret', content: 'private body' }))
-  const current = await runtime.syncState(true, '2026-01-01T00:00:00Z')
-  assert.equal(current.phase, 'idle')
-  assert.equal(current.messages, 12)
-  assert.doesNotMatch(JSON.stringify(current), /sk-secret|private body/)
-  assert.equal((await runtime.syncState(true, '2026-02-01T00:00:00Z')).stale, true)
-  runtime.isAlive = () => false
-  assert.equal((await runtime.syncState(true)).phase, 'unavailable')
-  assert.equal((await runtime.syncState(false)).phase, 'stopped')
 })
 
 test('diagnostic logs retain only allowed event text and cap the result at 100', async (t) => {
@@ -245,32 +228,4 @@ test('manager HTTP serves packed assets, rejects cross-site and arbitrary comman
   assert.equal((await post('/api/shutdown')).status, 200)
   await new Promise((resolve) => setImmediate(resolve))
   assert.equal(shutDown, true)
-})
-
-test('status reporting reflects synchronization, failure and recovery without writing message content', async (t) => {
-  const { paths } = await fixture(t)
-  const store = new MessageStore(':memory:')
-  t.after(() => store.close())
-  const reporter = createStatusReporter(paths.statusFile, store)
-  let fail = false
-  const sync = new WechatSync({ store, accountRoot: '/unused', onState: (state) => reporter.update(state), source: {
-    sessions: () => { if (fail) throw new Error('sk-secret private body'); return [{ username: 'friend' }] },
-    *messagePages() { yield [{ mesLocalID: 1, msgCreateTime: 1, msgContent: 'private body', mesDes: 1 }] }
-  } })
-  await sync.sync()
-  let status = JSON.parse(await readFile(paths.statusFile, 'utf8'))
-  assert.equal(status.phase, 'idle')
-  assert.equal(status.sessions, 1)
-  assert.equal(status.messages, 1)
-  const lastSuccessAt = status.lastSuccessAt
-  fail = true
-  await assert.rejects(sync.sync())
-  status = JSON.parse(await readFile(paths.statusFile, 'utf8'))
-  assert.equal(status.phase, 'error')
-  assert.equal(status.lastSuccessAt, lastSuccessAt)
-  assert.doesNotMatch(JSON.stringify(status), /sk-secret|private body|friend/)
-  fail = false
-  await sync.sync()
-  assert.equal(JSON.parse(await readFile(paths.statusFile, 'utf8')).error, null)
-  sync.stop()
 })

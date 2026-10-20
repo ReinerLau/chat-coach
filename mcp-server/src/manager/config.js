@@ -46,7 +46,7 @@ export function loadTunnelConfig(paths, env = process.env) {
   if (typeof apiKey !== 'string' || !/^(?:env:|file:).+/.test(apiKey)) throw new ManagerError('隧道运行密钥必须使用 env: 或 file: 引用；请勿将密钥值写入配置。')
   const baseUrl = profile.control_plane.base_url || 'https://api.openai.com'
   if (typeof baseUrl !== 'string' || !baseUrl.startsWith('https://')) throw new ManagerError('隧道控制地址必须使用 HTTPS。')
-  return { ...config, apiKey, tunnelId, baseUrl, logFile: profile.log?.file, statusFile: paths.statusFile }
+  return { ...config, apiKey, tunnelId, baseUrl, logFile: profile.log?.file }
 }
 
 export function validateRuntimeKey(config, env = process.env) {
@@ -61,7 +61,6 @@ export function validateRuntimeKey(config, env = process.env) {
 export function mcpCommand(config) {
   return quote([
     process.execPath, fileURLToPath(new URL('../../bin/wechat-mcp.js', import.meta.url)),
-    'stdio',
-    '--account-root', config.accountRoot, '--data-file', config.dataFile, '--status-file', config.statusFile
+    'stdio', '--account-root', config.accountRoot
   ])
 }

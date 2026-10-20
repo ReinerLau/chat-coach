@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { parseQuotedReply } from './normalize.js'
+import { normalizeMessage, normalizeSession, parseQuotedReply } from './normalize.js'
 
 export const sessionInput = z.object({
   query: z.string().trim().max(200).default('').describe('会话名称或会话 ID 的部分文字；同名会话会返回多个候选会话'),
@@ -16,7 +16,7 @@ export const historyInput = z.object({
 const cursorSchema = z.object({
   sessionId: z.string().min(1),
   createdAt: z.number().int().nonnegative(),
-  localId: z.string().min(1)
+  localId: z.string().regex(/^\d+:-?\d+$/)
 }).strict()
 
 export class HistoryError extends Error {
@@ -38,60 +38,48 @@ function decodeCursor(value, sessionId) {
   } catch { throw new HistoryError('分页游标无效或属于其他会话') }
 }
 
-export class CachedHistory {
-  constructor({ store }) {
-    this.store = store
+function readableMessage(row) {
+  const quote = parseQuotedReply(row.content)
+  if (quote) return { ...row, ...quote }
+  return { ...row, content: row.type === 1 ? row.content : `[非文本消息：类型 ${row.type}]` }
+}
+
+export class WechatHistory {
+  constructor({ openSource }) { this.openSource = openSource }
+
+  withSource(read) {
+    const source = this.openSource()
+    try { return read(source) }
+    finally { source.close() }
   }
 
   sessions(input) {
     const { query, limit, offset } = sessionInput.parse(input)
-    const rows = this.store.sessions({ query, limit: limit + 1, offset })
-    return { sessions: rows.slice(0, limit), nextOffset: rows.length > limit ? offset + limit : null }
+    return this.withSource((source) => {
+      const matches = source.sessions().map((row) => {
+        const session = normalizeSession(row)
+        return session && { ...session, updatedAt: Number(row.updatedAt) || 0 }
+      }).filter(Boolean).filter((session) =>
+        session.name.toLowerCase().includes(query.toLowerCase()) || session.id.toLowerCase().includes(query.toLowerCase()))
+      matches.sort((a, b) => b.updatedAt - a.updatedAt || (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      return { sessions: matches.slice(offset, offset + limit), nextOffset: matches.length > offset + limit ? offset + limit : null }
+    })
   }
 
   messages(input) {
     const { session_id: sessionId, limit, before } = historyInput.parse(input)
     const cursor = decodeCursor(before, sessionId)
-    const session = this.store.session(sessionId)
-    if (!session) throw new HistoryError('会话不存在，请先查找会话并使用返回的会话 ID', 404)
-    const rows = this.store.messages(sessionId, limit + 1, cursor)
-    const messages = rows.slice(-limit).map((row) => {
-      const quote = parseQuotedReply(row.content)
-      if (quote) return { ...row, ...quote }
-      return {
-        ...row,
-        content: row.type === 1 ? row.content : `[非文本消息：类型 ${row.type}]`
-      }
+    return this.withSource((source) => {
+      const raw = source.sessions().find((row) => String(row.username) === sessionId)
+      if (!raw) throw new HistoryError('会话不存在，请先查找会话并使用返回的会话 ID', 404)
+      const session = { ...normalizeSession(raw), updatedAt: Number(raw.updatedAt) || 0 }
+      const descending = source.messagePage(sessionId, limit + 1, cursor).map((row) => normalizeMessage(row, sessionId)).filter(Boolean)
+      const messages = descending.slice(0, limit).reverse().map(readableMessage)
+      const oldest = messages[0]
+      const next = descending.length > limit ? Buffer.from(JSON.stringify({
+        sessionId, createdAt: oldest.createdAt, localId: oldest.localId
+      })).toString('base64url') : null
+      return { session, messages, next }
     })
-    const oldest = messages[0]
-    const next = rows.length > limit ? Buffer.from(JSON.stringify({
-      sessionId, createdAt: oldest.createdAt, localId: oldest.localId
-    })).toString('base64url') : null
-    return { session, messages, next }
-  }
-}
-
-export class WechatHistory extends CachedHistory {
-  constructor({ store, sync }) {
-    super({ store })
-    this.sync = sync
-  }
-
-  async refresh() {
-    try { await this.sync.sync() }
-    catch { throw new HistoryError('微信同步失败，请检查数据库密钥、微信账号目录和本机服务状态') }
-  }
-
-  async sessions(input) {
-    const parsed = sessionInput.parse(input)
-    await this.refresh()
-    return super.sessions(parsed)
-  }
-
-  async messages(input) {
-    const parsed = historyInput.parse(input)
-    decodeCursor(parsed.before, parsed.session_id)
-    await this.refresh()
-    return super.messages(parsed)
   }
 }

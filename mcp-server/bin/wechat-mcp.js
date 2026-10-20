@@ -3,7 +3,7 @@ import { parseArgs } from 'node:util'
 import { launchManager } from '../src/manager/launcher.js'
 import { runForeground } from '../src/manager/foreground.js'
 
-const usage = '用法：wechat-mcp [stop] [--no-open] [--background]\n      wechat-mcp stdio --account-root <微信账号目录> [--data-file <历史缓存 SQLite 文件>] [--status-file <状态文件>]\n打开管理页并在前台等待；Ctrl+C 关闭全部服务。--background 后台启动；stop 关闭全部服务。'
+const usage = '用法：wechat-mcp [stop] [--no-open] [--background]\n      wechat-mcp stdio --account-root <微信账号目录>\n打开管理页并在前台等待；Ctrl+C 关闭全部服务。--background 后台启动；stop 关闭全部服务。'
 if (process.argv[2] === 'stdio') {
   await import('../src/stdio-cli.js')
 } else try {

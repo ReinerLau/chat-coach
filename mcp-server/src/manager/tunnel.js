@@ -1,6 +1,6 @@
 import { execFile } from 'node:child_process'
 import { promisify } from 'node:util'
-import { open, readFile } from 'node:fs/promises'
+import { open } from 'node:fs/promises'
 import { ManagerError, findTunnelClient, loadTunnelConfig, mcpCommand, validateRuntimeKey } from './config.js'
 
 const execute = promisify(execFile)
@@ -89,21 +89,6 @@ export class TunnelRuntime {
     catch { throw new ManagerError('无法解析 tunnel-client 状态，请检查客户端版本。') }
   }
 
-  async syncState(running, startedAt) {
-    try {
-      const saved = JSON.parse(await readFile(this.paths.statusFile, 'utf8'))
-      const recentInstance = !startedAt || Date.parse(saved.startedAt) >= Date.parse(startedAt) - 1000
-      const current = running && recentInstance && this.isAlive(saved.pid) && ['starting', 'syncing', 'idle', 'error'].includes(saved.phase)
-      return {
-        phase: current ? saved.phase : (running ? 'unavailable' : 'stopped'), stale: !current,
-        lastSuccessAt: typeof saved.lastSuccessAt === 'string' ? saved.lastSuccessAt : null,
-        sessions: Number.isSafeInteger(saved.sessions) && saved.sessions >= 0 ? saved.sessions : null,
-        messages: Number.isSafeInteger(saved.messages) && saved.messages >= 0 ? saved.messages : null,
-        error: current && saved.error ? '微信同步或数据库监听失败，请检查账号目录和数据库密钥。' : null
-      }
-    } catch { return { phase: running ? 'unavailable' : 'stopped', stale: true, lastSuccessAt: null, sessions: null, messages: null, error: null } }
-  }
-
   async snapshot() {
     try {
       const config = loadTunnelConfig(this.paths, this.env)
@@ -111,14 +96,13 @@ export class TunnelRuntime {
       const running = Boolean(raw.process_running)
       const healthy = Boolean(raw.healthy)
       const ready = Boolean(raw.ready)
-      const sync = await this.syncState(running, raw.process?.started_at)
       const health = await this.mcpHealth(raw)
       const uiUrl = localUrl(raw.ui_url)
       const mcp = running ? (health === 'running' ? 'running' : health === 'stopped' ? 'error' : 'unknown') : 'stopped'
-      const state = this.operation || (this.lastError || sync.error || (running && (!healthy || !ready || health !== 'running')) ? 'error' : running ? 'running' : 'stopped')
-      return { state, operation: this.operation, error: this.lastError || sync.error || (running && health !== 'running' ? '微信历史 MCP 未运行或无法确认，请检查数据库密钥和客户端诊断。' : running && !ready ? '服务已启动但尚未就绪，请检查诊断日志。' : null), mcp, tunnel: running ? (healthy && ready ? 'connected' : 'starting') : 'stopped', sync, diagnosticsUrl: uiUrl ? `${uiUrl}/ui` : null, logs: await safeLogs(config.logFile) }
+      const state = this.operation || (this.lastError || (running && (!healthy || !ready || health !== 'running')) ? 'error' : running ? 'running' : 'stopped')
+      return { state, operation: this.operation, error: this.lastError || (running && health !== 'running' ? '微信历史 MCP 未运行或无法确认，请检查数据库密钥和客户端诊断。' : running && !ready ? '服务已启动但尚未就绪，请检查诊断日志。' : null), mcp, tunnel: running ? (healthy && ready ? 'connected' : 'starting') : 'stopped', diagnosticsUrl: uiUrl ? `${uiUrl}/ui` : null, logs: await safeLogs(config.logFile) }
     } catch (error) {
-      return { state: this.operation || 'error', operation: this.operation, error: error instanceof ManagerError ? error.message : '无法读取服务状态，请检查本机配置。', mcp: 'unknown', tunnel: 'unknown', sync: await this.syncState(false), diagnosticsUrl: null, logs: [] }
+      return { state: this.operation || 'error', operation: this.operation, error: error instanceof ManagerError ? error.message : '无法读取服务状态，请检查本机配置。', mcp: 'unknown', tunnel: 'unknown', diagnosticsUrl: null, logs: [] }
     }
   }
 

@@ -1,8 +1,8 @@
 # 微信历史 MCP
 
-`@reinerlau/wechat-mcp` 将本机微信消息同步到按账号隔离的历史缓存。它通过 stdio MCP 提供只读查询。
+`@reinerlau/wechat-mcp` 在每次查询时直接读取本机微信数据库，并通过 stdio MCP 提供只读结果。查询结束后关闭数据库连接，不另存聊天历史副本。
 
-服务自行同步，无需启动 DSH。它不调用模型，也不发送微信消息。
+服务无需启动 DSH。它不调用模型，也不发送微信消息。
 
 ## 安装
 
@@ -86,7 +86,7 @@ node mcp-server/bin/import-tracememo-key.js "/Users/you/Library/Containers/com.t
 
 调用时，电脑须在线，微信数据库须可读，微信历史 MCP 与隧道须保持运行。
 
-服务和历史缓存留在本机。工具返回的消息会进入 ChatGPT 当前对话。
+微信源数据库留在本机。工具返回的消息会进入 ChatGPT 当前对话。
 
 ## 启动与停止
 
@@ -96,7 +96,7 @@ node mcp-server/bin/import-tracememo-key.js "/Users/you/Library/Containers/com.t
 - 从源码使用：在仓库根目录运行 `node mcp-server/bin/wechat-mcp.js`。
 
 命令会打开中文管理页，并在终端前台等待。管理页只绑定 `127.0.0.1`。
-页面提供启动、停止、重启，以及同步状态和诊断记录。
+页面提供启动、停止、重启和诊断记录。
 
 按 `Ctrl+C` 会关闭微信历史 MCP、隧道和管理后台。关闭浏览器不会停止服务。
 
@@ -110,15 +110,7 @@ node mcp-server/bin/import-tracememo-key.js "/Users/you/Library/Containers/com.t
 
 ## 查看历史
 
-管理页的“聊天数据预览”可以搜索会话名称或会话 ID。会话列表每页 50 条，可继续加载。
-
-选择会话后，可查看最近 50 条消息并加载更早历史。消息按时间正序显示，标注发送者和时间；非文本消息只显示类型占位。
-
-点击“刷新预览”会重新读取当前搜索下的会话列表和选中会话的最近消息，并重置分页。
-
-预览只读取已同步的历史缓存，不触发微信同步。停止微信历史 MCP 与隧道后，仍可浏览缓存。
-
-尚未生成缓存时，页面会提示先启动同步。同步正在进行或失败时，预览可能只包含此前保存的消息。
+通过以下 MCP 工具按需读取微信源数据库。电脑、微信数据库和数据库密钥须在查询时可用；服务不会保存另一份聊天记录。管理页不展示聊天内容。
 
 ### `list_wechat_sessions`
 
@@ -175,4 +167,4 @@ wechat-mcp stdio --account-root "/Users/you/Library/Containers/com.tencent.xinWe
 - **旧客户端配置：**直接启动 stdio 的命令需加入 `stdio` 子命令。已有隧道无需重建。
 - **旧应用名称：**已有「微信历史」应用可在 ChatGPT 设置中改名为 **wechat**。服务名不会自动修改应用显示名。
 
-历史缓存默认位于 `~/.wechat-history-mcp/accounts/<账号路径哈希>/messages.sqlite`。每个账号使用独立缓存。
+旧版本的历史缓存位于 `~/.wechat-history-mcp/accounts/<账号路径哈希>/messages.sqlite`。升级后先停止旧服务、安装并验证新版，再删除对应账号的 `messages.sqlite`、`messages.sqlite-wal`、`messages.sqlite-shm`；新版不会自动删除旧缓存。不要删除微信账号目录中的源数据库或钥匙串密钥。旧命令中的 `--data-file`、`--status-file` 暂时仍可传入，但不再使用。
