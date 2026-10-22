@@ -2,12 +2,10 @@
 
 ## 项目范围
 
-本仓库维护教练 Skill、联系人记录 Skill、拟人 Skill 和微信历史 MCP。
+本仓库维护教练 Skill、拟人 Skill 和微信历史 MCP。
 
 - 教练 Skill 规则：`skills/coach/SKILL.md`；细节见同目录的 `references/`。
-- 联系人记录 Skill 规则：`skills/contact-notes/SKILL.md`；档案维护细节见同目录的 `references/contact-notes.md`。开发者规则索引与两份 Skill 的一致性约定见 `docs/contact-notes.md`。
-- 拟人 Skill 规则：`skills/humanize/SKILL.md`；结合当前对话中已有的明确要求、聊天或背景自然地起头、接话，并可调整自己在当前对话生成的消息；可独立使用，不读取微信历史或联动联系人记录。
-- 联系人档案保存于用户目录 `~/.chat-coach/contacts/`；Skill 内的 `contacts` 软链仅供本机查看，链接与个人数据不提交。
+- 拟人 Skill 规则：`skills/humanize/SKILL.md`；按本次调用的明确要求，结合已有聊天或背景自然地开场、接话，并可改写指定的消息；独立使用，不主动读取微信历史或联系人档案。
 - 微信历史 MCP：`mcp-server/`。修改服务、管理页、打包或隧道运行逻辑前先读 `mcp-server/README.md`。
 - 微信历史 MCP 只读本机微信历史，不调用模型、不发送消息。
 
@@ -17,12 +15,12 @@
 - 将 `docs/coach-manual-tests.md` 限定为可直接复制发送的手工测试输入；测试输入之外的观察、测试流程、评测或迭代说明，仅在用户明确要求时加入。
 
 - 允许直接提交并推送到 `master`，分支和 PR 为可选方式；使用分支时，每个分支只做一个需求或 Bug。
-- 各 Skill 须可独立安装，运行规则与引用保留在各自目录内；调整联系人档案规则时，按 `docs/contact-notes.md` 核对教练 Skill 与联系人记录 Skill 的兼容性。
+- 各 Skill 须可独立安装，运行规则与引用保留在各自目录内。
 - 新增、重命名或删除技巧时，同步更新根目录 `README.md` 的“可用技巧”清单，直接列出技巧名称及对应文档链接，与 Skill 内技巧文档保持一致；不在 README 中另写技巧定义。
 - 需求有实质歧义时先用选项澄清，再实现。
 - MCP 改动前运行现有 MCP 测试；改动后运行：
   `npm test --prefix mcp-server` 和 `npm run test:package --prefix mcp-server`。
-- 修改教练 Skill、联系人记录 Skill 或联系人档案规则后，用户可按需手工测试；不要求运行自动化回复评测或输出评测报告，手工测试结果不作为合并前置条件。
+- 修改教练 Skill 或拟人 Skill 后，用户可按需手工测试；不要求运行自动化回复评测或输出评测报告，手工测试结果不作为合并前置条件。
 - 只改文档或配置时，按影响范围做链接、引用和工作流检查。
 
 ## CI 与发布

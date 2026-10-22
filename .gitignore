@@ -5,5 +5,3 @@ node_modules/
 __pycache__/
 *.pyc
 *.png
-/skills/coach/contacts
-/skills/contact-notes/contacts
