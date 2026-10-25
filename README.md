@@ -74,6 +74,7 @@ $coach 把教练上一条给出的可发送消息换个角度，保留轻松调�
 ### 可用技巧
 
 - [扩大冲突](skills/coach/references/techniques/扩大冲突.md)
+- [魔趣法则](skills/coach/references/techniques/魔趣法则.md)
 
 教练 Skill 可独立安装。用户级 Skill 放在 `~/.agents/skills/`，参见 [Codex 官方 Skill 说明](https://learn.chatgpt.com/docs/build-skills)。从仓库 `skills/coach/` 复制全部受版本控制文件到同名安装目录，保留 `SKILL.md`、`agents/openai.yaml` 和 `references/`。安装后通过 `$coach` 调用；新安装的 Skill 未显示时重启 Codex。曾单独复制安装拟人 Skill 的用户需自行移除旧安装目录，再使用教练的改写能力。
 
