@@ -2,10 +2,10 @@
 
 ## 项目范围
 
-本仓库维护教练 Skill、拟人 Skill 和微信历史 MCP。
+本仓库维护教练 Skill 和微信历史 MCP。
 
 - 教练 Skill 规则：`skills/coach/SKILL.md`；细节见同目录的 `references/`。
-- 拟人 Skill 规则：`skills/humanize/SKILL.md`；按本次调用的明确要求，结合已有聊天或背景自然地开场、接话，并可改写指定的消息；独立使用，不主动读取微信历史或联系人档案。
+- 教练 Skill 的语言模式：`skills/coach/references/expression.md`；仅用于可发送消息，按交流目标取舍；改写目标须由用户在本次请求中明确指定。
 - 微信历史 MCP：`mcp-server/`。修改服务、管理页、打包或隧道运行逻辑前先读 `mcp-server/README.md`。
 - 微信历史 MCP 只读本机微信历史，不调用模型、不发送消息。
 
@@ -20,7 +20,7 @@
 - 需求有实质歧义时先用选项澄清，再实现。
 - MCP 改动前运行现有 MCP 测试；改动后运行：
   `npm test --prefix mcp-server` 和 `npm run test:package --prefix mcp-server`。
-- 修改教练 Skill 或拟人 Skill 后，用户可按需手工测试；不要求运行自动化回复评测或输出评测报告，手工测试结果不作为合并前置条件。
+- 修改教练 Skill 后，用户可按需手工测试；不要求运行自动化回复评测或输出评测报告，手工测试结果不作为合并前置条件。
 - 只改文档或配置时，按影响范围做链接、引用和工作流检查。
 
 ## CI 与发布
