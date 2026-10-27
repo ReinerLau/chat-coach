@@ -5,7 +5,7 @@
 本仓库维护教练 Skill 和微信历史 MCP。
 
 - 教练 Skill 规则：`skills/coach/SKILL.md`；细节见同目录的 `references/`。
-- 教练 Skill 的语言模式：`skills/coach/references/expression.md`；仅用于可发送消息，通用层及匹配的分享、关注层逐条检查；改写目标须由用户在本次请求中明确指定。
+- 教练 Skill 的语言模式：`skills/coach/references/expression.md`；仅用于可发送消息，通用层及按话轮匹配的开场层或接话层逐条检查；改写目标须由用户在本次请求中明确指定。
 - 微信历史 MCP：`mcp-server/`。修改服务、管理页、打包或隧道运行逻辑前先读 `mcp-server/README.md`。
 - 微信历史 MCP 只读本机微信历史，不调用模型、不发送消息。
 
