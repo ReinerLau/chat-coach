@@ -4,8 +4,9 @@
 
 本仓库维护教练 Skill 和微信历史 MCP。
 
-- 教练 Skill 规则：`skills/coach/SKILL.md`；细节见同目录的 `references/`。
-- 教练 Skill 的语言模式：`skills/coach/references/expression.md`；仅用于可发送消息，通用层及按话轮匹配的开场层或接话层逐条检查；改写目标须由用户在本次请求中明确指定。
+- 教练 Skill 规则：`skills/coach/SKILL.md`；以狗头军师关系分析流程为主框架，细节见同目录的 `references/`，本机记忆脚本见 `scripts/`。
+- 教练 Skill 的话术偏好：仅在已同意且未暂停的本机档案中按需读取；本次明确要求优先，未保存偏好时结合场景和用户口吻拟写。改写目标须由用户在本次请求中明确指定；技巧步骤与具体写法同在 `references/practical/` 的对应文档中，具体写法只在使用该技巧时应用。
+- 教练 Skill 在用户要求分析微信历史时使用已连接的 `@wechat` 微信历史插件；先查找会话，重名时确认，再按需只读查询。插件不可用时沿用用户提供的材料，不假装已读取。
 - 微信历史 MCP：`mcp-server/`。修改服务、管理页、打包或隧道运行逻辑前先读 `mcp-server/README.md`。
 - 微信历史 MCP 只读本机微信历史，不调用模型、不发送消息。
 
@@ -21,11 +22,12 @@
 - MCP 改动前运行现有 MCP 测试；改动后运行：
   `npm test --prefix mcp-server` 和 `npm run test:package --prefix mcp-server`。
 - 修改教练 Skill 后，用户可按需手工测试；不要求运行自动化回复评测或输出评测报告，手工测试结果不作为合并前置条件。
+- 修改教练 Skill 后运行 `python3 skills/coach/scripts/validate_skill.py`；涉及记忆脚本时，用临时数据目录验证，不触碰用户档案。
 - 只改文档或配置时，按影响范围做链接、引用和工作流检查。
 
 ## CI 与发布
 
-- 推送到 `master` 或向 `master` 提交 PR 时，GitHub Actions 运行 MCP 测试和独立包验证；主分支不设置保护规则。
+- 推送到 `master` 或向 `master` 提交 PR 时，GitHub Actions 运行 MCP 测试、独立包验证和教练 Skill 校验；主分支不设置保护规则。
 - 用户明确要求“合并”即视为授权合并当前 PR，不再二次确认。合并前检查 PR 检查结果；无需等待或索要手工测试确认。遇到 PR 检查失败、冲突或其他明确阻塞时，说明具体情况。
 - MCP 包版本与对应 Git tag 由维护者手动管理；升版时同时更新 `mcp-server/package.json` 和 `mcp-server/package-lock.json`，提交后创建并推送对应 tag。
 - npm 包仅由维护者手动运行 **Publish WeChat MCP** 工作流发布，工作流检查并发布 `master` 当前版本到 GitHub Packages。
